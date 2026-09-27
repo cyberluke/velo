@@ -1,5 +1,6 @@
 import { searchMessages, type SearchResult } from "@/services/db/search";
 import { askInbox as callAskInbox } from "./aiService";
+import { askCrossSource, type CrossSourceAnswer } from "./askMeetings";
 
 /**
  * Extract key search terms from a natural language question.
@@ -32,16 +33,33 @@ function extractSearchTerms(question: string): string {
 export interface AskInboxResult {
   answer: string;
   sourceMessages: SearchResult[];
+  /** Present when the question was answered from calendar/meeting evidence. */
+  crossSource?: CrossSourceAnswer;
 }
 
 /**
  * Answer a natural language question by searching the user's inbox
  * and using AI to synthesize an answer from the results.
+ *
+ * Meeting/calendar questions never reach the mailbox search — they are
+ * answered from calendar events, meeting records and their linked threads
+ * (the V271 personal graph join layer) first.
  */
 export async function askMyInbox(
   question: string,
   accountId: string,
 ): Promise<AskInboxResult> {
+  // Cross-source path: meetings, calendar, decisions, action items, and the
+  // thread behind a meeting all come from the calendar/meeting stores.
+  const crossSource = await askCrossSource(question, accountId);
+  if (crossSource) {
+    return {
+      answer: crossSource.answer,
+      sourceMessages: [],
+      crossSource,
+    };
+  }
+
   // Extract search terms
   const terms = extractSearchTerms(question);
   if (!terms.trim()) {

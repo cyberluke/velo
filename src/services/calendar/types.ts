@@ -22,6 +22,14 @@ export interface CalendarEventData {
   attendeesJson: string | null;
   htmlLink: string | null;
   icalData: string | null;
+  /** Joinable conference link (Google Meet, Zoom-in-description, CalDAV CONFERENCE). */
+  meetingLink: string | null;
+  /** Master event id for an instance of a recurring series (Google recurringEventId). */
+  recurringEventId: string | null;
+  /** RRULE text for the series this event belongs to. */
+  recurrenceRule: string | null;
+  /** Provider reminder config as JSON (Google reminders / CalDAV VALARM). */
+  remindersJson: string | null;
 }
 
 export interface CreateEventInput {
@@ -32,6 +40,8 @@ export interface CreateEventInput {
   endTime: string;   // ISO 8601
   isAllDay?: boolean;
   attendees?: { email: string }[];
+  /** Ask the provider to attach a conference/meeting link to the new event. */
+  meetingLink?: boolean;
 }
 
 export interface UpdateEventInput {

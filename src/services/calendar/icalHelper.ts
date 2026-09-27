@@ -38,6 +38,10 @@ export function generateVEvent(event: CreateEventInput | UpdateEventInput, uid?:
     lines.push(`LOCATION:${escapeICalText(event.location)}`);
   }
 
+  if ("meetingLink" in event && typeof event.meetingLink === "string" && event.meetingLink) {
+    lines.push(`CONFERENCE;VALUE=URI:${event.meetingLink}`);
+  }
+
   if ("attendees" in event && event.attendees) {
     for (const attendee of event.attendees) {
       lines.push(`ATTENDEE;RSVP=TRUE:mailto:${attendee.email}`);
@@ -65,6 +69,10 @@ export function parseVEvent(icalData: string, href?: string): CalendarEventData 
   let status = "confirmed";
   let organizerEmail: string | null = null;
   let isAllDay = false;
+  let meetingLink: string | null = null;
+  let recurrenceRule: string | null = null;
+  let recurringEventId: string | null = null;
+  const reminders: { method: string; minutes: number }[] = [];
   const attendees: { email: string; displayName?: string; responseStatus?: string }[] = [];
 
   for (const line of lines) {
@@ -105,6 +113,31 @@ export function parseVEvent(icalData: string, href?: string): CalendarEventData 
         if (mailto) organizerEmail = mailto[1]!;
         break;
       }
+      case "RRULE":
+        recurrenceRule = value;
+        break;
+      case "RECURRENCE-ID":
+        // This event is one instance of a series; RECURRENCE-ID is what
+        // distinguishes the instances (the master carries only the RRULE).
+        recurringEventId = value;
+        break;
+      case "CONFERENCE":
+      case "X-GOOGLE-CONFERENCE": {
+        const uri = value.match(/^https?:\/\/\S+/i)?.[0] ?? value.trim();
+        if (uri && /^https?:\/\//i.test(uri)) meetingLink = uri;
+        break;
+      }
+      case "TRIGGER": {
+        // RFC 5545 alarm trigger inside a VALARM: TRIGGER:-PT15M (before the
+        // event start). Durations in minutes or hours; negative = before.
+        const trigger = value.match(/^-?P(?:T)?(\d+)([MH])/i);
+        if (trigger && !value.startsWith("-P0")) {
+          const amount = parseInt(trigger[1]!, 10);
+          const unit = trigger[2]!.toUpperCase();
+          reminders.push({ method: "display", minutes: unit === "H" ? amount * 60 : amount });
+        }
+        break;
+      }
       case "ATTENDEE": {
         const attendeeMailto = value.match(/mailto:(.+)/i);
         if (attendeeMailto) {
@@ -139,6 +172,10 @@ export function parseVEvent(icalData: string, href?: string): CalendarEventData 
     attendeesJson: attendees.length > 0 ? JSON.stringify(attendees) : null,
     htmlLink: null,
     icalData,
+    meetingLink,
+    recurringEventId,
+    recurrenceRule,
+    remindersJson: reminders.length > 0 ? JSON.stringify(reminders) : null,
   };
 }
 

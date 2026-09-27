@@ -530,3 +530,135 @@ describe("round-trip: generateVEvent -> parseVEvent", () => {
     expect(parsed.location).toBe("Building A; Room 3, Floor 2");
   });
 });
+
+describe("meeting links, recurrence and reminders (migration 34)", () => {
+  it("parses a CONFERENCE property as the meeting link", () => {
+    const ical = [
+      "BEGIN:VCALENDAR",
+      "BEGIN:VEVENT",
+      "UID:conf-1",
+      "SUMMARY:Design review",
+      "DTSTART:20250701T090000Z",
+      "DTEND:20250701T100000Z",
+      "CONFERENCE;VALUE=URI:https://meet.example.com/abc-123",
+      "END:VEVENT",
+      "END:VCALENDAR",
+    ].join("\r\n");
+
+    const parsed = parseVEvent(ical);
+    expect(parsed.meetingLink).toBe("https://meet.example.com/abc-123");
+  });
+
+  it("parses an X-GOOGLE-CONFERENCE property as the meeting link", () => {
+    const ical = [
+      "BEGIN:VCALENDAR",
+      "BEGIN:VEVENT",
+      "UID:conf-2",
+      "SUMMARY:Standup",
+      "DTSTART:20250701T090000Z",
+      "DTEND:20250701T093000Z",
+      "X-GOOGLE-CONFERENCE:https://meet.google.com/xyz-abc-def",
+      "END:VEVENT",
+      "END:VCALENDAR",
+    ].join("\r\n");
+
+    const parsed = parseVEvent(ical);
+    expect(parsed.meetingLink).toBe("https://meet.google.com/xyz-abc-def");
+  });
+
+  it("parses an RRULE as the recurrence rule", () => {
+    const ical = [
+      "BEGIN:VCALENDAR",
+      "BEGIN:VEVENT",
+      "UID:rec-1",
+      "SUMMARY:Weekly sync",
+      "DTSTART:20250701T090000Z",
+      "DTEND:20250701T100000Z",
+      "RRULE:FREQ=WEEKLY;BYDAY=TU",
+      "END:VEVENT",
+      "END:VCALENDAR",
+    ].join("\r\n");
+
+    const parsed = parseVEvent(ical);
+    expect(parsed.recurrenceRule).toBe("FREQ=WEEKLY;BYDAY=TU");
+  });
+
+  it("parses RECURRENCE-ID as the recurring event reference", () => {
+    const ical = [
+      "BEGIN:VCALENDAR",
+      "BEGIN:VEVENT",
+      "UID:inst-1",
+      "SUMMARY:Weekly sync",
+      "DTSTART:20250708T090000Z",
+      "DTEND:20250708T100000Z",
+      "RECURRENCE-ID:20250708T090000Z",
+      "END:VEVENT",
+      "END:VCALENDAR",
+    ].join("\r\n");
+
+    const parsed = parseVEvent(ical);
+    expect(parsed.recurringEventId).toBe("20250708T090000Z");
+  });
+
+  it("parses a VALARM TRIGGER into reminder minutes", () => {
+    const ical = [
+      "BEGIN:VCALENDAR",
+      "BEGIN:VEVENT",
+      "UID:alarm-1",
+      "SUMMARY:Doctor",
+      "DTSTART:20250701T090000Z",
+      "DTEND:20250701T093000Z",
+      "BEGIN:VALARM",
+      "ACTION:DISPLAY",
+      "TRIGGER:-PT15M",
+      "DESCRIPTION:Reminder",
+      "END:VALARM",
+      "END:VEVENT",
+      "END:VCALENDAR",
+    ].join("\r\n");
+
+    const parsed = parseVEvent(ical);
+    expect(parsed.remindersJson).not.toBeNull();
+    const reminders = JSON.parse(parsed.remindersJson!);
+    expect(reminders).toEqual([{ method: "display", minutes: 15 }]);
+  });
+
+  it("parses an hourly VALARM trigger into minutes", () => {
+    const ical = [
+      "BEGIN:VCALENDAR",
+      "BEGIN:VEVENT",
+      "UID:alarm-2",
+      "SUMMARY:All hands",
+      "DTSTART:20250701T090000Z",
+      "DTEND:20250701T100000Z",
+      "BEGIN:VALARM",
+      "ACTION:DISPLAY",
+      "TRIGGER:-PT1H",
+      "END:VALARM",
+      "END:VEVENT",
+      "END:VCALENDAR",
+    ].join("\r\n");
+
+    const parsed = parseVEvent(ical);
+    const reminders = JSON.parse(parsed.remindersJson!);
+    expect(reminders).toEqual([{ method: "display", minutes: 60 }]);
+  });
+
+  it("leaves meetingLink null when no conference property exists", () => {
+    const ical = [
+      "BEGIN:VCALENDAR",
+      "BEGIN:VEVENT",
+      "UID:plain-1",
+      "SUMMARY:Plain",
+      "DTSTART:20250701T090000Z",
+      "DTEND:20250701T100000Z",
+      "END:VEVENT",
+      "END:VCALENDAR",
+    ].join("\r\n");
+
+    const parsed = parseVEvent(ical);
+    expect(parsed.meetingLink).toBeNull();
+    expect(parsed.recurrenceRule).toBeNull();
+    expect(parsed.remindersJson).toBeNull();
+  });
+});

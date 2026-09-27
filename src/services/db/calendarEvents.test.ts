@@ -18,6 +18,8 @@ import {
   getEventByRemoteId,
   deleteEventByRemoteId,
   deleteCalendarEvent,
+  getDueCalendarReminders,
+  matchesEventByParticipantsAndSubject,
   type DbCalendarEvent,
 } from "./calendarEvents";
 import { createMockDb } from "@/test/mocks";
@@ -290,6 +292,119 @@ describe("calendarEvents service", () => {
       const [sql, params] = mockDb.execute.mock.calls[0] as [string, unknown[]];
       expect(sql).toBe("DELETE FROM calendar_events WHERE id = $1");
       expect(params).toEqual(["evt-1"]);
+    });
+  });
+
+  describe("matchesEventByParticipantsAndSubject", () => {
+    const event = (overrides: Partial<DbCalendarEvent> = {}): DbCalendarEvent =>
+      makeEvent({ ...overrides });
+
+    it("matches when a participant and a distinctive subject token overlap", () => {
+      const e = event({
+        organizer_email: "alice@example.com",
+        summary: "Q3 planning review",
+      });
+      expect(
+        matchesEventByParticipantsAndSubject(e, "Q3 planning review", ["alice@example.com", "bob@example.com"]),
+      ).toBe(true);
+    });
+
+    it("does not match on a shared participant alone (generic title)", () => {
+      const e = event({
+        organizer_email: "alice@example.com",
+        summary: "Meeting",
+      });
+      expect(
+        matchesEventByParticipantsAndSubject(e, "Anything at all", ["alice@example.com"]),
+      ).toBe(false);
+    });
+
+    it("does not match on a shared subject token alone (no shared participant)", () => {
+      const e = event({
+        organizer_email: "stranger@example.com",
+        summary: "Q3 planning review",
+      });
+      expect(
+        matchesEventByParticipantsAndSubject(e, "Q3 planning review", ["alice@example.com"]),
+      ).toBe(false);
+    });
+
+    it("matches through attendees_json as well as the organizer", () => {
+      const e = event({
+        organizer_email: "org@example.com",
+        attendees_json: JSON.stringify([{ email: "carol@example.com" }]),
+        summary: "Launch retro",
+      });
+      expect(
+        matchesEventByParticipantsAndSubject(e, "Launch retro", ["carol@example.com"]),
+      ).toBe(true);
+    });
+  });
+
+  describe("getDueCalendarReminders", () => {
+    it("returns only events whose reminder window is open and unnotified", async () => {
+      const now = 10_000;
+      const inWindow = makeEvent({
+        id: "due-1",
+        start_time: now + 10 * 60, // starts in 10 min
+        reminders_json: JSON.stringify([{ method: "popup", minutes: 15 }]),
+        reminders_notified_at: null,
+        status: "confirmed",
+      });
+      const notYet = makeEvent({
+        id: "early-1",
+        start_time: now + 60 * 60, // starts in 1h, 15-min reminder not due
+        reminders_json: JSON.stringify([{ method: "popup", minutes: 15 }]),
+        reminders_notified_at: null,
+        status: "confirmed",
+      });
+      const alreadyNotified = makeEvent({
+        id: "notified-1",
+        start_time: now + 10 * 60,
+        reminders_json: JSON.stringify([{ method: "popup", minutes: 15 }]),
+        reminders_notified_at: now - 100,
+        status: "confirmed",
+      });
+      const cancelled = makeEvent({
+        id: "cancelled-1",
+        start_time: now + 10 * 60,
+        reminders_json: JSON.stringify([{ method: "popup", minutes: 15 }]),
+        reminders_notified_at: null,
+        status: "cancelled",
+      });
+      const noReminders = makeEvent({
+        id: "plain-1",
+        start_time: now + 10 * 60,
+        reminders_json: null,
+        reminders_notified_at: null,
+        status: "confirmed",
+      });
+
+      vi.mocked(getDb).mockResolvedValue({
+        ...mockDb,
+        select: vi.fn(async () => [inWindow, notYet, alreadyNotified, cancelled, noReminders]),
+      } as unknown as Awaited<ReturnType<typeof getDb>>);
+
+      const due = await getDueCalendarReminders(now);
+      expect(due.map((e) => e.id)).toEqual(["due-1"]);
+    });
+
+    it("treats a reminder due exactly at start time as outside the window", async () => {
+      const now = 10_000;
+      const atStart = makeEvent({
+        id: "at-start",
+        start_time: now,
+        reminders_json: JSON.stringify([{ method: "popup", minutes: 0 }]),
+        reminders_notified_at: null,
+        status: "confirmed",
+      });
+      vi.mocked(getDb).mockResolvedValue({
+        ...mockDb,
+        select: vi.fn(async () => [atStart]),
+      } as unknown as Awaited<ReturnType<typeof getDb>>);
+
+      const due = await getDueCalendarReminders(now);
+      expect(due).toHaveLength(0);
     });
   });
 });

@@ -869,7 +869,95 @@ export const MIGRATIONS = [
       UPDATE threads SET merged_into = NULL, merged_by = NULL WHERE merged_by = 'subject';
     `,
   },
+  {
+    version: 33,
+    description: "Extracted attachment text for invoice and agent search",
+    sql: `
+      ALTER TABLE attachments ADD COLUMN extracted_text TEXT;
+      CREATE INDEX IF NOT EXISTS idx_attachments_extracted ON attachments(account_id, message_id);
+    `,
+  },
+  {
+    version: 34,
+    description: "Calendar meeting links, recurrence, reminders, event-thread links, meeting records and V271 graph sync state",
+    sql: `
+      -- Meeting/conference link (Google conferenceData entry point, CalDAV
+      -- CONFERENCE property) and the Join button that goes with it.
+      ALTER TABLE calendar_events ADD COLUMN meeting_link TEXT;
+
+      -- Recurrence reference: the master event id for Google instances
+      -- (recurringEventId) and the RRULE text for the series.
+      ALTER TABLE calendar_events ADD COLUMN recurring_event_id TEXT;
+      ALTER TABLE calendar_events ADD COLUMN recurrence_rule TEXT;
+
+      -- Provider reminders (Google reminders.overrides / CalDAV VALARM) as
+      -- JSON, plus the moment the local checker fired a notification so it
+      -- never fires twice.
+      ALTER TABLE calendar_events ADD COLUMN reminders_json TEXT;
+      ALTER TABLE calendar_events ADD COLUMN reminders_notified_at INTEGER;
+
+      -- Mail thread this event relates to (auto-linked by matching
+      -- participants and subject, or set by hand).
+      ALTER TABLE calendar_events ADD COLUMN linked_thread_id TEXT;
+      ALTER TABLE calendar_events ADD COLUMN linked_thread_account_id TEXT;
+
+      -- Toastovač meeting record link on the event itself (the record body
+      -- lives in meeting_records).
+      ALTER TABLE calendar_events ADD COLUMN meeting_record_id TEXT;
+      ALTER TABLE calendar_events ADD COLUMN meeting_record_url TEXT;
+
+      -- V271 Personal Graph sync state. One row per (entity type, source id)
+      -- with the hash of the last payload actually pushed, so repeated syncs
+      -- are idempotent: nothing changes, nothing is pushed again.
+      CREATE TABLE IF NOT EXISTS graph_entities (
+        entity_type TEXT NOT NULL,
+        source_id TEXT NOT NULL,
+        payload_hash TEXT NOT NULL,
+        last_synced_at INTEGER NOT NULL DEFAULT (unixepoch()),
+        PRIMARY KEY (entity_type, source_id)
+      );
+
+      -- Canonical meeting records (Toastovač Meeting Scribe): the transcript,
+      -- summary, decisions and action items a finalized meeting exposes.
+      CREATE TABLE IF NOT EXISTS meeting_records (
+        id TEXT PRIMARY KEY,
+        event_id TEXT NOT NULL REFERENCES calendar_events(id) ON DELETE CASCADE,
+        source TEXT NOT NULL DEFAULT 'toastovac',
+        record_url TEXT,
+        title TEXT,
+        transcript TEXT,
+        summary TEXT,
+        decisions_json TEXT,
+        action_items_json TEXT,
+        synced_at INTEGER DEFAULT (unixepoch())
+      );
+      CREATE INDEX IF NOT EXISTS idx_meeting_records_event ON meeting_records(event_id);
+    `,
+  },
 ];
+
+function isAlreadyAppliedSchemaError(message: string): boolean {
+  return message.includes("duplicate column") || message.includes("already exists");
+}
+
+async function requeueIfTableMissing(
+  db: Awaited<ReturnType<typeof getDb>>,
+  appliedVersions: Set<number>,
+  version: number,
+  table: string,
+): Promise<void> {
+  if (!appliedVersions.has(version)) return;
+  const tables = await db.select<{ name: string }[]>(
+    "SELECT name FROM sqlite_master WHERE type='table' AND name=$1",
+    [table],
+  );
+  if (tables.length > 0) return;
+  console.warn(
+    `Migration v${version} marked applied but ${table} table missing — re-running`,
+  );
+  await db.execute("DELETE FROM _migrations WHERE version = $1", [version]);
+  appliedVersions.delete(version);
+}
 
 /**
  * Split a SQL string into individual statements, correctly handling

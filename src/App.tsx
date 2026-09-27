@@ -454,6 +454,12 @@ export default function App() {
         startQueueProcessor();
         startPreCacheManager();
 
+        // Calendar reminders + the V271 Personal Graph sync loop
+        const { startCalendarReminderChecker } = await import("@/services/calendar/reminderChecker");
+        startCalendarReminderChecker();
+        const { startV271GraphChecker } = await import("@/services/v271/graphSync");
+        startV271GraphChecker();
+
         // Initialize notifications. Not awaited: on a bundled macOS build the
         // first run shows the system permission prompt, and the rest of
         // start-up (and the splash screen) must not wait on the user's answer
@@ -498,6 +504,8 @@ export default function App() {
       stopQueueProcessor();
       stopPreCacheManager();
       stopUpdateChecker();
+      import("@/services/calendar/reminderChecker").then(({ stopCalendarReminderChecker }) => stopCalendarReminderChecker()).catch(() => {});
+      import("@/services/v271/graphSync").then(({ stopV271GraphChecker }) => stopV271GraphChecker()).catch(() => {});
       unregisterComposeShortcut();
       deepLinkCleanupRef.current?.();
     };

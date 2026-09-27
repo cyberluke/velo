@@ -13,5 +13,9 @@ export default defineConfig({
     environment: "jsdom",
     setupFiles: ["./src/test/setup.ts"],
     globals: true,
+    // Nested Agent Manager worktrees (.kilo/worktrees/*) are full checkouts
+    // of this repo and would otherwise be scanned and run twice — once with
+    // a stale tree that fails on the Tauri mocks.
+    exclude: ["**/node_modules/**", "**/.kilo/**", "**/dist/**"],
   },
 });

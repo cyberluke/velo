@@ -59,6 +59,10 @@ export async function syncCalendarAccount(accountId: string): Promise<void> {
           etag: event.etag,
           icalData: event.icalData,
           uid: event.uid,
+          meetingLink: event.meetingLink,
+          recurringEventId: event.recurringEventId,
+          recurrenceRule: event.recurrenceRule,
+          remindersJson: event.remindersJson,
         });
       }
 
@@ -84,4 +88,20 @@ export async function syncCalendarAccount(accountId: string): Promise<void> {
   }
 
   if (firstError) throw firstError;
+
+  // Fresh events can now be matched to their email threads, and the V271
+  // graph adapter picks up the change. Both are best-effort: a link failure
+  // or a graph outage must never fail the calendar sync itself.
+  try {
+    const { autoLinkEventsToThreads } = await import("./eventThreadLinks");
+    await autoLinkEventsToThreads(accountId);
+  } catch (err) {
+    console.warn("[calendarSync] Event-thread auto-linking failed:", err);
+  }
+  try {
+    const { syncGraph } = await import("@/services/v271/graphSync");
+    await syncGraph();
+  } catch (err) {
+    console.warn("[calendarSync] V271 graph sync failed:", err);
+  }
 }

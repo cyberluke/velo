@@ -49,6 +49,17 @@ interface GoogleCalendarEvent {
   htmlLink?: string;
   iCalUID?: string;
   etag?: string;
+  hangoutLink?: string;
+  conferenceData?: {
+    entryPoints?: { entryPointType?: string; uri?: string }[];
+    createRequest?: { requestId?: string };
+  };
+  recurringEventId?: string;
+  recurrence?: string[];
+  reminders?: {
+    useDefault?: boolean;
+    overrides?: { method?: string; minutes?: number }[];
+  };
 }
 
 interface GoogleEventListResponse {
@@ -99,7 +110,12 @@ export class GoogleCalendarProvider implements CalendarProvider {
     const client = await this.getClient();
     const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
     const encodedId = encodeURIComponent(calendarRemoteId);
-    const url = `${CALENDAR_API_BASE}/calendars/${encodedId}/events`;
+    const params = new URLSearchParams();
+    // Ask Google to attach a Meet conference when the caller wants one. The
+    // event comes back with conferenceData.entryPoints populated.
+    if (event.meetingLink) params.set("conferenceDataVersion", "1");
+    const query = params.size > 0 ? `?${params.toString()}` : "";
+    const url = `${CALENDAR_API_BASE}/calendars/${encodedId}/events${query}`;
 
     const body: Record<string, unknown> = {
       summary: event.summary,
@@ -117,6 +133,12 @@ export class GoogleCalendarProvider implements CalendarProvider {
 
     if (event.attendees) {
       body.attendees = event.attendees;
+    }
+
+    if (event.meetingLink) {
+      body.conferenceData = {
+        createRequest: { requestId: crypto.randomUUID() },
+      };
     }
 
     const created = await client.request<GoogleCalendarEvent>(url, {
@@ -256,6 +278,26 @@ function mapGoogleEvent(event: GoogleCalendarEvent): CalendarEventData {
     ? Math.floor(new Date(event.end.dateTime).getTime() / 1000)
     : Math.floor(new Date(event.end.date + "T23:59:59").getTime() / 1000);
 
+  // A conference link can come back as the dedicated hangoutLink or as an
+  // entry point inside conferenceData. Prefer the video entry point.
+  const entryPointUri = (event.conferenceData?.entryPoints ?? []).find(
+    (ep) => ep.entryPointType === "video",
+  )?.uri;
+  const meetingLink = event.hangoutLink ?? entryPointUri ?? null;
+  const recurrenceRule =
+    event.recurrence && event.recurrence.length > 0
+      ? event.recurrence.find((r) => r.startsWith("RRULE:")) ?? null
+      : null;
+  const remindersJson =
+    event.reminders && event.reminders.overrides && event.reminders.overrides.length > 0
+      ? JSON.stringify(
+          event.reminders.overrides.map((r) => ({
+            method: r.method ?? "popup",
+            minutes: r.minutes ?? 0,
+          })),
+        )
+      : null;
+
   return {
     remoteEventId: event.id,
     uid: event.iCalUID ?? null,
@@ -271,5 +313,9 @@ function mapGoogleEvent(event: GoogleCalendarEvent): CalendarEventData {
     attendeesJson: event.attendees ? JSON.stringify(event.attendees) : null,
     htmlLink: event.htmlLink ?? null,
     icalData: null,
+    meetingLink,
+    recurringEventId: event.recurringEventId ?? null,
+    recurrenceRule,
+    remindersJson,
   };
 }

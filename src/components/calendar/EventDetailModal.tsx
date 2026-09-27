@@ -1,6 +1,6 @@
 import { hourCycleOption } from "@/utils/date";
-import { useState, useCallback } from "react";
-import { MapPin, Clock, User, Pencil, Trash2 } from "lucide-react";
+import { useState, useCallback, useEffect } from "react";
+import { MapPin, Clock, User, Pencil, Trash2, Video, FileText, Mail, Repeat } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { TextField } from "@/components/ui/TextField";
@@ -8,6 +8,16 @@ import type { DbCalendarEvent } from "@/services/db/calendarEvents";
 import type { DbCalendar } from "@/services/db/calendars";
 import { getCalendarProvider } from "@/services/calendar/providerFactory";
 import { deleteCalendarEvent as deleteCalendarEventDb } from "@/services/db/calendarEvents";
+import {
+  getMeetingRecordForEvent,
+  meetingRecordDecisions,
+  meetingRecordActionItems,
+  type DbMeetingRecord,
+} from "@/services/db/meetingRecords";
+import { getLinkedThreadForEvent } from "@/services/calendar/eventThreadLinks";
+import { cacheThreadForOpening } from "@/services/threads/openThread";
+import { useThreadStore } from "@/stores/threadStore";
+import { openExternalLink } from "@/services/links/emailNavigation";
 import { useTimeFormat } from "@/hooks/useTimeFormat";
 
 interface EventDetailModalProps {
@@ -30,6 +40,25 @@ export function EventDetailModal({ event, calendars, accountId, onClose, onUpdat
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+
+  const [record, setRecord] = useState<DbMeetingRecord | null>(null);
+  const [linkedThread, setLinkedThread] = useState<{ threadId: string; accountId: string } | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      const [meetingRecord, thread] = await Promise.all([
+        getMeetingRecordForEvent(event.id),
+        getLinkedThreadForEvent(event),
+      ]);
+      if (cancelled) return;
+      setRecord(meetingRecord);
+      setLinkedThread(thread);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [event]);
 
   const calendar = calendars.find((c) => c.id === event.calendar_id);
 
@@ -75,6 +104,13 @@ export function EventDetailModal({ event, calendars, accountId, onClose, onUpdat
       setDeleting(false);
     }
   }, [accountId, calendar, event, onUpdated]);
+
+  const handleOpenThread = useCallback(async () => {
+    if (!linkedThread) return;
+    await cacheThreadForOpening(linkedThread.accountId, linkedThread.threadId);
+    useThreadStore.getState().selectThread(linkedThread.threadId);
+    onClose();
+  }, [linkedThread, onClose]);
 
   const formatTime = (ts: number) => {
     return new Date(ts * 1000).toLocaleString(undefined, {
@@ -158,6 +194,11 @@ export function EventDetailModal({ event, calendars, accountId, onClose, onUpdat
               style={{ backgroundColor: calendar.color ?? "var(--color-accent)" }}
             />
             {calendar.display_name}
+            {event.recurrence_rule && (
+              <span className="flex items-center gap-1 ml-auto" title={event.recurrence_rule}>
+                <Repeat size={12} /> Recurring
+              </span>
+            )}
           </div>
         )}
 
@@ -173,6 +214,29 @@ export function EventDetailModal({ event, calendars, accountId, onClose, onUpdat
           <div className="flex items-start gap-2.5 text-sm text-text-secondary">
             <MapPin size={14} className="mt-0.5 shrink-0 text-text-tertiary" />
             <span>{event.location}</span>
+          </div>
+        )}
+
+        {event.meeting_link && (
+          <div className="flex items-center gap-2 pt-1">
+            <Button
+              variant="primary"
+              size="sm"
+              icon={<Video size={14} />}
+              onClick={() => void openExternalLink(event.meeting_link!)}
+            >
+              Join meeting
+            </Button>
+            {event.meeting_record_url && (
+              <Button
+                variant="secondary"
+                size="sm"
+                icon={<FileText size={14} />}
+                onClick={() => void openExternalLink(event.meeting_record_url!)}
+              >
+                Meeting record
+              </Button>
+            )}
           </div>
         )}
 
@@ -193,6 +257,48 @@ export function EventDetailModal({ event, calendars, accountId, onClose, onUpdat
                 </div>
               ))}
             </div>
+          </div>
+        )}
+
+        {linkedThread && (
+          <div className="border-t border-border-primary pt-3">
+            <div className="text-xs text-text-tertiary mb-1.5 flex items-center gap-1.5">
+              <Mail size={12} /> Related email thread
+            </div>
+            <Button variant="secondary" size="sm" onClick={() => void handleOpenThread()}>
+              Open thread
+            </Button>
+          </div>
+        )}
+
+        {record && (record.summary || meetingRecordDecisions(record).length > 0 || meetingRecordActionItems(record).length > 0) && (
+          <div className="border-t border-border-primary pt-3 space-y-2">
+            <div className="text-xs text-text-tertiary flex items-center gap-1.5">
+              <FileText size={12} /> Meeting record
+            </div>
+            {record.summary && (
+              <p className="text-sm text-text-secondary whitespace-pre-wrap">{record.summary}</p>
+            )}
+            {meetingRecordDecisions(record).length > 0 && (
+              <div>
+                <div className="text-xs text-text-tertiary mb-1">Decisions</div>
+                <ul className="list-disc pl-4 text-sm text-text-secondary space-y-0.5">
+                  {meetingRecordDecisions(record).map((d, i) => (
+                    <li key={i}>{d}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            {meetingRecordActionItems(record).length > 0 && (
+              <div>
+                <div className="text-xs text-text-tertiary mb-1">Action items</div>
+                <ul className="list-disc pl-4 text-sm text-text-secondary space-y-0.5">
+                  {meetingRecordActionItems(record).map((a, i) => (
+                    <li key={i}>{a}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </div>
         )}
 

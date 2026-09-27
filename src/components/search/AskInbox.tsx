@@ -113,6 +113,32 @@ export function AskInbox({ isOpen, onClose }: AskInboxProps) {
                 {result.answer}
               </div>
 
+              {/* Cross-source provenance (calendar/meetings) */}
+              {result.crossSource && result.crossSource.sources.length > 0 && (
+                <div>
+                  <div className="text-xs font-medium text-text-tertiary uppercase tracking-wider mb-2">
+                    Sources ({result.crossSource.sources.length})
+                  </div>
+                  <div className="space-y-1.5">
+                    {result.crossSource.sources.slice(0, 5).map((source, i) => (
+                      <div
+                        key={i}
+                        className="w-full text-left px-3 py-2 rounded-md bg-bg-secondary hover:bg-bg-hover transition-colors"
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-xs font-medium text-text-primary truncate">
+                            {source.title}
+                          </span>
+                          <span className="text-[0.625rem] text-text-tertiary shrink-0 uppercase">
+                            {source.kind.replace("mail.", "").replace("calendar.", "").replace("meeting.", "")}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {/* Source messages */}
               {result.sourceMessages.length > 0 && (
                 <div>

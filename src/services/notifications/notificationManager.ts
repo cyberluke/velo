@@ -50,6 +50,8 @@ export interface NotificationContext {
   code?: string;
   /** A sign-in link the notification is offering to open. */
   linkUrl?: string;
+  /** A calendar event the notification refers to (reminders). */
+  eventId?: string;
 }
 
 /** The button sets. Ids come back verbatim in the press. */
@@ -395,6 +397,30 @@ export function notifyFollowUpDue(
  */
 export function notifySnoozeReturn(subject: string): void {
   void show({ title: "Snoozed email returned", body: subject || "(No subject)" });
+}
+
+/**
+ * Show a calendar reminder notification. The body names the event and how
+ * long until it starts; the context carries the event so a native press can
+ * act on it.
+ */
+export function notifyCalendarReminder(
+  summary: string,
+  minutesUntilStart: number,
+  eventId?: string,
+  accountId?: string,
+): void {
+  const when =
+    minutesUntilStart <= 0
+      ? "starting now"
+      : minutesUntilStart < 60
+        ? `in ${minutesUntilStart} min`
+        : `in ${Math.round(minutesUntilStart / 60)} h`;
+  void show({
+    title: "Calendar reminder",
+    body: `${summary || "(No title)"} ${when}`,
+    context: { accountId, subject: summary || undefined, eventId },
+  });
 }
 
 /**

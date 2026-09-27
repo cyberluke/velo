@@ -14,6 +14,7 @@ import {
   ASK_INBOX_PROMPT,
   SMART_LABEL_PROMPT,
   EXTRACT_TASK_PROMPT,
+  MEETINGS_PROMPT,
 } from "./prompts";
 
 async function callAi(systemPrompt: string, userContent: string): Promise<string> {
@@ -150,6 +151,20 @@ export async function askInbox(
 ): Promise<string> {
   const userContent = `<email_content>${context}</email_content>\n\nQuestion: ${question}`;
   return callAi(ASK_INBOX_PROMPT, userContent);
+}
+
+/**
+ * Cross-source meeting intelligence: answer a question that joins calendar
+ * events, meeting records and their linked email threads in one evidence
+ * block. The provenance is carried by the caller (askMeetings.ts), which
+ * gathers the evidence; the AI never invents sources it was not given.
+ */
+export async function askMeetings(
+  question: string,
+  context: string,
+): Promise<string> {
+  const userContent = `<meeting_evidence>${context}</meeting_evidence>\n\nQuestion: ${question}`;
+  return callAi(MEETINGS_PROMPT, userContent);
 }
 
 const VALID_CATEGORIES = new Set(["Primary", "Updates", "Promotions", "Social", "Newsletters"]);

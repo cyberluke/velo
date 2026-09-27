@@ -12,7 +12,7 @@ import { useContextMenuStore } from "@/stores/contextMenuStore";
 import { markThreadRead, spamThread } from "@/services/emailActions";
 import { getSetting } from "@/services/db/settings";
 import { getAllowlistedSenders } from "@/services/db/imageAllowlist";
-import { VolumeX, Merge } from "lucide-react";
+import { VolumeX, Merge, CalendarDays } from "lucide-react";
 import { escapeHtml, sanitizeHtml } from "@/utils/sanitize";
 import { isNoReplyAddress } from "@/utils/noReply";
 import { recipientHeadersFromMessages } from "@/utils/resolveFromAddress";
@@ -20,6 +20,7 @@ import { extractEmailAddresses } from "@/utils/emailUtils";
 import { ThreadSummary } from "./ThreadSummary";
 import { ChatThread } from "./ChatThread";
 import { PastConversations } from "./PastConversations";
+import { RelatedEventsModal } from "@/components/calendar/RelatedEventsModal";
 import { useOwnAddresses } from "@/hooks/useOwnAddresses";
 import { SmartReplySuggestions } from "./SmartReplySuggestions";
 import { InlineReply } from "./InlineReply";
@@ -87,6 +88,7 @@ export function ThreadView({ thread }: ThreadViewProps) {
   );
   const ownAddresses = useOwnAddresses(ownAddressScope);
   const [showTaskExtract, setShowTaskExtract] = useState(false);
+  const [showRelatedEvents, setShowRelatedEvents] = useState(false);
   const updateThread = useThreadStore((s) => s.updateThread);
   const searchQuery = useThreadStore((s) => s.searchQuery);
   const searchMatch = useThreadStore((s) => s.searchMatches.get(thread.id));
@@ -585,8 +587,20 @@ export function ThreadView({ thread }: ThreadViewProps) {
               </span>
             )}
           </h1>
-          <div className="text-xs text-text-tertiary mt-2">
-            {messages.length} message{messages.length !== 1 ? "s" : ""} in this thread
+          <div className="text-xs text-text-tertiary mt-2 flex items-center gap-3">
+            <span>
+              {messages.length} message{messages.length !== 1 ? "s" : ""} in this thread
+            </span>
+            {threadAccountId && (
+              <button
+                onClick={() => setShowRelatedEvents(true)}
+                className="flex items-center gap-1 text-accent hover:underline"
+                title="Meetings related to this thread"
+              >
+                <CalendarDays size={12} />
+                Related meetings
+              </button>
+            )}
           </div>
         </div>
 
@@ -729,6 +743,15 @@ export function ThreadView({ thread }: ThreadViewProps) {
           accountId={threadAccountId}
           messages={messages}
           onClose={() => setShowTaskExtract(false)}
+        />
+      )}
+
+      {/* Related meetings (mail thread -> calendar cross-link) */}
+      {showRelatedEvents && threadAccountId && (
+        <RelatedEventsModal
+          accountId={threadAccountId}
+          threadId={thread.id}
+          onClose={() => setShowRelatedEvents(false)}
         />
       )}
     </div>
