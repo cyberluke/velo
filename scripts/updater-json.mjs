@@ -73,13 +73,16 @@ function platformKey(file) {
 
 // Windows may produce both MSI and NSIS; JSON keys are unique, so the NSIS
 // installer wins (passive/quiet install, the usual updater choice).
+// GitHub stores release assets with spaces replaced by dots (a `gh release
+// upload` quirk), so the URL basename mirrors that or the updater 404s.
+const assetName = (file) => basename(file).replaceAll(" ", ".");
 const byPlatform = new Map();
 for (const file of candidates) {
   const key = platformKey(file);
   if (!key) continue;
   const entry = {
     signature: readFileSync(`${file}.sig`, "utf8").trim(),
-    url: `${assetBase}${basename(file)}`,
+    url: `${assetBase}${assetName(file)}`,
   };
   const current = byPlatform.get(key);
   if (!current || (current.url.endsWith(".msi") && file.endsWith("-setup.exe"))) {
