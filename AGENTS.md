@@ -2,6 +2,18 @@
 
 This file provides guidance to Codex (Codex.ai/code) when working with code in this repository.
 
+## Fork branding (two-way rename script)
+
+This tree is a fork of the upstream Velo project and is kept **upstream-compatible**: the repository defaults to the upstream names, and a two-way script (`scripts/naiise.mjs`) swaps them in for the branded product:
+
+- `npm run naiise` — renames everything (product name, exe/process name, window title, tray, notifications, bundle identifier, AUMID, deep-link scheme, database/key files, crate and npm names, help/docs) from the upstream Velo names to the fork's branded name. Run it before building the branded product.
+- `npm run denaiise` — restores the upstream names byte-for-byte (idempotent; run before committing, merging or pulling upstream).
+- `npm run build:nai` — naiise, `tauri build`, denaiise (leaves the tree upstream-clean).
+
+The script is the single source of truth for the exact token mapping — read it before touching any name in this file, because the replacements must stay exactly reversible. Excluded from the rename on purpose (they stay upstream): `.github/` release/CI infra, `LICENSE`/`NOTICE`, `release-please-config.json`, the generated `src-tauri/semantic-runtime/` bundle, and `scripts/naiise.mjs` itself. Historical identifiers (`com.velomail.app`, and `PREVIOUS_IDENTIFIER`/`PREVIOUS_SERVICE` in Rust, spelled with a hex escape so the script cannot touch them) are never renamed — they are what lets a renamed build inherit the data and keychain entries of the app it replaces.
+
+The updater belongs to the fork: `plugins.updater.endpoints` points at the fork's GitHub releases (`github.com/cyberluke/velo`, in the script's protected list so the URL survives both directions) and `plugins.updater.pubkey` is the fork's own minisign public key. The matching private key lives at `~/.tauri/nai-email.key` on the build machine (plus `.pub`) and must never be committed; a build that should produce updatable artifacts sets `TAURI_SIGNING_PRIVATE_KEY_PATH` (and `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` if the key was generated with one). `bundle.createUpdaterArtifacts: true` makes `tauri build` emit `latest.json` and signed update zips alongside the installers — upload those to a GitHub release so the app can update itself.
+
 ## Delivery workflow
 
 - Commit task-specific work and push it to `origin` regularly so completed work does not remain only in a checkout or worktree.

@@ -3,6 +3,7 @@
   "productName": "Velo Pro",
   "version": "0.4.21",
   "identifier": "com.anydaysomething.velopro",
+  "mainBinaryName": "Velo Pro",
   "build": {
     "frontendDist": "../dist",
     "devUrl": "http://localhost:1420",

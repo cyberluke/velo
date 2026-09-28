@@ -57,6 +57,14 @@ fn open_devtools(app: tauri::AppHandle) {
 #[cfg(any(target_os = "macos", target_os = "linux"))]
 const LEGACY_IDENTIFIER: &str = "com.velomail.app";
 
+/// The identifier of the previous product name — for a fork that renames the
+/// app (scripts/naiise.mjs), the data written by the app it replaces must
+/// still be found. Spelled with a hex escape so automated branding renames
+/// leave this historical value alone; at runtime it reads as the plain
+/// identifier.
+#[cfg(any(target_os = "macos", target_os = "linux"))]
+const PREVIOUS_IDENTIFIER: &str = "com.anydaysomething.\x76elopro";
+
 /// Carry the data directory over to the new bundle identifier.
 ///
 /// Tauri names the application-support directory after the identifier, so
@@ -77,12 +85,17 @@ fn migrate_legacy_data_dir(identifier: &str) {
     #[cfg(target_os = "linux")]
     let roots = [home.join(".local/share"), home.join(".config")];
 
-    for root in roots {
-        let (old, new) = (root.join(LEGACY_IDENTIFIER), root.join(identifier));
-        if old.is_dir() && !new.exists() {
-            match std::fs::rename(&old, &new) {
-                Ok(()) => log::info!("Moved {} to {}", old.display(), new.display()),
-                Err(e) => log::error!("Could not move {} to {}: {e}", old.display(), new.display()),
+    for legacy in [LEGACY_IDENTIFIER, PREVIOUS_IDENTIFIER] {
+        if legacy == identifier {
+            continue;
+        }
+        for root in &roots {
+            let (old, new) = (root.join(legacy), root.join(identifier));
+            if old.is_dir() && !new.exists() {
+                match std::fs::rename(&old, &new) {
+                    Ok(()) => log::info!("Moved {} to {}", old.display(), new.display()),
+                    Err(e) => log::error!("Could not move {} to {}: {e}", old.display(), new.display()),
+                }
             }
         }
     }

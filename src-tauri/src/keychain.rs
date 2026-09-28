@@ -21,6 +21,12 @@ const ACCOUNT: &str = "db-encryption-key";
 /// password — the account list would have come back empty and unreadable.
 const LEGACY_SERVICE: &str = "com.velomail.app";
 
+/// The service used by the previous product name — a fork that renames the
+/// app (scripts/naiise.mjs) must still find keys written by the app it
+/// replaces. Spelled with a hex escape so automated branding renames leave
+/// this historical value alone; at runtime it reads as the plain identifier.
+const PREVIOUS_SERVICE: &str = "com.anydaysomething.\x76elopro";
+
 fn entry() -> Result<Entry, String> {
     Entry::new(SERVICE, ACCOUNT).map_err(|e| format!("Keychain unavailable: {e}"))
 }
@@ -29,7 +35,11 @@ fn legacy_entry() -> Result<Entry, String> {
     Entry::new(LEGACY_SERVICE, ACCOUNT).map_err(|e| format!("Keychain unavailable: {e}"))
 }
 
-/// Copy the key out of the pre-rename entry, before any window exists.
+fn previous_entry() -> Result<Entry, String> {
+    Entry::new(PREVIOUS_SERVICE, ACCOUNT).map_err(|e| format!("Keychain unavailable: {e}"))
+}
+
+/// Copy the key out of the pre-rename entries, before any window exists.
 ///
 /// Reading a keychain item written by a differently-signed binary makes macOS
 /// ask the user first. Done lazily — on the frontend's first decrypt — that
@@ -41,19 +51,30 @@ fn legacy_entry() -> Result<Entry, String> {
 /// Best-effort throughout: a refusal or a missing credential store leaves the
 /// lazy path in `keychain_get_key` to try again and report properly.
 pub fn migrate_legacy_key() {
-    let (Ok(current), Ok(legacy)) = (entry(), legacy_entry()) else {
+    let Ok(current) = entry() else {
         return;
     };
     if current.get_password().is_ok() {
         return; // already carried over, or this install never had the old name
     }
-    match legacy.get_password() {
-        Ok(secret) => match current.set_password(&secret) {
-            Ok(()) => log::info!("Carried the database encryption key over to {SERVICE}"),
-            Err(e) => log::warn!("Could not store the encryption key under {SERVICE}: {e}"),
-        },
-        Err(keyring::Error::NoEntry) => {}
-        Err(e) => log::warn!("Could not read the encryption key from {LEGACY_SERVICE}: {e}"),
+    for (label, fallback) in [("legacy", legacy_entry()), ("previous product", previous_entry())] {
+        let Ok(fallback) = fallback else {
+            continue;
+        };
+        match fallback.get_password() {
+            Ok(secret) => match current.set_password(&secret) {
+                Ok(()) => {
+                    log::info!("Carried the database encryption key over to {SERVICE}");
+                    return;
+                }
+                Err(e) => {
+                    log::warn!("Could not store the encryption key under {SERVICE}: {e}");
+                    return;
+                }
+            },
+            Err(keyring::Error::NoEntry) => {}
+            Err(e) => log::warn!("Could not read the encryption key from the {label} service: {e}"),
+        }
     }
 }
 
@@ -64,20 +85,28 @@ pub fn migrate_legacy_key() {
 pub fn keychain_get_key() -> Result<Option<String>, String> {
     match entry()?.get_password() {
         Ok(secret) => Ok(Some(secret)),
-        // Nothing under the current name: the key may still be filed under the
-        // one the app had before it was renamed. Copy it across rather than
-        // read it every time, and leave the old entry alone — an older build
-        // pointed at the same database must keep working.
-        Err(keyring::Error::NoEntry) => match legacy_entry()?.get_password() {
-            Ok(secret) => {
-                if let Err(e) = entry()?.set_password(&secret) {
-                    log::warn!("Could not copy the encryption key to the new keychain entry: {e}");
+        // Nothing under the current name: the key may still be filed under a
+        // name the app had before. Copy it across rather than read it every
+        // time, and leave the old entry alone — an older build pointed at the
+        // same database must keep working.
+        Err(keyring::Error::NoEntry) => {
+            for (label, fallback) in [("legacy", legacy_entry()), ("previous product", previous_entry())] {
+                let Ok(fallback) = fallback else {
+                    continue;
+                };
+                match fallback.get_password() {
+                    Ok(secret) => {
+                        if let Err(e) = entry()?.set_password(&secret) {
+                            log::warn!("Could not copy the encryption key to the new keychain entry: {e}");
+                        }
+                        return Ok(Some(secret));
+                    }
+                    Err(keyring::Error::NoEntry) => {}
+                    Err(e) => log::warn!("Failed to read key from the {label} keychain entry: {e}"),
                 }
-                Ok(Some(secret))
             }
-            Err(keyring::Error::NoEntry) => Ok(None),
-            Err(e) => Err(format!("Failed to read key from keychain: {e}")),
-        },
+            Ok(None)
+        }
         Err(e) => Err(format!("Failed to read key from keychain: {e}")),
     }
 }
