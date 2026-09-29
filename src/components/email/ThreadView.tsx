@@ -9,7 +9,7 @@ import { useThreadStore, type Thread } from "@/stores/threadStore";
 import { getMergedThreadIds, unmergeThread } from "@/services/db/threads";
 import { useComposerStore } from "@/stores/composerStore";
 import { useContextMenuStore } from "@/stores/contextMenuStore";
-import { markThreadRead, spamThread } from "@/services/emailActions";
+import { markThreadRead, manuallyUnreadThreadIds, spamThread } from "@/services/emailActions";
 import { getSetting } from "@/services/db/settings";
 import { getAllowlistedSenders } from "@/services/db/imageAllowlist";
 import { VolumeX, Merge, CalendarDays } from "lucide-react";
@@ -199,6 +199,8 @@ export function ThreadView({ thread }: ThreadViewProps) {
   useEffect(() => {
     if (!threadAccountId || thread.isRead || markedReadRef.current === thread.id) return;
     if (markAsReadBehavior === "manual") return;
+    // Don't undo an explicit "mark unread" on the open thread.
+    if (manuallyUnreadThreadIds.has(thread.id)) return;
 
     const markRead = () => {
       markedReadRef.current = thread.id;

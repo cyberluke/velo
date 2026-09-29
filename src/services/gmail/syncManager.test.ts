@@ -45,6 +45,9 @@ vi.mock("../db/calendarEvents", () => ({
   upsertCalendarEvent: vi.fn(),
   deleteEventByRemoteId: vi.fn(),
 }));
+vi.mock("../contacts/contactMining", () => ({
+  mineContactsForAllAccounts: vi.fn().mockResolvedValue(undefined),
+}));
 
 // Import after mocks
 import {

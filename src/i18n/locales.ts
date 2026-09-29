@@ -92,6 +92,10 @@ export const translations: Record<Locale, Dict> = {
     "mcp.enabled": "Enable local MCP server",
     "mcp.endpoint": "Endpoint",
     "invoice.termsHint": "Invoice search also matches: invoice, faktura, faktury, hóa đơn",
+    "shortcuts.toggleRead": "Mark as read / unread",
+    "thread.markRead": "Mark as Read",
+    "thread.markUnread": "Mark as Unread",
+    "command.toggleRead": "Mark as Read / Unread",
   },
   cs: {
     "app.name": "Velo",
@@ -168,6 +172,10 @@ export const translations: Record<Locale, Dict> = {
     "mcp.enabled": "Zapnout místní MCP server",
     "mcp.endpoint": "Endpoint",
     "invoice.termsHint": "Hledání faktur bere i: invoice, faktura, faktury, hóa đơn",
+    "shortcuts.toggleRead": "Označit jako přečtené / nepřečtené",
+    "thread.markRead": "Označit jako přečtené",
+    "thread.markUnread": "Označit jako nepřečtené",
+    "command.toggleRead": "Označit jako přečtené / nepřečtené",
   },
   sk: {
     "app.name": "Velo",
@@ -244,6 +252,10 @@ export const translations: Record<Locale, Dict> = {
     "mcp.enabled": "Zapnúť miestny MCP server",
     "mcp.endpoint": "Endpoint",
     "invoice.termsHint": "Hľadanie faktúr berie aj: invoice, faktura, faktúry, hóa đơn",
+    "shortcuts.toggleRead": "Označiť ako prečítané / neprečítané",
+    "thread.markRead": "Označiť ako prečítané",
+    "thread.markUnread": "Označiť ako neprečítané",
+    "command.toggleRead": "Označiť ako prečítané / neprečítané",
   },
   vi: {
     "app.name": "Velo",
@@ -320,5 +332,9 @@ export const translations: Record<Locale, Dict> = {
     "mcp.enabled": "Bật máy chủ MCP cục bộ",
     "mcp.endpoint": "Điểm cuối",
     "invoice.termsHint": "Tìm hóa đơn cũng khớp: invoice, faktura, faktury, hóa đơn",
+    "shortcuts.toggleRead": "Đánh dấu là đã đọc / chưa đọc",
+    "thread.markRead": "Đánh dấu là đã đọc",
+    "thread.markUnread": "Đánh dấu là chưa đọc",
+    "command.toggleRead": "Đánh dấu là đã đọc / chưa đọc",
   },
 };

@@ -6,7 +6,7 @@ import { useAccountStore } from "@/stores/accountStore";
 import { useShortcutStore } from "@/stores/shortcutStore";
 import { useContextMenuStore } from "@/stores/contextMenuStore";
 import { navigateToLabel, navigateToThread, navigateBack, getActiveLabel, getSelectedThreadId } from "@/router/navigate";
-import { archiveThread, trashThread, permanentDeleteThread, starThread, spamThread, runBulkAction, type BulkTarget } from "@/services/emailActions";
+import { archiveThread, trashThread, permanentDeleteThread, starThread, spamThread, markThreadRead, runBulkAction, type BulkTarget } from "@/services/emailActions";
 import { confirmDelete } from "@/utils/confirmDelete";
 import { deleteThread as deleteThreadFromDb, pinThread as pinThreadDb, unpinThread as unpinThreadDb, muteThread as muteThreadDb, unmuteThread as unmuteThreadDb } from "@/services/db/threads";
 import { deleteDraftsForThread } from "@/services/gmail/draftDeletion";
@@ -57,6 +57,10 @@ function buildReverseMap(keyMap: Record<string, string>): {
       // Two-key sequence like "g then i"
       const secondKey = keys.split(" then ")[1]!.trim();
       twoKeySequences.set(secondKey, id);
+    } else if (keys.startsWith("Shift+") && keys.length === 7) {
+      // Shift-modified characters are matched via e.key (the produced character,
+      // e.g. "U"), so normalize "Shift+u" / "Shift+U" bindings to the uppercase char.
+      singleKey.set(keys[6]!.toUpperCase(), id);
     } else if (/^(?:(?:Ctrl|Cmd|Alt|Shift)\+)+/.test(keys)) {
       modifiedCombos.set(id, keys);
     } else {
@@ -424,6 +428,23 @@ async function executeAction(actionId: string): Promise<void> {
           await starThread(activeAccountId, selectedId, [], !thread.isStarred);
         }
       }
+      break;
+    }
+    case "action.toggleRead": {
+      if (!activeAccountId) break;
+      const multiReadIds = useThreadStore.getState().selectedThreadIds;
+      const readIds = multiReadIds.size > 0 ? [...multiReadIds] : selectedId ? [selectedId] : [];
+      const targets = readIds
+        .map((id) => threads.find((t) => t.id === id))
+        .filter((t): t is NonNullable<typeof t> => Boolean(t));
+      if (targets.length === 0) break;
+      // Uniform toggle: if any target is unread, mark all read; otherwise mark all unread.
+      const nextRead = targets.some((t) => !t.isRead);
+      await Promise.all(
+        targets
+          .filter((t) => t.isRead !== nextRead)
+          .map((t) => markThreadRead(accountFor(t.id) ?? activeAccountId, t.id, [], nextRead)),
+      );
       break;
     }
     case "action.spam": {

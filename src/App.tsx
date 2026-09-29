@@ -18,9 +18,12 @@ import {
   triggerSync,
   onSyncStatus,
   onSyncBatchComplete,
+  isSyncInProgress,
 } from "./services/gmail/syncManager";
 import { startGmailPushRelay, stopGmailPushRelay } from "./services/gmail/gmailPushRelay";
 import { initializeClients } from "./services/gmail/tokenManager";
+import { mineContactsForAllAccounts } from "./services/contacts/contactMining";
+import { importGoogleContactsForAllAccounts } from "./services/contacts/googleContactsImport";
 import {
   startSnoozeChecker,
   stopSnoozeChecker,
@@ -445,6 +448,19 @@ export default function App() {
             console.warn("Could not start IDLE watchers:", err);
           });
         }
+
+        // Mine contacts from already-synced mail for recipient autocomplete
+        // (fire-and-forget — incremental via per-account watermark; yields to
+        // sync and is re-run by the sync manager when each sync pass finishes)
+        mineContactsForAllAccounts({ shouldYield: isSyncInProgress }).catch((err) => {
+          console.warn("[contacts] Contact mining failed:", err);
+        });
+
+        // Import Google address books into contacts for recipient autocomplete
+        // (fire-and-forget; self-throttled to once a day per account)
+        importGoogleContactsForAllAccounts().catch((err) => {
+          console.warn("[contacts] Google contacts import failed:", err);
+        });
 
         // Start snooze, scheduled send, follow-up, bundle, and queue checkers
         startSnoozeChecker();

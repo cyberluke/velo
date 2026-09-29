@@ -15,8 +15,8 @@ vi.mock("@/stores/uiStore", () => ({
   useUIStore: { getState: () => uiState },
 }));
 const threadState = {
-  threads: [],
-  selectedThreadIds: new Set(),
+  threads: [] as Array<{ id: string; isRead?: boolean; accountId?: string }>,
+  selectedThreadIds: new Set<string>(),
   removeThread: vi.fn(),
   removeThreads: vi.fn(),
   updateThread: vi.fn(),
@@ -40,14 +40,18 @@ const defaultKeyMap = {
   "app.help": "?",
   "action.selectAll": "Ctrl+A",
   "action.archive": "e",
+  "action.toggleRead": "n",
   "nav.escape": "Escape",
 };
 let shortcutKeyMap = { ...defaultKeyMap };
 vi.mock("@/stores/composerStore", () => ({
   useComposerStore: { getState: () => composerState },
 }));
+const accountState = {
+  activeAccountId: null as string | null,
+};
 vi.mock("@/stores/accountStore", () => ({
-  useAccountStore: { getState: () => ({ activeAccountId: null }) },
+  useAccountStore: { getState: () => ({ activeAccountId: accountState.activeAccountId }) },
 }));
 vi.mock("@/stores/shortcutStore", () => ({
   useShortcutStore: {
@@ -72,6 +76,7 @@ vi.mock("@/services/emailActions", () => ({
   permanentDeleteThread: vi.fn(),
   starThread: vi.fn(),
   spamThread: vi.fn(),
+  markThreadRead: vi.fn(),
 }));
 vi.mock("@/services/db/threads", () => ({
   deleteThread: vi.fn(),
@@ -89,6 +94,7 @@ vi.mock("@/services/gmail/syncManager", () => ({ triggerSync: vi.fn() }));
 
 import { renderHook } from "@testing-library/react";
 import { useKeyboardShortcuts } from "./useKeyboardShortcuts";
+import { markThreadRead } from "@/services/emailActions";
 
 describe("useKeyboardShortcuts", () => {
   beforeEach(() => {
@@ -96,6 +102,9 @@ describe("useKeyboardShortcuts", () => {
     uiState.settingsOpen = false;
     composerState.isOpen = false;
     shortcutKeyMap = { ...defaultKeyMap };
+    threadState.threads = [];
+    threadState.selectedThreadIds = new Set();
+    accountState.activeAccountId = null;
   });
 
   it("dispatches velo-toggle-ask-inbox when 'i' is pressed", () => {
@@ -289,5 +298,66 @@ describe("useKeyboardShortcuts", () => {
     );
 
     expect(composerState.closeComposer).toHaveBeenCalledTimes(1);
+  });
+
+  describe("action.toggleRead (n)", () => {
+    const pressToggleReadKey = () => {
+      window.dispatchEvent(
+        new KeyboardEvent("keydown", { key: "n", bubbles: true }),
+      );
+    };
+
+    it("marks all selected threads read when any is unread", () => {
+      accountState.activeAccountId = "acc1";
+      threadState.threads = [
+        { id: "t1", isRead: true },
+        { id: "t2", isRead: false },
+        { id: "t3", isRead: false },
+      ];
+      threadState.selectedThreadIds = new Set(["t1", "t2", "t3"]);
+      renderHook(() => useKeyboardShortcuts());
+
+      pressToggleReadKey();
+
+      // Only threads whose state differs are updated (t1 is already read)
+      expect(markThreadRead).toHaveBeenCalledTimes(2);
+      expect(markThreadRead).toHaveBeenCalledWith("acc1", "t2", [], true);
+      expect(markThreadRead).toHaveBeenCalledWith("acc1", "t3", [], true);
+    });
+
+    it("marks all selected threads unread when all are read", () => {
+      accountState.activeAccountId = "acc1";
+      threadState.threads = [
+        { id: "t1", isRead: true },
+        { id: "t2", isRead: true },
+      ];
+      threadState.selectedThreadIds = new Set(["t1", "t2"]);
+      renderHook(() => useKeyboardShortcuts());
+
+      pressToggleReadKey();
+
+      expect(markThreadRead).toHaveBeenCalledTimes(2);
+      expect(markThreadRead).toHaveBeenCalledWith("acc1", "t1", [], false);
+      expect(markThreadRead).toHaveBeenCalledWith("acc1", "t2", [], false);
+    });
+
+    it("does nothing with no selection and no open thread", () => {
+      accountState.activeAccountId = "acc1";
+      renderHook(() => useKeyboardShortcuts());
+
+      pressToggleReadKey();
+
+      expect(markThreadRead).not.toHaveBeenCalled();
+    });
+
+    it("does nothing without an active account", () => {
+      threadState.threads = [{ id: "t1", isRead: false }];
+      threadState.selectedThreadIds = new Set(["t1"]);
+      renderHook(() => useKeyboardShortcuts());
+
+      pressToggleReadKey();
+
+      expect(markThreadRead).not.toHaveBeenCalled();
+    });
   });
 });
