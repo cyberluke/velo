@@ -1,3 +1,12 @@
+import {
+  addressOnly,
+  encodeAddressHeader,
+  encodeAddressList,
+  encodeFilenameParams,
+  encodeHeaderValue,
+  stripHeaderBreaks,
+} from "./headerSafety";
+
 /**
  * Build an RFC 2822 email message and encode as base64url for the Gmail API.
  */
@@ -133,34 +142,35 @@ function extractInlineImages(html: string): { html: string; images: InlineImage[
 function generateMessageId(from: string): string {
   const timestamp = Date.now();
   const random = Math.random().toString(36).slice(2, 10);
-  const domain = from.includes("@") ? from.split("@")[1] : "velomail.local";
+  const address = addressOnly(from);
+  const domain = address.includes("@") ? address.split("@")[1] : "velomail.local";
   return `<${timestamp}.${random}@${domain}>`;
 }
 
 export function buildRawEmail(draft: EmailDraft): string {
   const messageId = generateMessageId(draft.from);
   const lines: string[] = [
-    `From: ${draft.from}`,
-    `To: ${draft.to.join(", ")}`,
+    `From: ${encodeAddressHeader(draft.from)}`,
+    `To: ${encodeAddressList(draft.to)}`,
   ];
 
   if (draft.cc && draft.cc.length > 0) {
-    lines.push(`Cc: ${draft.cc.join(", ")}`);
+    lines.push(`Cc: ${encodeAddressList(draft.cc)}`);
   }
   if (draft.bcc && draft.bcc.length > 0) {
-    lines.push(`Bcc: ${draft.bcc.join(", ")}`);
+    lines.push(`Bcc: ${encodeAddressList(draft.bcc)}`);
   }
 
   lines.push(`Date: ${new Date().toUTCString()}`);
   lines.push(`Message-ID: ${messageId}`);
-  lines.push(`Subject: ${encodeMimeHeader(draft.subject)}`);
+  lines.push(`Subject: ${encodeHeaderValue(draft.subject)}`);
   lines.push(`MIME-Version: 1.0`);
 
   if (draft.inReplyTo) {
-    lines.push(`In-Reply-To: ${draft.inReplyTo}`);
+    lines.push(`In-Reply-To: ${stripHeaderBreaks(draft.inReplyTo)}`);
   }
   if (draft.references) {
-    lines.push(`References: ${draft.references}`);
+    lines.push(`References: ${stripHeaderBreaks(draft.references)}`);
   }
   if (draft.requestReadReceipt) {
     lines.push(`Disposition-Notification-To: ${draft.from}`);
@@ -195,7 +205,7 @@ export function buildRawEmail(draft: EmailDraft): string {
       // Inline image parts
       for (const img of inlineImages) {
         lines.push(`--${relatedBoundary}`);
-        lines.push(`Content-Type: ${img.mimeType}`);
+        lines.push(`Content-Type: ${stripHeaderBreaks(img.mimeType)}`);
         lines.push("Content-Transfer-Encoding: base64");
         lines.push(`Content-ID: <${img.cid}>`);
         lines.push("Content-Disposition: inline");
@@ -218,9 +228,10 @@ export function buildRawEmail(draft: EmailDraft): string {
       // Attachment parts
       for (const att of draft.attachments!) {
         lines.push(`--${mixedBoundary}`);
-        lines.push(`Content-Type: ${att.mimeType}; name="${att.filename}"`);
+        const { nameParam, dispositionParam } = encodeFilenameParams(att.filename);
+        lines.push(`Content-Type: ${stripHeaderBreaks(att.mimeType)}; ${nameParam}`);
         lines.push("Content-Transfer-Encoding: base64");
-        lines.push(`Content-Disposition: attachment; filename="${att.filename}"`);
+        lines.push(`Content-Disposition: attachment; ${dispositionParam}`);
         lines.push("");
         const raw = att.content;
         for (let i = 0; i < raw.length; i += 76) {
