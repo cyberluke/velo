@@ -1,5 +1,5 @@
 import { GoogleGenAI } from "@google/genai";
-import type { AiProviderClient, AiCompletionRequest } from "../types";
+import type { AiProviderClient, AiCompletionRequest, AiTestResult } from "../types";
 import { createProviderFactory } from "../providerFactory";
 
 // `@google/genai` replaced `@google/generative-ai`, which Google stopped
@@ -23,15 +23,16 @@ export function createGeminiProvider(apiKey: string, modelId: string): AiProvide
       return response.text ?? "";
     },
 
-    async testConnection(): Promise<boolean> {
+    async testConnection(): Promise<AiTestResult> {
       try {
         await client.models.generateContent({
           model: modelId,
           contents: "Say hi",
         });
-        return true;
-      } catch {
-        return false;
+        return { ok: true };
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        return { ok: false, error: msg };
       }
     },
   };

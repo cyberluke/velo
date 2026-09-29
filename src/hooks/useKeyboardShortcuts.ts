@@ -539,6 +539,9 @@ async function executeAction(actionId: string): Promise<void> {
     case "app.askInbox":
       window.dispatchEvent(new Event("velo-toggle-ask-inbox"));
       break;
+    case "app.aiAgent":
+      window.dispatchEvent(new Event("velo-toggle-agent-panel"));
+      break;
     case "app.help":
       window.dispatchEvent(new Event("velo-toggle-shortcuts-help"));
       break;

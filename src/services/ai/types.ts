@@ -1,4 +1,4 @@
-export type AiProvider = "claude" | "openai" | "gemini" | "ollama" | "copilot";
+export type AiProvider = "claude" | "openai" | "gemini" | "ollama" | "copilot" | "custom" | "bedrock";
 
 export interface AiCompletionRequest {
   systemPrompt: string;
@@ -6,9 +6,20 @@ export interface AiCompletionRequest {
   maxTokens?: number;
 }
 
+/**
+ * Result of a provider connection test. `ok` mirrors the old boolean return;
+ * `error` carries the underlying message when the test failed so the settings
+ * UI can tell the user *why* (bad key, wrong URL, model not enabled) instead
+ * of a bare "connection failed".
+ */
+export interface AiTestResult {
+  ok: boolean;
+  error?: string;
+}
+
 export interface AiProviderClient {
   complete(req: AiCompletionRequest): Promise<string>;
-  testConnection(): Promise<boolean>;
+  testConnection(): Promise<AiTestResult>;
 }
 
 export const DEFAULT_MODELS: Record<AiProvider, string> = {
@@ -17,6 +28,8 @@ export const DEFAULT_MODELS: Record<AiProvider, string> = {
   gemini: "gemini-3.8-flash",
   ollama: "llama3.2",
   copilot: "openai/gpt-4o-mini",
+  custom: "gpt-4o-mini",
+  bedrock: "us.anthropic.claude-sonnet-4-6",
 };
 
 export interface ModelOption {
@@ -24,7 +37,10 @@ export interface ModelOption {
   label: string;
 }
 
-export const PROVIDER_MODELS: Record<Exclude<AiProvider, "ollama">, ModelOption[]> = {
+// Custom and Bedrock take a free-text model id: any OpenAI-compatible
+// deployment has its own model names, and Bedrock availability varies by AWS
+// account/region, so a fixed picker would only offer ids that 404.
+export const PROVIDER_MODELS: Record<Exclude<AiProvider, "ollama" | "custom" | "bedrock">, ModelOption[]> = {
   claude: [
     { id: "claude-haiku-4-5-20251001", label: "Claude Haiku 4.5" },
     { id: "claude-sonnet-4-20250514", label: "Claude Sonnet 4" },
@@ -81,7 +97,7 @@ export function resolveModelId(modelId: string): string {
   return RETIRED_MODELS[modelId] ?? modelId;
 }
 
-export const MODEL_SETTINGS: Record<Exclude<AiProvider, "ollama">, string> = {
+export const MODEL_SETTINGS: Record<Exclude<AiProvider, "ollama" | "custom" | "bedrock">, string> = {
   claude: "claude_model",
   openai: "openai_model",
   gemini: "gemini_model",

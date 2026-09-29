@@ -165,11 +165,17 @@ export function SettingsPage() {
   const [phishingDetectionEnabled, setPhishingDetectionEnabled] = useState(true);
   const [phishingSensitivity, setPhishingSensitivity] = useState<"low" | "default" | "high">("default");
   const [autostartEnabled, setAutostartEnabled] = useState(false);
-  const [aiProvider, setAiProvider] = useState<"claude" | "openai" | "gemini" | "ollama" | "copilot">("claude");
+  const [aiProvider, setAiProvider] = useState<"claude" | "openai" | "gemini" | "ollama" | "copilot" | "custom" | "bedrock">("claude");
   const [claudeApiKey, setClaudeApiKey] = useState("");
   const [openaiApiKey, setOpenaiApiKey] = useState("");
   const [geminiApiKey, setGeminiApiKey] = useState("");
   const [copilotApiKey, setCopilotApiKey] = useState("");
+  const [customApiKey, setCustomApiKey] = useState("");
+  const [customBaseUrl, setCustomBaseUrl] = useState("");
+  const [customModel, setCustomModel] = useState("gpt-4o-mini");
+  const [bedrockApiKey, setBedrockApiKey] = useState("");
+  const [bedrockRegion, setBedrockRegion] = useState("us-east-1");
+  const [bedrockModel, setBedrockModel] = useState("us.anthropic.claude-sonnet-4-6");
   const [ollamaServerUrl, setOllamaServerUrl] = useState("http://localhost:11434");
   const [ollamaApiKey, setOllamaApiKey] = useState("");
   const [ollamaModel, setOllamaModel] = useState("llama3.2");
@@ -187,7 +193,7 @@ export function SettingsPage() {
   const [aiAutoSummarize, setAiAutoSummarize] = useState(true);
   const [aiKeySaved, setAiKeySaved] = useState(false);
   const [aiTesting, setAiTesting] = useState(false);
-  const [aiTestResult, setAiTestResult] = useState<"success" | "fail" | null>(null);
+  const [aiTestResult, setAiTestResult] = useState<{ ok: boolean; error?: string } | null>(null);
   const [aiAutoDraftEnabled, setAiAutoDraftEnabled] = useState(true);
   const [aiWritingStyleEnabled, setAiWritingStyleEnabled] = useState(true);
   const [styleAnalyzing, setStyleAnalyzing] = useState(false);
@@ -263,7 +269,7 @@ export function SettingsPage() {
 
       // Load AI settings
       const provider = await getSetting("ai_provider");
-      if (provider === "openai" || provider === "gemini" || provider === "ollama" || provider === "copilot") setAiProvider(provider);
+      if (provider === "openai" || provider === "gemini" || provider === "ollama" || provider === "copilot" || provider === "custom" || provider === "bedrock") setAiProvider(provider);
       const ollamaUrl = await getSetting("ollama_server_url");
       if (ollamaUrl) setOllamaServerUrl(ollamaUrl);
       const ollamaModelVal = await getSetting("ollama_model");
@@ -1571,7 +1577,7 @@ export function SettingsPage() {
                       <select
                         value={aiProvider}
                         onChange={async (e) => {
-                          const val = e.target.value as "claude" | "openai" | "gemini" | "ollama" | "copilot";
+                          const val = e.target.value as "claude" | "openai" | "gemini" | "ollama" | "copilot" | "custom" | "bedrock";
                           setAiProvider(val);
                           setAiTestResult(null);
                           await setSetting("ai_provider", val);
@@ -1585,6 +1591,8 @@ export function SettingsPage() {
                         <option value="gemini">Gemini (Google)</option>
                         <option value="ollama">Local AI (Ollama / LMStudio)</option>
                         <option value="copilot">GitHub Copilot</option>
+                        <option value="custom">{t("ai.provider.custom")}</option>
+                        <option value="bedrock">{t("ai.provider.bedrock")}</option>
                       </select>
                     </SettingRow>
                     <p className="text-xs text-text-tertiary">
@@ -1593,10 +1601,180 @@ export function SettingsPage() {
                       {aiProvider === "gemini" && `Uses ${PROVIDER_MODELS.gemini.find((m) => m.id === geminiModel)?.label ?? geminiModel}.`}
                       {aiProvider === "ollama" && t("ai.local.help")}
                       {aiProvider === "copilot" && `Uses ${PROVIDER_MODELS.copilot.find((m) => m.id === copilotModel)?.label ?? copilotModel}. Requires a GitHub PAT with models:read permission.`}
+                      {aiProvider === "custom" && t("ai.custom.help")}
+                      {aiProvider === "bedrock" && `Uses ${bedrockModel}. ${t("ai.bedrock.help")}`}
                     </p>
                   </Section>
 
-                  {aiProvider === "ollama" ? (
+                  {aiProvider === "custom" ? (
+                    <Section title={t("ai.custom.baseUrl")}>
+                      <div className="space-y-3">
+                        <TextField
+                          label={t("ai.custom.baseUrl")}
+                          size="md"
+                          value={customBaseUrl}
+                          onChange={(e) => setCustomBaseUrl(e.target.value)}
+                          placeholder="https://api.example.com/v1"
+                        />
+                        <TextField
+                          label={t("ai.custom.apiKey")}
+                          size="md"
+                          type="password"
+                          value={customApiKey}
+                          onChange={(e) => setCustomApiKey(e.target.value)}
+                          placeholder="sk-..."
+                        />
+                        <TextField
+                          label={t("ai.custom.model")}
+                          size="md"
+                          value={customModel}
+                          onChange={(e) => setCustomModel(e.target.value)}
+                          placeholder="gpt-4o-mini"
+                        />
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant="primary"
+                            size="md"
+                            onClick={async () => {
+                              await setSetting("custom_base_url", customBaseUrl.trim());
+                              await setSetting("custom_model", customModel.trim());
+                              if (customApiKey.trim()) {
+                                await setSecureSetting("custom_api_key", customApiKey.trim());
+                              }
+                              const { clearProviderClients } = await import("@/services/ai/providerManager");
+                              clearProviderClients();
+                              setAiKeySaved(true);
+                              setTimeout(() => setAiKeySaved(false), 2000);
+                            }}
+                            disabled={!customBaseUrl.trim() || !customApiKey.trim() || !customModel.trim()}
+                          >
+                            {aiKeySaved ? t("ai.saved") : t("ai.save")}
+                          </Button>
+                          <Button
+                            variant="secondary"
+                            size="md"
+                            onClick={async () => {
+                              setAiTesting(true);
+                              setAiTestResult(null);
+                              try {
+                                // auto-save so test uses current form values
+                                await setSetting("custom_base_url", customBaseUrl.trim());
+                                await setSetting("custom_model", customModel.trim());
+                                if (customApiKey.trim()) {
+                                  await setSecureSetting("custom_api_key", customApiKey.trim());
+                                }
+                                const { clearProviderClients } = await import("@/services/ai/providerManager");
+                                clearProviderClients();
+                                const { testConnection } = await import("@/services/ai/aiService");
+                                const result = await testConnection();
+                                setAiTestResult(result);
+                              } catch (err) {
+                                const msg = err instanceof Error ? err.message : String(err);
+                                setAiTestResult({ ok: false, error: msg });
+                              } finally {
+                                setAiTesting(false);
+                              }
+                            }}
+                            disabled={!customBaseUrl.trim() || !customApiKey.trim() || !customModel.trim() || aiTesting}
+                            className="bg-bg-tertiary text-text-primary border border-border-primary"
+                          >
+                            {aiTesting ? t("ai.testing") : t("ai.test")}
+                          </Button>
+                          {aiTestResult?.ok && (
+                            <span className="text-xs text-success">{t("ai.connected")}</span>
+                          )}
+                          {aiTestResult && !aiTestResult.ok && (
+                            <span className="text-xs text-danger" title={aiTestResult.error}>
+                              {t("ai.failed")}{aiTestResult.error ? `: ${aiTestResult.error.slice(0, 100)}` : ""}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </Section>
+                  ) : aiProvider === "bedrock" ? (
+                    <Section title={t("ai.bedrock.apiKey")}>
+                      <div className="space-y-3">
+                        <TextField
+                          label={t("ai.bedrock.apiKey")}
+                          size="md"
+                          type="password"
+                          value={bedrockApiKey}
+                          onChange={(e) => setBedrockApiKey(e.target.value)}
+                          placeholder="••••••••"
+                        />
+                        <TextField
+                          label={t("ai.bedrock.region")}
+                          size="md"
+                          value={bedrockRegion}
+                          onChange={(e) => setBedrockRegion(e.target.value)}
+                          placeholder="us-east-1"
+                        />
+                        <TextField
+                          label={t("ai.bedrock.model")}
+                          size="md"
+                          value={bedrockModel}
+                          onChange={(e) => setBedrockModel(e.target.value)}
+                          placeholder="us.anthropic.claude-sonnet-4-6"
+                        />
+                        <p className="text-xs text-text-tertiary">
+                          {t("ai.bedrock.model.help")}
+                        </p>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant="primary"
+                            size="md"
+                            onClick={async () => {
+                              await setSecureSetting("bedrock_api_key", bedrockApiKey.trim());
+                              await setSetting("bedrock_region", bedrockRegion.trim());
+                              await setSetting("bedrock_model", bedrockModel);
+                              const { clearProviderClients } = await import("@/services/ai/providerManager");
+                              clearProviderClients();
+                              setAiKeySaved(true);
+                              setTimeout(() => setAiKeySaved(false), 2000);
+                            }}
+                            disabled={!bedrockApiKey.trim() || !bedrockRegion.trim()}
+                          >
+                            {aiKeySaved ? t("ai.saved") : t("ai.save")}
+                          </Button>
+                          <Button
+                            variant="secondary"
+                            size="md"
+                            onClick={async () => {
+                              setAiTesting(true);
+                              setAiTestResult(null);
+                              try {
+                                await setSecureSetting("bedrock_api_key", bedrockApiKey.trim());
+                                await setSetting("bedrock_region", bedrockRegion.trim());
+                                await setSetting("bedrock_model", bedrockModel);
+                                const { clearProviderClients } = await import("@/services/ai/providerManager");
+                                clearProviderClients();
+                                const { testConnection } = await import("@/services/ai/aiService");
+                                const result = await testConnection();
+                                setAiTestResult(result);
+                              } catch (err) {
+                                const msg = err instanceof Error ? err.message : String(err);
+                                setAiTestResult({ ok: false, error: msg });
+                              } finally {
+                                setAiTesting(false);
+                              }
+                            }}
+                            disabled={!bedrockApiKey.trim() || !bedrockRegion.trim() || aiTesting}
+                            className="bg-bg-tertiary text-text-primary border border-border-primary"
+                          >
+                            {aiTesting ? t("ai.testing") : t("ai.test")}
+                          </Button>
+                          {aiTestResult?.ok && (
+                            <span className="text-xs text-success">{t("ai.connected")}</span>
+                          )}
+                          {aiTestResult && !aiTestResult.ok && (
+                            <span className="text-xs text-danger" title={aiTestResult.error}>
+                              {t("ai.failed")}{aiTestResult.error ? `: ${aiTestResult.error.slice(0, 100)}` : ""}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </Section>
+                  ) : aiProvider === "ollama" ? (
                     <Section title={t("ai.local.server")}>
                       <div className="space-y-3">
                         <TextField
@@ -1686,10 +1864,11 @@ export function SettingsPage() {
                                 const { clearProviderClients } = await import("@/services/ai/providerManager");
                                 clearProviderClients();
                                 const { testConnection } = await import("@/services/ai/aiService");
-                                const ok = await testConnection();
-                                setAiTestResult(ok ? "success" : "fail");
-                              } catch {
-                                setAiTestResult("fail");
+                                const result = await testConnection();
+                                setAiTestResult(result);
+                              } catch (err) {
+                                const msg = err instanceof Error ? err.message : String(err);
+                                setAiTestResult({ ok: false, error: msg });
                               } finally {
                                 setAiTesting(false);
                               }
@@ -1699,11 +1878,13 @@ export function SettingsPage() {
                           >
                             {aiTesting ? t("ai.testing") : t("ai.test")}
                           </Button>
-                          {aiTestResult === "success" && (
+                          {aiTestResult?.ok && (
                             <span className="text-xs text-success">{t("ai.connected")}</span>
                           )}
-                          {aiTestResult === "fail" && (
-                            <span className="text-xs text-danger">{t("ai.failed")}</span>
+                          {aiTestResult && !aiTestResult.ok && (
+                            <span className="text-xs text-danger" title={aiTestResult.error}>
+                              {t("ai.failed")}{aiTestResult.error ? `: ${aiTestResult.error.slice(0, 100)}` : ""}
+                            </span>
                           )}
                         </div>
                       </div>
@@ -1811,10 +1992,11 @@ export function SettingsPage() {
                               setAiTestResult(null);
                               try {
                                 const { testConnection } = await import("@/services/ai/aiService");
-                                const ok = await testConnection();
-                                setAiTestResult(ok ? "success" : "fail");
-                              } catch {
-                                setAiTestResult("fail");
+                                const result = await testConnection();
+                                setAiTestResult(result);
+                              } catch (err) {
+                                const msg = err instanceof Error ? err.message : String(err);
+                                setAiTestResult({ ok: false, error: msg });
                               } finally {
                                 setAiTesting(false);
                               }
@@ -1827,13 +2009,15 @@ export function SettingsPage() {
                             }
                             className="bg-bg-tertiary text-text-primary border border-border-primary"
                           >
-                            {aiTesting ? "Testing..." : "Test Connection"}
+                            {aiTesting ? t("ai.testing") : t("ai.test")}
                           </Button>
-                          {aiTestResult === "success" && (
-                            <span className="text-xs text-success">Connected!</span>
+                          {aiTestResult?.ok && (
+                            <span className="text-xs text-success">{t("ai.connected")}</span>
                           )}
-                          {aiTestResult === "fail" && (
-                            <span className="text-xs text-danger">Connection failed</span>
+                          {aiTestResult && !aiTestResult.ok && (
+                            <span className="text-xs text-danger" title={aiTestResult.error}>
+                              {t("ai.failed")}{aiTestResult.error ? `: ${aiTestResult.error.slice(0, 100)}` : ""}
+                            </span>
                           )}
                         </div>
                       </div>
