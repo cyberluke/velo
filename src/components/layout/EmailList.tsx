@@ -14,6 +14,7 @@ import { getCategoriesForThreads, getCategoryUnreadCounts } from "@/services/db/
 import { getTaskThreadIds, getReminderThreadIds } from "@/services/db/tasks";
 import { getBundleRules, getHeldThreadIds, getBundleSummaries, type DbBundleRule } from "@/services/db/bundleRules";
 import { getGmailClient } from "@/services/gmail/tokenManager";
+import { getSetting } from "@/services/db/settings";
 import { archiveThread, trashThread, permanentDeleteThread, spamThread, runBulkAction, type BulkTarget } from "@/services/emailActions";
 import { confirmDelete } from "@/utils/confirmDelete";
 import { useLabelStore } from "@/stores/labelStore";
@@ -24,7 +25,7 @@ import { getMessagesForThread } from "@/services/db/messages";
 import { getSmartFolderSearchQuery, mapSmartFolderRows, type SmartFolderRow } from "@/services/search/smartFolderQuery";
 import { getDb } from "@/services/db/connection";
 import { useI18n } from "@/i18n";
-import { Archive, Trash2, X, Ban, Filter, ChevronRight, Package, FolderSearch, UserSearch, MailMinus, Check, AlertCircle, Merge } from "lucide-react";
+import { Archive, Trash2, X, Ban, Filter, ChevronRight, Package, FolderSearch, UserSearch, MailMinus, Check, AlertCircle, Merge, Sparkles } from "lucide-react";
 import { getLabelsForThreadPage } from "@/services/db/threads";
 import { EmptyState } from "../ui/EmptyState";
 import {
@@ -34,6 +35,7 @@ import {
   GenericEmptyIllustration,
 } from "../ui/illustrations";
 import { getListSearchTerms } from "@/utils/searchHighlight";
+import { InboxDigestPanel } from "../email/InboxDigestPanel";
 
 const PAGE_SIZE = 50;
 
@@ -53,6 +55,7 @@ const LABEL_MAP: Record<string, string | string[]> = {
 };
 
 export function EmailList({ width, listRef }: { width?: number; listRef?: React.Ref<HTMLDivElement> }) {
+  const { t } = useI18n();
   const threads = useThreadStore((s) => s.threads);
   const selectedThreadId = useSelectedThreadId();
   const selectedThreadIds = useThreadStore((s) => s.selectedThreadIds);
@@ -121,6 +124,18 @@ export function EmailList({ width, listRef }: { width?: number; listRef?: React.
 
   const openComposer = useComposerStore((s) => s.openComposer);
   const multiSelectBarRef = useRef<HTMLDivElement>(null);
+
+  const [digestOpen, setDigestOpen] = useState(false);
+  const [digestContent, setDigestContent] = useState<string | null>(null);
+  const [digestLoading, setDigestLoading] = useState(false);
+  const [digestEnabled, setDigestEnabled] = useState(false);
+
+  // Check if inbox digest is enabled
+  useEffect(() => {
+    getSetting("ai_inbox_digest_enabled").then((val) => {
+      setDigestEnabled(val !== "false");
+    });
+  }, []);
 
   // Quick actions next to the search box, acting on the selected thread
   const selectedThread = selectedThreadId
@@ -366,6 +381,8 @@ export function EmailList({ width, listRef }: { width?: number; listRef?: React.
     return Promise.all(
       dbThreads.map(async (t) => {
         const labelIds = pageLabels.get(JSON.stringify([t.account_id, t.id])) ?? [];
+        const rawUrgency = t.ai_urgency;
+        const urgency = (rawUrgency === "low" || rawUrgency === "medium" || rawUrgency === "high") ? rawUrgency : null;
         return {
           id: t.id,
           accountId: t.account_id,
@@ -379,6 +396,7 @@ export function EmailList({ width, listRef }: { width?: number; listRef?: React.
           isMuted: t.is_muted === 1,
           hasAttachments: t.has_attachments === 1,
           labelIds,
+          aiUrgency: urgency,
           // Prefer whoever replied over the user's own address on a thread
           // they started — the peer is null only when nobody else has written
           fromName: t.peer_address ? (t.peer_name ?? null) : t.from_name,
@@ -457,6 +475,31 @@ export function EmailList({ width, listRef }: { width?: number; listRef?: React.
       return true;
     });
   }, [filteredThreads, searchThreadIds, activeLabel, activeCategory, categoryMap, bundledCategorySet, heldThreadIds]);
+
+  const handleOpenDigest = useCallback(async () => {
+    if (!activeAccountId) return;
+    setDigestOpen(true);
+    setDigestLoading(true);
+    setDigestContent(null);
+    try {
+      const { generateInboxDigest } = await import("@/services/ai/aiService");
+      const threadInput = visibleThreads.slice(0, 50).map((t) => ({
+        id: t.id,
+        subject: t.subject ?? "",
+        snippet: t.snippet ?? "",
+        fromAddress: t.fromAddress ?? "",
+        fromName: t.fromName ?? "",
+        date: t.lastMessageAt,
+      }));
+      const result = await generateInboxDigest(activeAccountId, threadInput);
+      setDigestContent(result);
+    } catch (err) {
+      console.error("Inbox digest failed:", err);
+      setDigestContent(t("ai.digest.failed"));
+    } finally {
+      setDigestLoading(false);
+    }
+  }, [activeAccountId, visibleThreads]);
 
   // Selection is made against what is on screen, so the store has to know
   // which rows those are — search hits and filtered views included
@@ -827,6 +870,16 @@ export function EmailList({ width, listRef }: { width?: number; listRef?: React.
               <MailMinus size={15} className={unsubStatus === "loading" ? "animate-pulse" : ""} />
             )}
           </button>
+          {digestEnabled && (
+            <button
+              onClick={handleOpenDigest}
+              title={t("ai.digest.generate")}
+              aria-label={t("ai.digest.generate")}
+              className="p-1.5 text-text-tertiary hover:text-accent hover:bg-bg-hover rounded-lg transition-colors"
+            >
+              <Sparkles size={15} />
+            </button>
+          )}
           {activeLabel === "inbox" && searchThreadIds === null ? (
           <div className="flex items-center rounded-full bg-bg-tertiary/80 p-1 shadow-[inset_0_1px_1px_rgba(80,66,50,0.06)]">
             <button
@@ -986,7 +1039,7 @@ export function EmailList({ width, listRef }: { width?: number; listRef?: React.
                     />
                   </button>
                   {isExpanded && bundledThreads.map((thread) => (
-                    <div key={thread.id} className="pl-4">
+<div key={thread.id} className="pl-4">
                       <ThreadCard
                         thread={thread}
                         isSelected={thread.id === selectedThreadId}
@@ -995,6 +1048,7 @@ export function EmailList({ width, listRef }: { width?: number; listRef?: React.
                         category={rule.category}
                         hasFollowUp={followUpThreadIds.has(thread.id)}
                         hasTask={taskThreadIds.has(thread.id)}
+                        urgency={thread.aiUrgency}
                       />
                     </div>
                   ))}
@@ -1016,7 +1070,7 @@ export function EmailList({ width, listRef }: { width?: number; listRef?: React.
                       Other emails
                     </div>
                   )}
-                  <ThreadCard
+<ThreadCard
                     thread={thread}
                     isSelected={thread.id === selectedThreadId}
                     onClick={handleThreadClick}
@@ -1028,6 +1082,7 @@ export function EmailList({ width, listRef }: { width?: number; listRef?: React.
                     highlightTerms={searchHighlightTerms}
                     hasFollowUp={followUpThreadIds.has(thread.id)}
                     hasTask={taskThreadIds.has(thread.id)}
+                    urgency={thread.aiUrgency}
                   />
                 </div>
               );
@@ -1045,6 +1100,14 @@ export function EmailList({ width, listRef }: { width?: number; listRef?: React.
           </>
         )}
       </div>
+
+      {digestOpen && (
+        <InboxDigestPanel
+          content={digestContent}
+          isLoading={digestLoading}
+          onClose={() => setDigestOpen(false)}
+        />
+      )}
     </div>
   );
 }

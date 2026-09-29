@@ -43,6 +43,8 @@ function toDbAttachment(att: ContactAttachment): DbAttachment {
   };
 }
 
+import { useI18n } from "@/i18n";
+
 interface ContactSidebarProps {
   email: string;
   name: string | null;
@@ -54,6 +56,7 @@ interface ContactSidebarProps {
 }
 
 export function ContactSidebar({ email, name, accountId, threadId, ownAddresses, onClose }: ContactSidebarProps) {
+  const { t } = useI18n();
   // A Set identity changes every render of the parent; the addresses do not
   const ownAddressKey = ownAddresses ? [...ownAddresses].sort().join(",") : "";
   const ownAddressList = useMemo(
@@ -69,6 +72,8 @@ export function ContactSidebar({ email, name, accountId, threadId, ownAddresses,
   const [isVip, setIsVip] = useState(false);
   const [notes, setNotes] = useState("");
   const [notesExpanded, setNotesExpanded] = useState(false);
+  const [contactSummary, setContactSummary] = useState<string | null>(null);
+  const [summaryLoading, setSummaryLoading] = useState(false);
   const [attachments, setAttachments] = useState<ContactAttachment[]>([]);
   const [filePreviewIndex, setFilePreviewIndex] = useState<number | null>(null);
   // The files ←/→ can move through in the preview: every fetchable shared file
@@ -122,13 +127,38 @@ export function ContactSidebar({ email, name, accountId, threadId, ownAddresses,
     // Load recent threads
     // Threads the two of them actually exchanged, in this mailbox — matching
     // on "they sent it" alone listed every unrelated mail from that address
-    getThreadsWithContact(accountId, email, null, ownAddressList, 5).then((rows) => {
+    getThreadsWithContact(accountId, email, null, ownAddressList, 5).then(async (rows) => {
       if (cancelled) return;
-      setRecentThreads(rows.map((r) => ({
+      const t = rows.map((r) => ({
         thread_id: r.id,
         subject: r.subject,
         last_message_at: r.last_message_at,
-      })));
+      }));
+      setRecentThreads(t);
+
+      // Trigger AI contact summary if we have at least 2 threads
+      if (t.length >= 2) {
+        const { getSetting } = await import("@/services/db/settings");
+        const enabled = await getSetting("ai_contact_summary_enabled");
+        if (cancelled || enabled === "false") return;
+
+        setSummaryLoading(true);
+        try {
+          const { generateContactSummary } = await import("@/services/ai/aiService");
+          const threadInput = t.map((thread) => ({
+            id: thread.thread_id,
+            subject: thread.subject ?? "",
+            snippet: "",
+            date: thread.last_message_at ?? 0,
+          }));
+          const summary = await generateContactSummary(accountId, email, threadInput);
+          if (!cancelled) setContactSummary(summary);
+        } catch {
+          // Silently ignore summary errors
+        } finally {
+          if (!cancelled) setSummaryLoading(false);
+        }
+      }
     }).catch(() => { if (!cancelled) setRecentThreads([]); });
 
     // Load VIP status
@@ -374,6 +404,18 @@ export function ContactSidebar({ email, name, accountId, threadId, ownAddresses,
                 <span>Last email: {formatRelativeDate(stats.lastEmail)}</span>
               </div>
             )}
+          </div>
+        )}
+
+        {/* AI Relationship Summary */}
+        {summaryLoading && (
+          <p className="text-xs text-text-tertiary animate-pulse mb-4">
+            {t("ai.contact.analyzing")}
+          </p>
+        )}
+        {!summaryLoading && contactSummary && (
+          <div className="bg-bg-secondary rounded-md p-3 text-sm text-text-secondary mb-4">
+            {contactSummary}
           </div>
         )}
 

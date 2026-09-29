@@ -19,6 +19,8 @@ export interface Thread {
   labelIds: string[];
   fromName: string | null;
   fromAddress: string | null;
+  /** AI-assigned urgency score, shown as a badge in the list. Optional — views that do not score threads omit it. */
+  aiUrgency?: "low" | "medium" | "high" | null;
   /**
    * Whether the newest message in the thread was written by the user.
    *

@@ -190,6 +190,14 @@ export function SettingsPage() {
   const [aiTestResult, setAiTestResult] = useState<"success" | "fail" | null>(null);
   const [aiAutoDraftEnabled, setAiAutoDraftEnabled] = useState(true);
   const [aiWritingStyleEnabled, setAiWritingStyleEnabled] = useState(true);
+  // New AI feature toggles
+  const [aiProofreadEnabled, setAiProofreadEnabled] = useState(true);
+  const [aiMeetingDetectionEnabled, setAiMeetingDetectionEnabled] = useState(true);
+  const [aiInboxDigestEnabled, setAiInboxDigestEnabled] = useState(true);
+  const [aiUrgencyEnabled, setAiUrgencyEnabled] = useState(false);
+  const [aiAutoTasksEnabled, setAiAutoTasksEnabled] = useState(false);
+  const [aiContactSummaryEnabled, setAiContactSummaryEnabled] = useState(true);
+  const [aiFilterSuggestionsEnabled, setAiFilterSuggestionsEnabled] = useState(true);
   const [styleAnalyzing, setStyleAnalyzing] = useState(false);
   const [styleAnalyzeDone, setStyleAnalyzeDone] = useState(false);
   const [cacheMaxMb, setCacheMaxMb] = useState("500");
@@ -299,6 +307,22 @@ export function SettingsPage() {
       setAiAutoDraftEnabled(aiDraft !== "false");
       const aiStyle = await getSetting("ai_writing_style_enabled");
       setAiWritingStyleEnabled(aiStyle !== "false");
+
+      // Load new AI feature settings
+      const aiProofread = await getSetting("ai_proofread_enabled");
+      setAiProofreadEnabled(aiProofread !== "false");
+      const aiMeeting = await getSetting("ai_meeting_detection_enabled");
+      setAiMeetingDetectionEnabled(aiMeeting !== "false");
+      const aiDigest = await getSetting("ai_inbox_digest_enabled");
+      setAiInboxDigestEnabled(aiDigest !== "false");
+      const aiUrgency = await getSetting("ai_urgency_enabled");
+      setAiUrgencyEnabled(aiUrgency === "true");
+      const aiAutoTasks = await getSetting("ai_auto_tasks_enabled");
+      setAiAutoTasksEnabled(aiAutoTasks === "true");
+      const aiContactSum = await getSetting("ai_contact_summary_enabled");
+      setAiContactSummaryEnabled(aiContactSum !== "false");
+      const aiFilterSug = await getSetting("ai_filter_suggestions_enabled");
+      setAiFilterSuggestionsEnabled(aiFilterSug !== "false");
 
       // Load auto-archive categories
       const autoArchive = await getSetting("auto_archive_categories");
@@ -1948,6 +1972,82 @@ export function SettingsPage() {
                         </Button>
                       </div>
                     )}
+                  </Section>
+
+                  <Section title={t("ai.features.title")}>
+                    <p className="text-xs text-text-tertiary mb-3">
+                      {t("ai.features.description")}
+                    </p>
+                    <ToggleRow
+                      label={t("ai.features.proofread")}
+                      description={t("ai.features.proofreadDesc")}
+                      checked={aiProofreadEnabled}
+                      onToggle={async () => {
+                        const newVal = !aiProofreadEnabled;
+                        setAiProofreadEnabled(newVal);
+                        await setSetting("ai_proofread_enabled", newVal ? "true" : "false");
+                      }}
+                    />
+                    <ToggleRow
+                      label={t("ai.features.meeting")}
+                      description={t("ai.features.meetingDesc")}
+                      checked={aiMeetingDetectionEnabled}
+                      onToggle={async () => {
+                        const newVal = !aiMeetingDetectionEnabled;
+                        setAiMeetingDetectionEnabled(newVal);
+                        await setSetting("ai_meeting_detection_enabled", newVal ? "true" : "false");
+                      }}
+                    />
+                    <ToggleRow
+                      label={t("ai.features.digest")}
+                      description={t("ai.features.digestDesc")}
+                      checked={aiInboxDigestEnabled}
+                      onToggle={async () => {
+                        const newVal = !aiInboxDigestEnabled;
+                        setAiInboxDigestEnabled(newVal);
+                        await setSetting("ai_inbox_digest_enabled", newVal ? "true" : "false");
+                      }}
+                    />
+                    <ToggleRow
+                      label={t("ai.features.urgency")}
+                      description={t("ai.features.urgencyDesc")}
+                      checked={aiUrgencyEnabled}
+                      onToggle={async () => {
+                        const newVal = !aiUrgencyEnabled;
+                        setAiUrgencyEnabled(newVal);
+                        await setSetting("ai_urgency_enabled", newVal ? "true" : "false");
+                      }}
+                    />
+                    <ToggleRow
+                      label={t("ai.features.autoTasks")}
+                      description={t("ai.features.autoTasksDesc")}
+                      checked={aiAutoTasksEnabled}
+                      onToggle={async () => {
+                        const newVal = !aiAutoTasksEnabled;
+                        setAiAutoTasksEnabled(newVal);
+                        await setSetting("ai_auto_tasks_enabled", newVal ? "true" : "false");
+                      }}
+                    />
+                    <ToggleRow
+                      label={t("ai.features.contactSummary")}
+                      description={t("ai.features.contactSummaryDesc")}
+                      checked={aiContactSummaryEnabled}
+                      onToggle={async () => {
+                        const newVal = !aiContactSummaryEnabled;
+                        setAiContactSummaryEnabled(newVal);
+                        await setSetting("ai_contact_summary_enabled", newVal ? "true" : "false");
+                      }}
+                    />
+                    <ToggleRow
+                      label={t("ai.features.filterSuggestions")}
+                      description={t("ai.features.filterSuggestionsDesc")}
+                      checked={aiFilterSuggestionsEnabled}
+                      onToggle={async () => {
+                        const newVal = !aiFilterSuggestionsEnabled;
+                        setAiFilterSuggestionsEnabled(newVal);
+                        await setSetting("ai_filter_suggestions_enabled", newVal ? "true" : "false");
+                      }}
+                    />
                   </Section>
 
                   <Section title="Categories">

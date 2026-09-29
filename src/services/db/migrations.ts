@@ -945,6 +945,11 @@ export const MIGRATIONS = [
       ALTER TABLE attachments ADD COLUMN extraction_error TEXT;
     `,
   },
+  {
+    version: 36,
+    description: "Add ai_urgency column for AI-based thread priority scoring",
+    sql: `ALTER TABLE threads ADD COLUMN ai_urgency TEXT;`,
+  },
 ];
 
 function isAlreadyAppliedSchemaError(message: string): boolean {
