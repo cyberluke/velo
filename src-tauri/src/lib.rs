@@ -11,6 +11,7 @@ mod files;
 mod imap;
 mod keychain;
 mod links;
+mod mcp;
 mod net;
 mod notifications;
 mod oauth;
@@ -73,8 +74,11 @@ const PREVIOUS_IDENTIFIER: &str = "com.anydaysomething.\x76elopro";
 /// before the SQL plugin opens anything, and it is a rename rather than a
 /// copy — the same volume, so it costs nothing however large the mailbox is.
 ///
-/// It only ever moves a directory *into* a name that does not exist yet, so a
-/// second run, or a fresh install that never had the old name, does nothing.
+/// Every identifier the app carried before the current one is moved over;
+/// a rename that only changed the suffix keeps the chain intact for the next
+/// one. It only ever moves a directory *into* a name that does not exist yet,
+/// so a second run, or a fresh install that never had the old name, does
+/// nothing.
 #[cfg(any(target_os = "macos", target_os = "linux"))]
 fn migrate_legacy_data_dir(identifier: &str) {
     let Some(home) = std::env::var_os("HOME").map(std::path::PathBuf::from) else {
@@ -202,6 +206,10 @@ pub fn run() {
             commands::imap_delta_check,
             commands::smtp_send_email,
             commands::smtp_test_connection,
+            mcp::mcp_start,
+            mcp::mcp_stop,
+            mcp::mcp_status,
+            mcp::mcp_respond,
         ])
         .setup(|app| {
             {
@@ -255,6 +263,16 @@ pub fn run() {
                             }
                         }
                         "quit" => {
+                            // Destroy the windows before exiting so WebView2
+                            // closes its controllers cleanly — exiting with
+                            // the webviews still alive is what surfaces the
+                            // benign "Chrome_WidgetWin_0" teardown noise on
+                            // Windows.
+                            for label in ["main", "splashscreen"] {
+                                if let Some(window) = app.get_webview_window(label) {
+                                    let _ = window.destroy();
+                                }
+                            }
                             app.exit(0);
                         }
                         _ => {}
@@ -307,6 +325,13 @@ pub fn run() {
 
                     let app_handle_quit = app_handle.clone();
                     if let Err(e) = tray.add_menu_item("Quit", move || {
+                        // Same clean teardown as the Windows/macOS tray: close
+                        // the webviews first so WebView2 exits without noise.
+                        for label in ["main", "splashscreen"] {
+                            if let Some(window) = app_handle_quit.get_webview_window(label) {
+                                let _ = window.destroy();
+                            }
+                        }
                         app_handle_quit.exit(0);
                     }) {
                         log::warn!("Failed to add tray menu item 'Quit': {e}");

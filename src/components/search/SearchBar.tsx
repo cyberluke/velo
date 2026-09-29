@@ -10,6 +10,8 @@ import { useActiveLabel } from "@/hooks/useRouteNavigation";
 import { useLabelStore } from "@/stores/labelStore";
 import { parseSearchQuery } from "@/services/search/searchParser";
 import { resolveQueryTokens } from "@/services/search/smartFolderQuery";
+import { looksLikeInvoiceQuery, useI18n } from "@/i18n";
+import { searchInvoices } from "@/services/search/invoiceSearch";
 
 const folderIds: Record<string, string[]> = {
   inbox: ["INBOX"],
@@ -44,6 +46,7 @@ function presetIsActive(query: string, token: string): boolean {
 }
 
 export function SearchBar() {
+  const { t } = useI18n();
   const searchQuery = useThreadStore((s) => s.searchQuery);
   const activeAccountId = useAccountStore((s) => s.activeAccountId);
   const unifiedInbox = useAccountStore((s) => s.unifiedInbox);
@@ -91,27 +94,39 @@ export function SearchBar() {
         const labelIds =
           folderIds[folder] ??
           (folder.startsWith("smart-folder:") ? [] : [folder]);
-        const hits = await searchMessages(
-          searchQuery,
-          unifiedInbox ? undefined : (activeAccountId ?? undefined),
-          500,
-          {
-            accountIds: accountKey ? accountKey.split(",") : [],
+        const accountIds = accountKey ? accountKey.split(",") : [];
+        const options = {
+          accountIds,
           labelIds,
           sort,
-            excludeSpamTrash:
-              folder !== "everywhere" &&
-              folder !== "spam" &&
-              folder !== "trash",
-            ...(scope === "current" && smartFolder
-              ? {
-                  savedQuery: parseSearchQuery(
-                    resolveQueryTokens(smartFolder.query),
-                  ),
-                }
-              : {}),
-          },
-        );
+          excludeSpamTrash:
+            folder !== "everywhere" &&
+            folder !== "spam" &&
+            folder !== "trash",
+          ...(scope === "current" && smartFolder
+            ? {
+                savedQuery: parseSearchQuery(
+                  resolveQueryTokens(smartFolder.query),
+                ),
+              }
+            : {}),
+        };
+        const hits = [
+          ...await searchMessages(
+            searchQuery,
+            unifiedInbox ? undefined : (activeAccountId ?? undefined),
+            500,
+            options,
+          ),
+        ];
+        if (looksLikeInvoiceQuery(searchQuery)) {
+          const extra = await searchInvoices(searchQuery, accountIds, 500);
+          const seen = new Set(hits.map((hit) => `${hit.account_id}:${hit.message_id}`));
+          for (const hit of extra) {
+            const key = `${hit.account_id}:${hit.message_id}`;
+            if (!seen.has(key)) hits.push(hit);
+          }
+        }
         if (!cancelled) {
           const matches = new Map<string, SearchMatch>();
           for (const hit of hits) {
@@ -209,12 +224,12 @@ export function SearchBar() {
         <input
           ref={inputRef}
           type="text"
-          aria-label="Search mail"
+          aria-label={t("search.aria")}
           value={searchQuery}
           onChange={(e) => handleChange(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder="Search... (from: to: has:attachment)"
-          className="w-full bg-bg-secondary/80 text-text-primary text-sm pl-9 pr-14 py-2.5 rounded-full shadow-[inset_0_1px_1px_rgba(80,66,50,0.06)] focus:bg-white focus:ring-2 focus:ring-accent/15 focus:outline-none placeholder:text-text-tertiary"
+          placeholder={t("search.placeholder")}
+          className="w-full bg-bg-secondary/80 text-text-primary text-sm pl-9 pr-14 py-2.5 rounded-md shadow-[inset_0_1px_1px_rgba(0,0,0,0.25)] focus:bg-bg-tertiary focus:ring-2 focus:ring-accent/25 focus:outline-none placeholder:text-text-tertiary"
         />
         {searchQuery && (
           <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
@@ -222,7 +237,7 @@ export function SearchBar() {
               <button
                 onClick={handleSaveAsSmartFolder}
                 className="text-text-tertiary hover:text-accent transition-colors"
-                title="Save as Smart Folder"
+                  title={t("search.saveFolder")}
               >
                 <FolderPlus size={14} />
               </button>

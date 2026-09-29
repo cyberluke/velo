@@ -209,7 +209,7 @@ Key tables (35 total): `accounts` (with `provider` "gmail_api"|"imap", IMAP/SMTP
 - **Tauri window config**: Custom titlebar — macOS uses `titleBarStyle: "Overlay"`, Windows/Linux removes decorations programmatically in Rust setup. 1200x800 default, 800x600 minimum. Splash screen: 400x300, no decorations, center, always on top
 - **Single instance**: `tauri-plugin-single-instance` must be first plugin registered. Forwards args for deep linking
 - **Minimize-to-tray**: Use `.on_window_event()` on the Builder, not `window.on_window_event()`
-- **Windows WebView2**: `Chrome_WidgetWin_0` error on close is benign — ignore it
+- **Windows WebView2**: a `Chrome_WidgetWin_0` teardown error is benign — ignore it. Quit from the tray destroys the windows before exiting so WebView2 closes cleanly; if the line still appears it is noise, not a crash
 - **Windows AUMID**: Set explicitly in Rust for proper notification identity (`com.anydaysomething.velopro`)
 - **OAuth (Gmail)**: Localhost server tries ports 17248-17251. PKCE flow, no client secret. Client ID stored in SQLite settings table, configured by user in Settings
 - **IMAP message IDs**: Format is `imap-{accountId}-{folder}-{uid}` — not the RFC Message-ID header

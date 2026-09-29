@@ -14,6 +14,11 @@ import {
   type NotificationBackend,
 } from "@/services/notifications/notificationManager";
 import { PROVIDER_MODELS, resolveModelId } from "@/services/ai/types";
+import { listLocalModels, type LocalModel } from "@/services/ai/localOpenAi";
+import { LOCALES, isLocale, setLocale, useI18n } from "@/i18n";
+import { DEFAULT_MCP_PORT } from "@/services/mcp/protocol";
+import { mcpEndpointLabel } from "@/services/mcp/tools";
+import { setMcpEnabled } from "@/services/mcp/server";
 import { FIX_NUMBER } from "@/constants/build";
 import { deleteAccount, updateAccountColor } from "@/services/db/accounts";
 import { ACCOUNT_COLORS, accountColor } from "@/constants/accountColors";
@@ -86,16 +91,16 @@ import appIcon from "@/assets/icon.png";
 import { AddAccount } from "@/components/accounts/AddAccount";
 import { refreshAfterAccountAdded } from "@/services/accounts/accountLifecycle";
 
-const tabs: { id: SettingsTab; label: string; icon: LucideIcon }[] = [
-  { id: "general", label: "General", icon: Settings },
-  { id: "notifications", label: "Notifications", icon: Bell },
-  { id: "composing", label: "Composing", icon: PenLine },
-  { id: "mail-rules", label: "Mail Rules", icon: Filter },
-  { id: "people", label: "People", icon: Users },
-  { id: "accounts", label: "Accounts", icon: UserCircle },
-  { id: "shortcuts", label: "Shortcuts", icon: Keyboard },
-  { id: "ai", label: "AI", icon: Sparkles },
-  { id: "about", label: "About", icon: Info },
+const tabs: { id: SettingsTab; icon: LucideIcon }[] = [
+  { id: "general", icon: Settings },
+  { id: "notifications", icon: Bell },
+  { id: "composing", icon: PenLine },
+  { id: "mail-rules", icon: Filter },
+  { id: "people", icon: Users },
+  { id: "accounts", icon: UserCircle },
+  { id: "shortcuts", icon: Keyboard },
+  { id: "ai", icon: Sparkles },
+  { id: "about", icon: Info },
 ];
 
 export function SettingsPage() {
@@ -166,7 +171,13 @@ export function SettingsPage() {
   const [geminiApiKey, setGeminiApiKey] = useState("");
   const [copilotApiKey, setCopilotApiKey] = useState("");
   const [ollamaServerUrl, setOllamaServerUrl] = useState("http://localhost:11434");
+  const [ollamaApiKey, setOllamaApiKey] = useState("");
   const [ollamaModel, setOllamaModel] = useState("llama3.2");
+  const [ollamaModels, setOllamaModels] = useState<LocalModel[]>([]);
+  const [ollamaModelsLoading, setOllamaModelsLoading] = useState(false);
+  const [mcpEnabled, setMcpEnabledState] = useState(true);
+  const [mcpEndpoint, setMcpEndpoint] = useState(`http://127.0.0.1:${DEFAULT_MCP_PORT}/mcp`);
+  const { locale, t } = useI18n();
   const [claudeModel, setClaudeModel] = useState("claude-haiku-4-5-20251001");
   const [openaiModel, setOpenaiModel] = useState("gpt-4o-mini");
   const [geminiModel, setGeminiModel] = useState("gemini-3.8-flash");
@@ -257,6 +268,11 @@ export function SettingsPage() {
       if (ollamaUrl) setOllamaServerUrl(ollamaUrl);
       const ollamaModelVal = await getSetting("ollama_model");
       if (ollamaModelVal) setOllamaModel(ollamaModelVal);
+      const ollamaKey = await getSecureSetting("ollama_api_key");
+      setOllamaApiKey(ollamaKey ?? "");
+      const mcpOn = await getSetting("mcp_enabled");
+      setMcpEnabledState(mcpOn !== "false");
+      setMcpEndpoint(await mcpEndpointLabel());
       const claudeModelVal = await getSetting("claude_model");
       if (claudeModelVal) setClaudeModel(claudeModelVal);
       const openaiModelVal = await getSetting("openai_model");
@@ -494,15 +510,15 @@ export function SettingsPage() {
     <div className="flex flex-col h-full min-w-0 overflow-hidden bg-bg-primary/50">
       {/* Header */}
       <div className="flex items-center gap-3 px-5 py-3 border-b border-border-primary shrink-0 bg-bg-primary/60 backdrop-blur-sm">
-        <h1 className="text-base font-semibold text-text-primary">Settings</h1>
+        <h1 className="text-base font-semibold text-text-primary">{t("settings.title")}</h1>
         <kbd className="text-[0.625rem] text-text-tertiary bg-bg-tertiary px-1.5 py-0.5 rounded font-mono">
           {keyMap["app.settings"] ?? "Ctrl+,"}
         </kbd>
         <button
           onClick={closeSettings}
           className="ml-auto p-1.5 -mr-1 rounded-md text-text-secondary hover:text-text-primary hover:bg-bg-hover transition-colors"
-          title="Close settings (Esc)"
-          aria-label="Close settings"
+          title={`${t("settings.close")} (Esc)`}
+          aria-label={t("settings.close")}
         >
           <X size={18} />
         </button>
@@ -526,7 +542,7 @@ export function SettingsPage() {
                 }`}
               >
                 <Icon size={15} className="shrink-0" />
-                {tab.label}
+                {t(`settings.${tab.id}`)}
               </button>
             );
           })}
@@ -539,7 +555,7 @@ export function SettingsPage() {
             {activeTabDef && (
               <div className="mb-6">
                 <h2 className="text-lg font-semibold text-text-primary">
-                  {activeTabDef.label}
+                  {t(`settings.${activeTabDef.id}`)}
                 </h2>
               </div>
             )}
@@ -548,8 +564,24 @@ export function SettingsPage() {
         {activeTab === "general" && <SemanticSearchSettings />}
         {activeTab === "general" && (
                 <>
-                  <Section title="Appearance">
-                    <SettingRow label="Theme">
+                  <Section title={t("settings.appearance")}>
+                    <SettingRow label={t("settings.language")}>
+                      <select
+                        value={locale}
+                        onChange={(e) => {
+                          const next = e.target.value;
+                          if (!isLocale(next)) return;
+                          setLocale(next);
+                          setSetting("locale", next);
+                        }}
+                        className="w-48 bg-bg-tertiary text-text-primary text-sm px-3 py-1.5 rounded-md border border-border-primary focus:border-accent outline-none"
+                      >
+                        {LOCALES.map((item) => (
+                          <option key={item.id} value={item.id}>{item.label}</option>
+                        ))}
+                      </select>
+                    </SettingRow>
+                    <SettingRow label={t("settings.theme")}>
                       <select
                         value={theme}
                         onChange={(e) => {
@@ -559,9 +591,9 @@ export function SettingsPage() {
                         }}
                         className="w-48 bg-bg-tertiary text-text-primary text-sm px-3 py-1.5 rounded-md border border-border-primary focus:border-accent outline-none"
                       >
-                        <option value="system">System</option>
-                        <option value="light">Light</option>
-                        <option value="dark">Dark</option>
+                        <option value="system">{t("settings.theme.system")}</option>
+                        <option value="light">{t("settings.theme.light")}</option>
+                        <option value="dark">{t("settings.theme.dark")}</option>
                       </select>
                     </SettingRow>
                     <SettingRow label="Reading pane">
@@ -1559,28 +1591,67 @@ export function SettingsPage() {
                       {aiProvider === "claude" && `Uses ${PROVIDER_MODELS.claude.find((m) => m.id === claudeModel)?.label ?? claudeModel}.`}
                       {aiProvider === "openai" && `Uses ${PROVIDER_MODELS.openai.find((m) => m.id === openaiModel)?.label ?? openaiModel}.`}
                       {aiProvider === "gemini" && `Uses ${PROVIDER_MODELS.gemini.find((m) => m.id === geminiModel)?.label ?? geminiModel}.`}
-                      {aiProvider === "ollama" && "Connect to a local Ollama or LMStudio server. No API key required."}
+                      {aiProvider === "ollama" && t("ai.local.help")}
                       {aiProvider === "copilot" && `Uses ${PROVIDER_MODELS.copilot.find((m) => m.id === copilotModel)?.label ?? copilotModel}. Requires a GitHub PAT with models:read permission.`}
                     </p>
                   </Section>
 
                   {aiProvider === "ollama" ? (
-                    <Section title="Local Server">
+                    <Section title={t("ai.local.server")}>
                       <div className="space-y-3">
                         <TextField
-                          label="Server URL"
+                          label={t("ai.local.server")}
                           size="md"
                           value={ollamaServerUrl}
                           onChange={(e) => setOllamaServerUrl(e.target.value)}
                           placeholder="http://localhost:11434"
                         />
                         <TextField
-                          label="Model Name"
+                          label={t("ai.local.apiKey")}
                           size="md"
-                          value={ollamaModel}
-                          onChange={(e) => setOllamaModel(e.target.value)}
-                          placeholder="llama3.2"
+                          type="password"
+                          value={ollamaApiKey}
+                          onChange={(e) => setOllamaApiKey(e.target.value)}
+                          placeholder={t("ai.local.apiKey.placeholder")}
                         />
+                        <SettingRow label={t("ai.local.model")}>
+                          <div className="flex items-center gap-2">
+                            <select
+                              value={ollamaModel}
+                              onChange={(e) => setOllamaModel(e.target.value)}
+                              className="w-48 bg-bg-tertiary text-text-primary text-sm px-3 py-1.5 rounded-md border border-border-primary focus:border-accent outline-none"
+                            >
+                              {Array.from(new Set([ollamaModel, ...ollamaModels.map((m) => m.id)].filter(Boolean))).map((id) => (
+                                <option key={id} value={id}>{id}</option>
+                              ))}
+                            </select>
+                            <Button
+                              variant="secondary"
+                              size="md"
+                              onClick={async () => {
+                                setOllamaModelsLoading(true);
+                                try {
+                                  const models = await listLocalModels(ollamaServerUrl, ollamaApiKey);
+                                  setOllamaModels(models);
+                                  if (models[0] && !models.some((m) => m.id === ollamaModel)) {
+                                    setOllamaModel(models[0].id);
+                                  }
+                                } catch (err) {
+                                  reportError(t("ai.failed"), err);
+                                } finally {
+                                  setOllamaModelsLoading(false);
+                                }
+                              }}
+                              disabled={!ollamaServerUrl.trim() || ollamaModelsLoading}
+                              className="bg-bg-tertiary text-text-primary border border-border-primary"
+                            >
+                              {ollamaModelsLoading ? t("ai.local.refreshing") : t("ai.local.refresh")}
+                            </Button>
+                          </div>
+                        </SettingRow>
+                        {ollamaModels.length === 0 && (
+                          <p className="text-xs text-text-tertiary">{t("ai.local.noModels")}</p>
+                        )}
                         <div className="flex items-center gap-2">
                           <Button
                             variant="primary"
@@ -1588,6 +1659,9 @@ export function SettingsPage() {
                             onClick={async () => {
                               await setSetting("ollama_server_url", ollamaServerUrl.trim());
                               await setSetting("ollama_model", ollamaModel.trim());
+                              if (ollamaApiKey.trim()) {
+                                await setSecureSetting("ollama_api_key", ollamaApiKey.trim());
+                              }
                               const { clearProviderClients } = await import("@/services/ai/providerManager");
                               clearProviderClients();
                               setAiKeySaved(true);
@@ -1595,7 +1669,7 @@ export function SettingsPage() {
                             }}
                             disabled={!ollamaServerUrl.trim() || !ollamaModel.trim()}
                           >
-                            {aiKeySaved ? "Saved!" : "Save"}
+                            {aiKeySaved ? t("ai.saved") : t("ai.save")}
                           </Button>
                           <Button
                             variant="secondary"
@@ -1604,6 +1678,13 @@ export function SettingsPage() {
                               setAiTesting(true);
                               setAiTestResult(null);
                               try {
+                                await setSetting("ollama_server_url", ollamaServerUrl.trim());
+                                await setSetting("ollama_model", ollamaModel.trim());
+                                if (ollamaApiKey.trim()) {
+                                  await setSecureSetting("ollama_api_key", ollamaApiKey.trim());
+                                }
+                                const { clearProviderClients } = await import("@/services/ai/providerManager");
+                                clearProviderClients();
                                 const { testConnection } = await import("@/services/ai/aiService");
                                 const ok = await testConnection();
                                 setAiTestResult(ok ? "success" : "fail");
@@ -1616,13 +1697,13 @@ export function SettingsPage() {
                             disabled={!ollamaServerUrl.trim() || !ollamaModel.trim() || aiTesting}
                             className="bg-bg-tertiary text-text-primary border border-border-primary"
                           >
-                            {aiTesting ? "Testing..." : "Test Connection"}
+                            {aiTesting ? t("ai.testing") : t("ai.test")}
                           </Button>
                           {aiTestResult === "success" && (
-                            <span className="text-xs text-success">Connected!</span>
+                            <span className="text-xs text-success">{t("ai.connected")}</span>
                           )}
                           {aiTestResult === "fail" && (
-                            <span className="text-xs text-danger">Connection failed</span>
+                            <span className="text-xs text-danger">{t("ai.failed")}</span>
                           )}
                         </div>
                       </div>
@@ -1758,6 +1839,25 @@ export function SettingsPage() {
                       </div>
                     </Section>
                   )}
+
+                  <Section title={t("mcp.title")}>
+                    <p className="text-xs text-text-tertiary mb-3">{t("mcp.description")}</p>
+                    <ToggleRow
+                      label={t("mcp.enabled")}
+                      description={t("invoice.termsHint")}
+                      checked={mcpEnabled}
+                      onToggle={async () => {
+                        const next = !mcpEnabled;
+                        setMcpEnabledState(next);
+                        await setSetting("mcp_enabled", next ? "true" : "false");
+                        const endpoint = await setMcpEnabled(next);
+                        setMcpEndpoint(endpoint);
+                      }}
+                    />
+                    <SettingRow label={t("mcp.endpoint")}>
+                      <code className="text-xs text-accent bg-bg-tertiary px-2 py-1 rounded-md">{mcpEndpoint}</code>
+                    </SettingRow>
+                  </Section>
 
                   <Section title="Features">
                     <ToggleRow

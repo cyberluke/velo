@@ -4,8 +4,10 @@ import { useLinkedAccountId, useSelectedThreadId } from "@/hooks/useRouteNavigat
 import { EmptyState } from "../ui/EmptyState";
 import { ReadingPaneIllustration } from "../ui/illustrations";
 import { ErrorBoundary } from "../ui/ErrorBoundary";
+import { useI18n } from "@/i18n";
 
 export function ReadingPane() {
+  const { t } = useI18n();
   const selectedThreadId = useSelectedThreadId();
   const linkedAccountId = useLinkedAccountId();
   // Falls back to the detached cache so a thread opened from the contact
@@ -20,14 +22,14 @@ export function ReadingPane() {
 
   if (!selectedThread) {
     return (
-      <div className="workspace-panel flex-1 flex flex-col bg-white glass-panel">
-        <EmptyState illustration={ReadingPaneIllustration} title="Velo" subtitle="Select an email to read" />
+      <div className="workspace-panel flex-1 flex flex-col bg-bg-primary glass-panel">
+        <EmptyState illustration={ReadingPaneIllustration} title={t("app.name")} subtitle={t("empty.selectEmail")} />
       </div>
     );
   }
 
   return (
-    <div className="workspace-panel flex-1 bg-white overflow-hidden glass-panel">
+    <div className="workspace-panel flex-1 bg-bg-primary overflow-hidden glass-panel">
       {/* Keyed so switching threads resets per-thread state — an open inline
           reply with text in it must not follow you to the next thread */}
       <ErrorBoundary key={`${selectedThread.accountId}:${selectedThread.id}`} name="Message">

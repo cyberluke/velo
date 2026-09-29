@@ -13,7 +13,8 @@ export async function updateBadgeCount(): Promise<void> {
     try {
       await getCurrentWindow().setBadgeCount(count > 0 ? count : undefined);
     } catch {
-      // badge count may not be supported on all platforms
+      // badge count may not be supported on all platforms,
+      // and a browser Vite tab has no Tauri window metadata
     }
 
     const tooltip = count > 0 ? `Velo Pro - ${count} unread` : "Velo Pro";

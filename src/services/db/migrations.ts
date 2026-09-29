@@ -268,7 +268,7 @@ export const MIGRATIONS = [
     sql: `
       -- Pin support
       ALTER TABLE threads ADD COLUMN is_pinned INTEGER DEFAULT 0;
-      CREATE INDEX idx_threads_pinned ON threads(account_id, is_pinned DESC, last_message_at DESC);
+      CREATE INDEX IF NOT EXISTS idx_threads_pinned ON threads(account_id, is_pinned DESC, last_message_at DESC);
 
       -- AI cache
       CREATE TABLE ai_cache (
@@ -280,7 +280,7 @@ export const MIGRATIONS = [
         created_at INTEGER DEFAULT (unixepoch()),
         UNIQUE(account_id, thread_id, type)
       );
-      CREATE INDEX idx_ai_cache_lookup ON ai_cache(account_id, thread_id, type);
+      CREATE INDEX IF NOT EXISTS idx_ai_cache_lookup ON ai_cache(account_id, thread_id, type);
 
       -- Thread categories (split inbox)
       CREATE TABLE thread_categories (
@@ -292,7 +292,7 @@ export const MIGRATIONS = [
         PRIMARY KEY (account_id, thread_id),
         FOREIGN KEY (account_id, thread_id) REFERENCES threads(account_id, id) ON DELETE CASCADE
       );
-      CREATE INDEX idx_thread_categories_cat ON thread_categories(account_id, category);
+      CREATE INDEX IF NOT EXISTS idx_thread_categories_cat ON thread_categories(account_id, category);
 
       -- Calendar events
       CREATE TABLE calendar_events (
@@ -312,7 +312,7 @@ export const MIGRATIONS = [
         updated_at INTEGER DEFAULT (unixepoch()),
         UNIQUE(account_id, google_event_id)
       );
-      CREATE INDEX idx_cal_events_time ON calendar_events(account_id, start_time, end_time);
+      CREATE INDEX IF NOT EXISTS idx_cal_events_time ON calendar_events(account_id, start_time, end_time);
 
       -- Contact enrichment
       ALTER TABLE contacts ADD COLUMN first_contacted_at INTEGER;
@@ -346,8 +346,8 @@ export const MIGRATIONS = [
         created_at INTEGER DEFAULT (unixepoch()),
         FOREIGN KEY (account_id, thread_id) REFERENCES threads(account_id, id) ON DELETE CASCADE
       );
-      CREATE INDEX idx_followup_status ON follow_up_reminders(status, remind_at);
-      CREATE INDEX idx_followup_thread ON follow_up_reminders(account_id, thread_id);
+      CREATE INDEX IF NOT EXISTS idx_followup_status ON follow_up_reminders(status, remind_at);
+      CREATE INDEX IF NOT EXISTS idx_followup_thread ON follow_up_reminders(account_id, thread_id);
 
       -- VIP notification senders (Feature 2)
       CREATE TABLE IF NOT EXISTS notification_vips (
@@ -358,7 +358,7 @@ export const MIGRATIONS = [
         created_at INTEGER DEFAULT (unixepoch()),
         UNIQUE(account_id, email_address)
       );
-      CREATE INDEX idx_notification_vips ON notification_vips(account_id, email_address);
+      CREATE INDEX IF NOT EXISTS idx_notification_vips ON notification_vips(account_id, email_address);
 
       -- Unsubscribe tracking (Feature 3)
       CREATE TABLE IF NOT EXISTS unsubscribe_actions (
@@ -374,7 +374,7 @@ export const MIGRATIONS = [
         created_at INTEGER DEFAULT (unixepoch()),
         UNIQUE(account_id, from_address)
       );
-      CREATE INDEX idx_unsub_account ON unsubscribe_actions(account_id, status);
+      CREATE INDEX IF NOT EXISTS idx_unsub_account ON unsubscribe_actions(account_id, status);
 
       -- Bundle rules (Feature 4)
       CREATE TABLE IF NOT EXISTS bundle_rules (
@@ -388,7 +388,7 @@ export const MIGRATIONS = [
         created_at INTEGER DEFAULT (unixepoch()),
         UNIQUE(account_id, category)
       );
-      CREATE INDEX idx_bundle_rules_account ON bundle_rules(account_id);
+      CREATE INDEX IF NOT EXISTS idx_bundle_rules_account ON bundle_rules(account_id);
 
       -- Held threads for delivery schedules (Feature 4)
       CREATE TABLE IF NOT EXISTS bundled_threads (
@@ -399,7 +399,7 @@ export const MIGRATIONS = [
         PRIMARY KEY (account_id, thread_id),
         FOREIGN KEY (account_id, thread_id) REFERENCES threads(account_id, id) ON DELETE CASCADE
       );
-      CREATE INDEX idx_bundled_held ON bundled_threads(held_until);
+      CREATE INDEX IF NOT EXISTS idx_bundled_held ON bundled_threads(held_until);
 
       -- List-Unsubscribe-Post header (Feature 3)
       ALTER TABLE messages ADD COLUMN list_unsubscribe_post TEXT;
@@ -429,7 +429,7 @@ export const MIGRATIONS = [
         created_at INTEGER DEFAULT (unixepoch()),
         UNIQUE(account_id, email)
       );
-      CREATE INDEX idx_send_as_account ON send_as_aliases(account_id);
+      CREATE INDEX IF NOT EXISTS idx_send_as_account ON send_as_aliases(account_id);
     `,
   },
   {
@@ -448,7 +448,7 @@ export const MIGRATIONS = [
         created_at INTEGER DEFAULT (unixepoch()),
         FOREIGN KEY (account_id) REFERENCES accounts(id) ON DELETE CASCADE
       );
-      CREATE INDEX idx_smart_folders_account ON smart_folders(account_id);
+      CREATE INDEX IF NOT EXISTS idx_smart_folders_account ON smart_folders(account_id);
 
       INSERT INTO smart_folders (id, account_id, name, query, icon, sort_order, is_default) VALUES
         ('sf-unread', NULL, 'Unread', 'is:unread', 'MailOpen', 0, 1),
@@ -466,7 +466,7 @@ export const MIGRATIONS = [
     description: "Mute thread support",
     sql: `
       ALTER TABLE threads ADD COLUMN is_muted INTEGER DEFAULT 0;
-      CREATE INDEX idx_threads_muted ON threads(account_id, is_muted);
+      CREATE INDEX IF NOT EXISTS idx_threads_muted ON threads(account_id, is_muted);
     `,
   },
   {
@@ -511,7 +511,7 @@ export const MIGRATIONS = [
         sort_order INTEGER DEFAULT 0,
         created_at INTEGER DEFAULT (unixepoch())
       );
-      CREATE INDEX idx_quick_steps_account ON quick_steps(account_id);
+      CREATE INDEX IF NOT EXISTS idx_quick_steps_account ON quick_steps(account_id);
     `,
   },
   {
@@ -767,7 +767,7 @@ export const MIGRATIONS = [
         sort_order INTEGER DEFAULT 0,
         created_at INTEGER DEFAULT (unixepoch())
       );
-      CREATE INDEX idx_smart_label_rules_account ON smart_label_rules(account_id);
+      CREATE INDEX IF NOT EXISTS idx_smart_label_rules_account ON smart_label_rules(account_id);
     `,
   },
   {
@@ -934,6 +934,17 @@ export const MIGRATIONS = [
       CREATE INDEX IF NOT EXISTS idx_meeting_records_event ON meeting_records(event_id);
     `,
   },
+  {
+    version: 35,
+    description: "Record attachment text extraction status so it is visible and runs once",
+    sql: `
+      -- When extraction was attempted and, on failure, why. The UI shows a
+      -- badge from these columns, and the extractor skips rows that already
+      -- carry an outcome instead of refetching the file on every sync.
+      ALTER TABLE attachments ADD COLUMN extracted_at INTEGER;
+      ALTER TABLE attachments ADD COLUMN extraction_error TEXT;
+    `,
+  },
 ];
 
 function isAlreadyAppliedSchemaError(message: string): boolean {
@@ -1053,18 +1064,11 @@ export async function runMigrations(): Promise<void> {
   );
   const appliedVersions = new Set(applied.map((r) => r.version));
 
-  // Repair: if migration 18 is marked applied but tasks table is missing,
-  // remove the stale record so it re-runs
-  if (appliedVersions.has(18)) {
-    const tables = await db.select<{ name: string }[]>(
-      "SELECT name FROM sqlite_master WHERE type='table' AND name='tasks'",
-    );
-    if (tables.length === 0) {
-      console.warn("Migration v18 marked applied but tasks table missing — re-running");
-      await db.execute("DELETE FROM _migrations WHERE version = 18");
-      appliedVersions.delete(18);
-    }
-  }
+  // Repair: if a version is marked applied but its table never landed
+  // (a previous half-applied run rolled back after recording, or a
+  // later statement failed), drop the stale record so it re-runs.
+  await requeueIfTableMissing(db, appliedVersions, 6, "follow_up_reminders");
+  await requeueIfTableMissing(db, appliedVersions, 18, "tasks");
 
   // Run pending migrations
   for (const migration of MIGRATIONS) {
@@ -1087,8 +1091,8 @@ export async function runMigrations(): Promise<void> {
           // Tolerate "duplicate column" errors from ALTER TABLE ADD COLUMN
           // in case a migration was partially applied previously
           const msg = err instanceof Error ? err.message : String(err);
-          if (msg.includes("duplicate column")) {
-            console.warn(`Skipping duplicate column in v${migration.version}: ${msg}`);
+          if (isAlreadyAppliedSchemaError(msg)) {
+            console.warn(`Skipping already-applied object in v${migration.version}: ${msg}`);
           } else {
             throw err;
           }

@@ -869,10 +869,11 @@ export const HELP_CATEGORIES: HelpCategory[] = [
         title: "AI overview",
         summary: "Choose your AI provider and bring your own key.",
         description:
-          "The app supports three AI providers: Anthropic Claude, OpenAI GPT, and Google Gemini. You bring your own API key, which means your email data is sent directly to the provider's API — there's no middleman or third-party server involved. API keys are stored securely in your local database. AI features include thread summaries, smart replies, compose assistance, text transformation, and natural language inbox queries. You can enable or disable AI features globally, and choose which provider to use.",
+          "The app supports Claude, OpenAI, Gemini, GitHub Copilot, and a local OpenAI-compatible server (Ollama, LM Studio, vLLM). Local AI can take an optional API key and fetches the live model list from /v1/models. Cloud keys stay on this device. AI features include thread summaries, smart replies, compose assistance, text transformation, and natural language inbox queries.",
         tips: [
           { text: "Add your API key in Settings > AI." },
-          { text: "Supported providers: Claude, OpenAI, and Gemini." },
+          { text: "Local AI: set the server URL, optional key, then Fetch models." },
+          { text: "Supported providers: Claude, OpenAI, Gemini, Copilot, and Local AI." },
           {
             text: "Choose which model to use for each provider in Settings (e.g., Claude Haiku 4.5, GPT-4o Mini, Gemini 3.8 Flash).",
           },
@@ -880,6 +881,21 @@ export const HELP_CATEGORIES: HelpCategory[] = [
           { text: "API keys are stored securely in your local database." },
           { text: "AI results are cached locally to reduce API calls." },
           { text: "Disable AI globally with one toggle in Settings." },
+          { text: "Enable the local MCP endpoint so another agent can search mail and calendar." },
+        ],
+        relatedSettingsTab: "ai",
+      },
+      {
+        id: "agent-protocol",
+        icon: Server,
+        title: "Agent protocol",
+        summary: "Let another AI agent search mail, invoices, and calendar.",
+        description:
+          "Settings > AI can start a local MCP server on 127.0.0.1. Another agent can call search_emails, search_invoices, get_email, search_calendar, and list_calendar. Invoice search reads subjects, bodies, PDF filenames, and extracted attachment text, and also matches Czech faktura / faktury, Slovak faktúra, and Vietnamese hóa đơn. The UI language can be English, Czech, Slovak, or Vietnamese.",
+        tips: [
+          { text: "Default endpoint: http://127.0.0.1:17321/mcp" },
+          { text: "Example: fetch all invoices from last year — also try faktury." },
+          { text: "Change language in Settings > General." },
         ],
         relatedSettingsTab: "ai",
       },
@@ -1457,7 +1473,7 @@ export const CONTEXTUAL_TIPS: Record<string, ContextualTip> = {
   },
   "ai-provider": {
     title: "AI provider",
-    body: "Choose between Claude, OpenAI, or Gemini. Bring your own API key — your data is sent directly to the provider, never through a middleman.",
+    body: "Choose Claude, OpenAI, Gemini, Copilot, or a local OpenAI-compatible server. Local AI can use an API key and a fetched model list.",
     helpTopic: "ai-features",
   },
   "search-operators": {

@@ -329,8 +329,9 @@ async function storeThreadsAndMessages(
           });
 
           for (const att of parsed.attachments) {
+            const attachmentId = `${parsed.id}_${att.gmailAttachmentId}`;
             await upsertAttachment({
-              id: `${parsed.id}_${att.gmailAttachmentId}`,
+              id: attachmentId,
               messageId: parsed.id,
               accountId,
               filename: att.filename,
@@ -340,6 +341,17 @@ async function storeThreadsAndMessages(
               contentId: att.contentId,
               isInline: att.isInline,
             });
+            void import("@/services/attachments/extractText").then(({ extractAttachmentText }) =>
+              extractAttachmentText({
+                id: attachmentId,
+                accountId,
+                messageId: parsed.id,
+                gmailAttachmentId: att.gmailAttachmentId,
+                filename: att.filename,
+                mimeType: att.mimeType,
+                size: att.size,
+              }),
+            );
           }
 
           storedMessages.push(parsed);
@@ -608,8 +620,9 @@ export async function imapInitialSync(
 
               // Store attachments
               for (const att of parsed.attachments) {
+                const attachmentId = `${parsed.id}_${att.gmailAttachmentId}`;
                 await upsertAttachment({
-                  id: `${parsed.id}_${att.gmailAttachmentId}`,
+                  id: attachmentId,
                   messageId: parsed.id,
                   accountId,
                   filename: att.filename,
@@ -619,6 +632,17 @@ export async function imapInitialSync(
                   contentId: att.contentId,
                   isInline: att.isInline,
                 });
+                void import("@/services/attachments/extractText").then(({ extractAttachmentText }) =>
+                  extractAttachmentText({
+                    id: attachmentId,
+                    accountId,
+                    messageId: parsed.id,
+                    gmailAttachmentId: att.gmailAttachmentId,
+                    filename: att.filename,
+                    mimeType: att.mimeType,
+                    size: att.size,
+                  }),
+                );
               }
             }
           });

@@ -4,6 +4,9 @@ import { useThreadStore } from "@/stores/threadStore";
 import { searchMessages } from "@/services/db/search";
 
 vi.mock("@/services/db/search", () => ({ searchMessages: vi.fn() }));
+vi.mock("@/services/search/invoiceSearch", () => ({
+  searchInvoices: vi.fn(async () => []),
+}));
 vi.mock("@/hooks/useRouteNavigation", () => ({
   useActiveLabel: () => "inbox",
 }));
@@ -84,7 +87,7 @@ describe("SearchBar", () => {
     await act(async () => {
       await vi.advanceTimersByTimeAsync(250);
     });
-    expect(searchMessages).toHaveBeenLastCalledWith(
+    expect(searchMessages).toHaveBeenCalledWith(
       "invoice",
       "a",
       500,
@@ -94,7 +97,7 @@ describe("SearchBar", () => {
     await act(async () => {
       await vi.advanceTimersByTimeAsync(250);
     });
-    expect(searchMessages).toHaveBeenLastCalledWith(
+    expect(searchMessages).toHaveBeenCalledWith(
       "invoice",
       "a",
       500,

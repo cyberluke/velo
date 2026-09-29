@@ -42,6 +42,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { useTaskStore } from "@/stores/taskStore";
+import { useI18n } from "@/i18n";
 
 interface SidebarProps {
   collapsed: boolean;
@@ -365,6 +366,7 @@ export function Sidebar({ collapsed }: SidebarProps) {
   }, [openMenu]);
 
   const editingLabel = editingLabelId ? labels.find((l) => l.id === editingLabelId) ?? null : null;
+  const { t } = useI18n();
 
   return (
     <aside
@@ -396,7 +398,7 @@ export function Sidebar({ collapsed }: SidebarProps) {
                   }
                 }}
                 onContextMenu={(e) => handleNavContextMenu(e, item.id)}
-                title={collapsed ? item.label : undefined}
+                title={collapsed ? t(`nav.${item.id}`) : undefined}
               >
                 {() => (
                   <>
@@ -406,7 +408,7 @@ export function Sidebar({ collapsed }: SidebarProps) {
                       <Icon size={18} className="shrink-0" />
                     )}
                     {!collapsed && (
-                      <span className="flex-1 truncate">{item.label}</span>
+                        <span className="flex-1 truncate">{t(`nav.${item.id}`)}</span>
                     )}
                     {item.id === "tasks" && taskIncompleteCount > 0 && !collapsed && (
                       <span className="text-[0.625rem] bg-accent/15 text-accent px-1.5 rounded-full leading-normal">
@@ -460,7 +462,7 @@ export function Sidebar({ collapsed }: SidebarProps) {
                         }`}
                       >
                         <CatIcon size={14} className="shrink-0" />
-                        <span className="flex-1 truncate">{cat.label}</span>
+                        <span className="flex-1 truncate">{t(`nav.${cat.id.toLowerCase()}`)}</span>
                       </button>
                     );
                   })}
@@ -476,7 +478,7 @@ export function Sidebar({ collapsed }: SidebarProps) {
             {!collapsed && (
               <div className="flex items-center justify-between px-3 pt-4 pb-1">
                 <span className="text-xs font-medium text-sidebar-text/60 uppercase tracking-wider">
-                  Smart Folders
+                  {t("nav.smart-folders")}
                 </span>
                 <button
                   onClick={handleAddSmartFolder}
@@ -532,7 +534,7 @@ export function Sidebar({ collapsed }: SidebarProps) {
             {!collapsed && (
               <div className="flex items-center justify-between px-3 pt-4 pb-1">
                 <span className="text-xs font-medium text-sidebar-text/60 uppercase tracking-wider">
-                  Labels
+                  {t("nav.labels")}
                 </span>
                 <button
                   onClick={handleAddLabel}
@@ -632,10 +634,10 @@ export function Sidebar({ collapsed }: SidebarProps) {
               ? "bg-accent/10 text-accent font-medium"
               : "text-sidebar-text hover:bg-sidebar-hover"
           }`}
-          title="Settings (Ctrl+,)"
+          title={`${t("nav.settings")} (Ctrl+,)`}
         >
           <Settings size={18} className="shrink-0" />
-          {!collapsed && <span>Settings</span>}
+          {!collapsed && <span>{t("nav.settings")}</span>}
         </button>
         <button
           onClick={() => navigateToLabel("help")}
@@ -646,7 +648,7 @@ export function Sidebar({ collapsed }: SidebarProps) {
               ? "bg-accent/10 text-accent font-medium"
               : "text-sidebar-text hover:bg-sidebar-hover"
           }`}
-          title="Help"
+          title={t("nav.help")}
         >
           <HelpCircle size={18} className="shrink-0" />
         </button>

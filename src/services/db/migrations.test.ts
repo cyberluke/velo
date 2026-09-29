@@ -1,44 +1,5 @@
 import { describe, it, expect } from "vitest";
-
-// Mirror of splitStatements from migrations.ts for testing
-function splitStatements(sql: string): string[] {
-  const statements: string[] = [];
-  let current = "";
-  let depth = 0;
-  const upper = sql.toUpperCase();
-
-  for (let i = 0; i < sql.length; i++) {
-    if (
-      upper.startsWith("BEGIN", i) &&
-      (i === 0 || /\W/.test(sql[i - 1]!)) &&
-      (i + 5 >= sql.length || /\W/.test(sql[i + 5]!))
-    ) {
-      depth++;
-    }
-
-    if (
-      upper.startsWith("END", i) &&
-      (i === 0 || /\W/.test(sql[i - 1]!)) &&
-      (i + 3 >= sql.length || /\W/.test(sql[i + 3]!)) &&
-      depth > 0
-    ) {
-      depth--;
-    }
-
-    if (sql[i] === ";" && depth === 0) {
-      const trimmed = current.trim();
-      if (trimmed.length > 0) statements.push(trimmed);
-      current = "";
-    } else {
-      current += sql[i];
-    }
-  }
-
-  const trimmed = current.trim();
-  if (trimmed.length > 0) statements.push(trimmed);
-
-  return statements;
-}
+import { MIGRATIONS, splitStatements } from "./migrations";
 
 describe("splitStatements", () => {
   it("splits simple statements", () => {
@@ -102,5 +63,16 @@ describe("splitStatements", () => {
     const sql = "CREATE TABLE backend (id INT); CREATE TABLE foo (id INT);";
     const result = splitStatements(sql);
     expect(result).toHaveLength(2);
+  });
+});
+
+describe("migration indexes", () => {
+  it("creates every index with IF NOT EXISTS so a half-applied version can finish", () => {
+    const bare = MIGRATIONS.flatMap((migration) =>
+      splitStatements(migration.sql).filter((statement) =>
+        /^\s*CREATE\s+INDEX\s+(?!IF\s+NOT\s+EXISTS)/i.test(statement),
+      ),
+    );
+    expect(bare).toEqual([]);
   });
 });

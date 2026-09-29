@@ -23,6 +23,7 @@ import { useComposerStore } from "@/stores/composerStore";
 import { getMessagesForThread } from "@/services/db/messages";
 import { getSmartFolderSearchQuery, mapSmartFolderRows, type SmartFolderRow } from "@/services/search/smartFolderQuery";
 import { getDb } from "@/services/db/connection";
+import { useI18n } from "@/i18n";
 import { Archive, Trash2, X, Ban, Filter, ChevronRight, Package, FolderSearch, UserSearch, MailMinus, Check, AlertCircle, Merge } from "lucide-react";
 import { getLabelsForThreadPage } from "@/services/db/threads";
 import { EmptyState } from "../ui/EmptyState";
@@ -749,7 +750,7 @@ export function EmailList({ width, listRef }: { width?: number; listRef?: React.
   return (
     <div
       ref={listRef}
-      className={`workspace-panel flex flex-col bg-white glass-panel ${
+      className={`workspace-panel flex flex-col bg-bg-primary glass-panel ${
         readingPanePosition === "right"
           ? "min-w-[240px] shrink-0"
           : readingPanePosition === "bottom"
@@ -832,7 +833,7 @@ export function EmailList({ width, listRef }: { width?: number; listRef?: React.
               onClick={() => setInboxFocus("all")}
               aria-pressed={inboxFocus === "all"}
               className={`rounded-full px-2.5 py-1 text-xs font-medium transition-colors ${
-                inboxFocus === "all" ? "bg-white text-text-primary shadow-sm" : "text-text-tertiary hover:text-text-secondary"
+                inboxFocus === "all" ? "bg-bg-secondary text-text-primary shadow-sm" : "text-text-tertiary hover:text-text-secondary"
               }`}
             >
               All
@@ -841,7 +842,7 @@ export function EmailList({ width, listRef }: { width?: number; listRef?: React.
               onClick={() => setInboxFocus("important")}
               aria-pressed={inboxFocus === "important"}
               className={`rounded-full px-2.5 py-1 text-xs font-medium transition-colors ${
-                inboxFocus === "important" ? "bg-white text-text-primary shadow-sm" : "text-text-tertiary hover:text-text-secondary"
+                inboxFocus === "important" ? "bg-bg-secondary text-text-primary shadow-sm" : "text-text-tertiary hover:text-text-secondary"
               }`}
             >
               Important
@@ -1048,6 +1049,17 @@ export function EmailList({ width, listRef }: { width?: number; listRef?: React.
   );
 }
 
+function NoAccountEmptyState() {
+  const { t } = useI18n();
+  return (
+    <EmptyState
+      illustration={NoAccountIllustration}
+      title={t("empty.noAccount")}
+      subtitle={t("empty.addAccount")}
+    />
+  );
+}
+
 function EmptyStateForContext({
   searchQuery,
   activeAccountId,
@@ -1068,7 +1080,7 @@ function EmptyStateForContext({
     return <EmptyState icon={Filter} title={`No ${readFilter} emails`} subtitle="Try changing the filter" />;
   }
   if (!activeAccountId) {
-    return <EmptyState illustration={NoAccountIllustration} title="No account connected" subtitle="Add a Gmail account to get started" />;
+    return <NoAccountEmptyState />;
   }
 
   switch (activeLabel) {

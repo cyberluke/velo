@@ -7,7 +7,8 @@ import {
   type AttachmentRef,
 } from "@/services/attachments/attachmentActions";
 import { Modal } from "@/components/ui/Modal";
-import { Download, Eye, Check, ChevronLeft, ChevronRight } from "lucide-react";
+import { Tooltip } from "@/components/ui/Tooltip";
+import { Download, Eye, Check, ChevronLeft, ChevronRight, FileSearch, TriangleAlert } from "lucide-react";
 import { formatFileSize, isImage, isPdf, isText, canPreview, getFileIcon } from "@/utils/fileTypeHelpers";
 
 export function attachmentRef(accountId: string, att: DbAttachment): AttachmentRef {
@@ -178,6 +179,16 @@ export function AttachmentList({ accountId, attachments, referencedCids, onOpenA
                   <span className="text-text-tertiary whitespace-nowrap">
                     {formatFileSize(att.size)}
                   </span>
+                )}
+                {att.extracted_at != null && !att.extraction_error && (
+                  <Tooltip content="Text extracted — this file is findable in search">
+                    <FileSearch size={12} className="text-success/80 shrink-0" />
+                  </Tooltip>
+                )}
+                {att.extraction_error && (
+                  <Tooltip content={`Couldn't read text from this file: ${att.extraction_error}`}>
+                    <TriangleAlert size={12} className="text-warning shrink-0" />
+                  </Tooltip>
                 )}
               </button>
               <AttachmentSaveButton

@@ -129,7 +129,7 @@ export const ThreadCard = memo(function ThreadCard({ thread, isSelected, onClick
             ? "bg-accent/10 border-accent/10"
             : isSelected
               ? "bg-bg-selected border-accent/10 shadow-[0_8px_20px_rgba(79,70,229,0.08)]"
-              : "bg-white/30 hover:bg-white/75 hover:border-white/80 hover:shadow-[0_5px_16px_rgba(80,66,50,0.06)] dark:bg-white/[0.02] dark:hover:bg-white/[0.06]"
+              : "bg-bg-secondary/40 hover:bg-bg-hover hover:border-border-primary"
       } ${isSpam ? "bg-red-500/8 dark:bg-red-500/10" : ""}`}
     >
       {/* Which mailbox this belongs to — only ambiguous in the unified list */}

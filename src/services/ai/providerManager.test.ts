@@ -190,7 +190,20 @@ describe("providerManager", () => {
       });
 
       await getActiveProvider();
-      expect(createOllamaProvider).toHaveBeenCalledWith("http://localhost:11434", "llama3.2");
+      expect(createOllamaProvider).toHaveBeenCalledWith("http://localhost:11434", "llama3.2", "");
+    });
+
+    it("passes a stored local API key to the OpenAI-compatible client", async () => {
+      mockGetSetting.mockImplementation(async (key: string) => {
+        if (key === "ai_provider") return "ollama";
+        if (key === "ollama_server_url") return "http://localhost:1234";
+        if (key === "ollama_model") return "qwen2.5";
+        if (key === "ollama_api_key") return "sk-local";
+        return null;
+      });
+
+      await getActiveProvider();
+      expect(createOllamaProvider).toHaveBeenCalledWith("http://localhost:1234", "qwen2.5", "sk-local");
     });
 
     it("uses default ollama url and model when not configured", async () => {
@@ -200,7 +213,7 @@ describe("providerManager", () => {
       });
 
       await getActiveProvider();
-      expect(createOllamaProvider).toHaveBeenCalledWith("http://localhost:11434", "llama3.2");
+      expect(createOllamaProvider).toHaveBeenCalledWith("http://localhost:11434", "llama3.2", "");
     });
 
     it("throws NOT_CONFIGURED when API key is missing", async () => {

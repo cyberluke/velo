@@ -1,16 +1,18 @@
 import OpenAI from "openai";
 import { fetch } from "@tauri-apps/plugin-http";
 import type { AiProviderClient, AiCompletionRequest } from "../types";
+import { localApiKey, normalizeLocalBaseUrl } from "../localOpenAi";
 
 let instance: OpenAI | null = null;
 let cachedKey: string | null = null;
 
-function getClient(serverUrl: string, model: string): OpenAI {
-  const cacheKey = `${serverUrl}|${model}`;
+function getClient(serverUrl: string, model: string, apiKey?: string | null): OpenAI {
+  const resolvedKey = localApiKey(apiKey);
+  const cacheKey = `${serverUrl}|${model}|${resolvedKey}`;
   if (!instance || cachedKey !== cacheKey) {
     instance = new OpenAI({
-      baseURL: `${serverUrl.replace(/\/+$/, "")}/v1`,
-      apiKey: "ollama",
+      baseURL: normalizeLocalBaseUrl(serverUrl),
+      apiKey: resolvedKey,
       dangerouslyAllowBrowser: true,
       fetch,
     });
@@ -19,8 +21,12 @@ function getClient(serverUrl: string, model: string): OpenAI {
   return instance;
 }
 
-export function createOllamaProvider(serverUrl: string, model: string): AiProviderClient {
-  const client = getClient(serverUrl, model);
+export function createOllamaProvider(
+  serverUrl: string,
+  model: string,
+  apiKey?: string | null,
+): AiProviderClient {
+  const client = getClient(serverUrl, model, apiKey);
 
   return {
     async complete(req: AiCompletionRequest): Promise<string> {

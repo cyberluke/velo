@@ -34,6 +34,17 @@ describe("ollamaProvider", () => {
       });
     });
 
+    it("sends a real API key when one is configured", () => {
+      createOllamaProvider("http://localhost:1234", "gpt-oss", "sk-local");
+
+      expect(OpenAI).toHaveBeenCalledWith({
+        baseURL: "http://localhost:1234/v1",
+        apiKey: "sk-local",
+        dangerouslyAllowBrowser: true,
+        fetch: expect.any(Function),
+      });
+    });
+
     it("strips trailing slashes from server URL", () => {
       createOllamaProvider("http://localhost:11434///", "llama3.2");
 
@@ -118,6 +129,13 @@ describe("ollamaProvider", () => {
     it("creates new client when model changes", () => {
       createOllamaProvider("http://localhost:11434", "llama3.2");
       createOllamaProvider("http://localhost:11434", "mistral");
+
+      expect(OpenAI).toHaveBeenCalledTimes(2);
+    });
+
+    it("creates new client when the API key changes", () => {
+      createOllamaProvider("http://localhost:11434", "llama3.2", "one");
+      createOllamaProvider("http://localhost:11434", "llama3.2", "two");
 
       expect(OpenAI).toHaveBeenCalledTimes(2);
     });

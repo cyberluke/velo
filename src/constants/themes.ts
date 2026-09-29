@@ -27,21 +27,21 @@ export interface ColorTheme {
 export const COLOR_THEMES: ColorTheme[] = [
   {
     id: "indigo",
-    name: "Indigo",
-    swatch: "#4f46e5",
+    name: "Aurora",
+    swatch: "#a78bfa",
     light: {
-      accent: "#4f46e5",
-      accentHover: "#4338ca",
-      accentLight: "#e0e7ff",
-      bgSelected: "rgba(224, 231, 255, 0.65)",
-      sidebarActive: "#4f46e5",
+      accent: "#a78bfa",
+      accentHover: "#2dd4bf",
+      accentLight: "rgba(167, 139, 250, 0.16)",
+      bgSelected: "rgba(45, 212, 191, 0.16)",
+      sidebarActive: "#2dd4bf",
     },
     dark: {
-      accent: "#818cf8",
-      accentHover: "#6366f1",
-      accentLight: "#312e81",
-      bgSelected: "rgba(30, 58, 95, 0.55)",
-      sidebarActive: "#818cf8",
+      accent: "#c4b5fd",
+      accentHover: "#5eead4",
+      accentLight: "rgba(167, 139, 250, 0.22)",
+      bgSelected: "rgba(45, 212, 191, 0.18)",
+      sidebarActive: "#2dd4bf",
     },
   },
   {

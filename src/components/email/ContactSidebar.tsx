@@ -38,6 +38,8 @@ function toDbAttachment(att: ContactAttachment): DbAttachment {
     content_id: null,
     is_inline: 0,
     local_path: null,
+    extracted_at: null,
+    extraction_error: null,
   };
 }
 

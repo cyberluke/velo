@@ -152,9 +152,10 @@ async function processAndStoreThread(
       dispositionNotificationTo: parsed.dispositionNotificationTo,
     });
 
-    await Promise.all(parsed.attachments.map((att) =>
-      upsertAttachment({
-        id: `${parsed.id}_${att.gmailAttachmentId}`,
+    await Promise.all(parsed.attachments.map(async (att) => {
+      const id = `${parsed.id}_${att.gmailAttachmentId}`;
+      await upsertAttachment({
+        id,
         messageId: parsed.id,
         accountId,
         filename: att.filename,
@@ -163,8 +164,19 @@ async function processAndStoreThread(
         gmailAttachmentId: att.gmailAttachmentId,
         contentId: att.contentId,
         isInline: att.isInline,
-      }),
-    ));
+      });
+      void import("@/services/attachments/extractText").then(({ extractAttachmentText }) =>
+        extractAttachmentText({
+          id,
+          accountId,
+          messageId: parsed.id,
+          gmailAttachmentId: att.gmailAttachmentId,
+          filename: att.filename,
+          mimeType: att.mimeType,
+          size: att.size,
+        }),
+      );
+    }));
   }));
 
   // Rejoin conversations Gmail split — by the headers where they link, and by

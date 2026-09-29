@@ -11,7 +11,7 @@ describe("uiStore", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     useUIStore.setState({
-      theme: "system",
+      theme: "dark",
       sidebarCollapsed: false,
       readingPanePosition: "right",
       readFilter: "all",
@@ -25,7 +25,7 @@ describe("uiStore", () => {
 
   it("should have correct default values", () => {
     const state = useUIStore.getState();
-    expect(state.theme).toBe("system");
+    expect(state.theme).toBe("dark");
     expect(state.sidebarCollapsed).toBe(false);
     expect(state.readingPanePosition).toBe("right");
   });

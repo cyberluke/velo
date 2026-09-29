@@ -37,6 +37,21 @@ fn same_origin(a: &Url, b: &Url) -> bool {
         && a.port_or_known_default() == b.port_or_known_default()
 }
 
+/// The webview's own documents — first paint, splash, and in-app routing.
+///
+/// `on_navigation` also sees the window's initial load, when the current URL is
+/// still `about:blank` (or unknown). Treating that as a mail click cancelled
+/// `splashscreen.html` and left a black window in both `tauri dev` and the
+/// Windows release custom protocol (`https://tauri.localhost`).
+fn is_app_url(url: &Url) -> bool {
+    match (url.scheme(), url.host_str()) {
+        ("http", Some("localhost" | "127.0.0.1")) => url.port() == Some(1420),
+        ("http" | "https", Some("tauri.localhost")) => true,
+        ("tauri", Some("localhost" | "tauri.localhost")) => true,
+        _ => false,
+    }
+}
+
 pub fn allows_navigation(own: Option<&Url>, url: &Url) -> bool {
     // Use an app-origin path rather than a custom scheme. WebKit rejects an
     // unknown scheme before its navigation delegate, while this path reaches
@@ -44,24 +59,20 @@ pub fn allows_navigation(own: Option<&Url>, url: &Url) -> bool {
     if url.path().starts_with(EMAIL_ACTION_PREFIX) {
         return false;
     }
-    if !is_external_scheme(url) {
+    if !is_external_scheme(url) || is_app_url(url) {
         return true;
     }
-    if let Some(own) = own {
-        if same_origin(own, url) {
-            return true;
-        }
-    }
-    own.is_none()
-        && cfg!(debug_assertions)
-        && url.scheme() == "http"
-        && url.port() == Some(1420)
-        && matches!(url.host_str(), Some("localhost" | "127.0.0.1"))
+    own.is_some_and(|own| same_origin(own, url))
 }
 
 pub fn init<R: Runtime>() -> TauriPlugin<R> {
     Builder::new("email-links")
         .on_navigation(|webview: &Webview<R>, url: &Url| {
+            // Splash is static HTML with no mail frames. Never treat its first
+            // load — or any later navigation — as an email click.
+            if webview.label() == "splashscreen" {
+                return true;
+            }
             let own = webview.url().ok();
             if allows_navigation(own.as_ref(), url) {
                 return true;
@@ -131,5 +142,29 @@ mod tests {
         ));
         assert!(!allows_navigation(Some(&own), &u("https://example.com/")));
         assert!(!allows_navigation(Some(&own), &u("http://localhost:8080/")));
+    }
+
+    #[test]
+    fn allows_the_window_first_load_from_a_blank_webview() {
+        let blank = u("about:blank");
+        for own in [None, Some(&blank)] {
+            for target in [
+                "http://localhost:1420/splashscreen.html",
+                "http://127.0.0.1:1420/",
+                "https://tauri.localhost/splashscreen.html",
+                "http://tauri.localhost/index.html",
+                "tauri://localhost/splashscreen.html",
+            ] {
+                assert!(allows_navigation(own, &u(target)), "{target}");
+            }
+            assert!(
+                !allows_navigation(own, &u("https://example.com/")),
+                "external first load must stay blocked"
+            );
+            assert!(
+                !allows_navigation(own, &u("http://localhost:8080/")),
+                "unrelated localhost ports must stay blocked"
+            );
+        }
     }
 }

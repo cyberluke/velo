@@ -1,31 +1,31 @@
 @import "tailwindcss";
 
 @theme {
-  --color-bg-primary: rgba(255, 253, 249, 0.94);
-  --color-bg-secondary: rgba(248, 244, 238, 0.9);
-  --color-bg-tertiary: rgba(238, 232, 223, 0.84);
-  --color-bg-hover: rgba(235, 226, 216, 0.7);
-  --color-bg-selected: rgba(231, 232, 255, 0.8);
+  --color-bg-primary: #12141c;
+  --color-bg-secondary: #181b26;
+  --color-bg-tertiary: #222633;
+  --color-bg-hover: rgba(167, 139, 250, 0.12);
+  --color-bg-selected: rgba(45, 212, 191, 0.16);
 
-  --color-text-primary: #252029;
-  --color-text-secondary: #625b61;
-  --color-text-tertiary: #8a8080;
+  --color-text-primary: #f4f1ff;
+  --color-text-secondary: #c4bdd8;
+  --color-text-tertiary: #8b83a3;
 
-  --color-border-primary: rgba(0, 0, 0, 0.08);
-  --color-border-secondary: rgba(0, 0, 0, 0.04);
+  --color-border-primary: rgba(167, 139, 250, 0.18);
+  --color-border-secondary: rgba(45, 212, 191, 0.12);
 
-  --color-accent: #4f46e5;
-  --color-accent-hover: #4338ca;
-  --color-accent-light: #e0e7ff;
+  --color-accent: #a78bfa;
+  --color-accent-hover: #2dd4bf;
+  --color-accent-light: rgba(167, 139, 250, 0.16);
 
   --color-danger: #dc2626;
   --color-warning: #d97706;
   --color-success: #059669;
 
-  --color-sidebar-bg: rgba(249, 246, 241, 0.96);
-  --color-sidebar-text: #252029;
-  --color-sidebar-hover: rgba(235, 226, 216, 0.82);
-  --color-sidebar-active: #4f46e5;
+  --color-sidebar-bg: #0c0e16;
+  --color-sidebar-text: #ece7ff;
+  --color-sidebar-hover: rgba(167, 139, 250, 0.14);
+  --color-sidebar-active: #2dd4bf;
 
   --glass-blur: 20px;
   --glass-blur-heavy: 24px;
@@ -36,7 +36,7 @@
   --backdrop-blur-overlay: 16px;
 
   /* Flat window surface the translucent panel tokens sit on */
-  --color-app-bg: #eee9e2;
+  --color-app-bg: #07080d;
 }
 
 @custom-variant dark (&:where(.dark, .dark *));
@@ -45,33 +45,33 @@
  * Dark mode overrides — applied when <html class="dark">
  */
 .dark {
-  --color-bg-primary: rgba(15, 23, 42, 0.88);
-  --color-bg-secondary: rgba(30, 41, 59, 0.82);
-  --color-bg-tertiary: rgba(51, 65, 85, 0.78);
-  --color-bg-hover: rgba(51, 65, 85, 0.58);
-  --color-bg-selected: rgba(30, 58, 95, 0.68);
+  --color-bg-primary: #12141c;
+  --color-bg-secondary: #181b26;
+  --color-bg-tertiary: #222633;
+  --color-bg-hover: rgba(167, 139, 250, 0.14);
+  --color-bg-selected: rgba(45, 212, 191, 0.18);
 
-  --color-text-primary: #f8fafc;
-  --color-text-secondary: #cbd5e1;
-  --color-text-tertiary: #94a3b8;
+  --color-text-primary: #f4f1ff;
+  --color-text-secondary: #c4bdd8;
+  --color-text-tertiary: #8b83a3;
 
-  --color-border-primary: rgba(255, 255, 255, 0.1);
-  --color-border-secondary: rgba(255, 255, 255, 0.06);
+  --color-border-primary: rgba(167, 139, 250, 0.2);
+  --color-border-secondary: rgba(45, 212, 191, 0.14);
 
-  --color-accent: #818cf8;
-  --color-accent-hover: #6366f1;
-  --color-accent-light: #312e81;
+  --color-accent: #c4b5fd;
+  --color-accent-hover: #5eead4;
+  --color-accent-light: rgba(167, 139, 250, 0.22);
 
-  --color-sidebar-bg: rgba(15, 23, 42, 0.88);
-  --color-sidebar-text: #e2e8f0;
-  --color-sidebar-hover: rgba(30, 41, 59, 0.7);
+  --color-sidebar-bg: #0c0e16;
+  --color-sidebar-text: #ece7ff;
+  --color-sidebar-hover: rgba(167, 139, 250, 0.16);
 
-  --glass-border: rgba(255, 255, 255, 0.1);
-  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-  --glass-shadow-elevated: 0 16px 48px rgba(0, 0, 0, 0.3);
-  --glass-highlight: inset 0 1px 0 0 rgba(255, 255, 255, 0.06);
+  --glass-border: rgba(196, 181, 253, 0.16);
+  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
+  --glass-shadow-elevated: 0 16px 48px rgba(0, 0, 0, 0.55);
+  --glass-highlight: inset 0 1px 0 0 rgba(255, 255, 255, 0.04);
 
-  --color-app-bg: #0f172a;
+  --color-app-bg: #07080d;
 }
 
 /* Font scale — set on <html> like .dark */
@@ -91,8 +91,7 @@ body,
 
 body {
   font-family:
-    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue",
-    Arial, sans-serif;
+    "Segoe UI Variable", "Segoe UI", "Noto Sans", sans-serif;
   background: transparent;
   color: var(--color-text-primary);
   -webkit-font-smoothing: antialiased;
@@ -108,8 +107,8 @@ body {
 
 .workspace-panel {
   border: 0;
-  border-radius: 1.45rem;
-  box-shadow: 0 12px 34px rgba(19, 25, 33, 0.13), var(--glass-highlight);
+  border-radius: 0.5rem;
+  box-shadow: inset 0 0 0 1px rgba(167, 139, 250, 0.12);
 }
 
 .reference-sidebar {
@@ -122,7 +121,7 @@ body {
 }
 
 .canvas-shell {
-  background: color-mix(in srgb, #343c47 82%, var(--color-accent));
+  background: color-mix(in srgb, #0d1018 86%, var(--color-accent));
   box-shadow: none;
 }
 
@@ -141,19 +140,36 @@ body {
 }
 
 .app-workspace {
-  background: color-mix(in srgb, #343c47 82%, var(--color-accent));
-  box-shadow: 0 20px 60px rgba(9, 13, 18, 0.28);
+  background: color-mix(in srgb, #10131c 88%, var(--color-accent));
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
+  border: 1px solid rgba(167, 139, 250, 0.16);
 }
 
 .workspace-toolbar {
-  --color-sidebar-text: #eef0f7;
-  --color-sidebar-hover: rgba(255, 255, 255, 0.09);
-  background: color-mix(in srgb, #343c47 82%, var(--color-accent));
-  box-shadow: none;
+  --color-sidebar-text: #ece7ff;
+  --color-sidebar-hover: rgba(167, 139, 250, 0.14);
+  background: color-mix(in srgb, #0d1018 82%, var(--color-accent));
+  box-shadow: inset 0 -1px 0 rgba(167, 139, 250, 0.12);
 }
 
-.workspace-toolbar .window-light {
-  box-shadow: inset 0 0 0 1px rgba(18, 22, 30, 0.15), 0 1px 2px rgba(0, 0, 0, 0.15);
+.win-caption-btn {
+  display: inline-flex;
+  width: 2.875rem;
+  align-items: center;
+  justify-content: center;
+  color: #ece7ff;
+  background: transparent;
+  border: 0;
+  transition: background 120ms ease, color 120ms ease;
+}
+
+.win-caption-btn:hover {
+  background: rgba(196, 181, 253, 0.16);
+}
+
+.win-caption-close:hover {
+  background: #c42b1c;
+  color: #fff;
 }
 
 .toolbar-compose {
@@ -166,7 +182,7 @@ body {
 
 /* Dark themes use deliberately bright accents. Dark ink keeps every selected
    primary color readable when it is used as a control on the dark shell. */
-.dark .toolbar-compose { color: #18202c; }
+.dark .toolbar-compose { color: #07110f; }
 
 .toolbar-icon-button {
   display: inline-flex;
@@ -185,26 +201,10 @@ body {
 .workspace-toolbar .relative.p-2 { padding: 0; }
 .workspace-toolbar .relative.p-2 > button { padding: 0.35rem 0.45rem; }
 
-.window-light {
-  display: inline-flex;
-  height: 0.82rem;
-  width: 0.82rem;
-  align-items: center;
-  justify-content: center;
-  border-radius: 999px;
-  color: rgba(45, 36, 33, 0);
-  transition: transform 160ms ease, filter 160ms ease, color 160ms ease;
+.window-light,
+.win-caption-btn svg {
+  pointer-events: none;
 }
-
-.window-light:hover {
-  color: rgba(45, 36, 33, 0.74);
-  filter: saturate(1.15) brightness(.96);
-  transform: scale(1.08);
-}
-
-.window-light-close { background: #ff5f57; }
-.window-light-minimize { background: #febc2e; }
-.window-light-maximize { background: #28c840; }
 
 /* The message controls belong to the message, not a separate app header.
    They stay available as a slim utility rail beside the paper-like reading

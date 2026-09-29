@@ -11,6 +11,10 @@ export interface DbAttachment {
   content_id: string | null;
   is_inline: number;
   local_path: string | null;
+  /** When text extraction was attempted (success or failure). */
+  extracted_at: number | null;
+  /** Why extraction failed; NULL means it succeeded (or was never attempted). */
+  extraction_error: string | null;
 }
 
 /**
@@ -28,6 +32,46 @@ export async function getAttachmentsForThread(
      WHERE a.account_id = $1 AND m.thread_id = $2
      ORDER BY m.date ASC`,
     [accountId, threadId],
+  );
+}
+
+export interface AttachmentExtraction {
+  extracted_at: number | null;
+  extraction_error: string | null;
+}
+
+export async function getAttachmentExtraction(
+  id: string,
+): Promise<AttachmentExtraction | null> {
+  const db = await getDb();
+  const rows = await db.select<AttachmentExtraction[]>(
+    "SELECT extracted_at, extraction_error FROM attachments WHERE id = $1",
+    [id],
+  );
+  return rows[0] ?? null;
+}
+
+export async function setAttachmentExtracted(
+  id: string,
+  extractedText: string,
+  extractedAt: number,
+): Promise<void> {
+  const db = await getDb();
+  await db.execute(
+    "UPDATE attachments SET extracted_text = $1, extracted_at = $2, extraction_error = NULL WHERE id = $3",
+    [extractedText, extractedAt, id],
+  );
+}
+
+export async function setAttachmentExtractionError(
+  id: string,
+  message: string,
+  extractedAt: number,
+): Promise<void> {
+  const db = await getDb();
+  await db.execute(
+    "UPDATE attachments SET extracted_text = NULL, extracted_at = $2, extraction_error = $1 WHERE id = $3",
+    [message, extractedAt, id],
   );
 }
 
@@ -74,6 +118,8 @@ export interface AttachmentWithContext {
   content_id: string | null;
   is_inline: number;
   local_path: string | null;
+  extracted_at: number | null;
+  extraction_error: string | null;
   from_address: string | null;
   from_name: string | null;
   date: number | null;
