@@ -27,12 +27,16 @@
 use serde::{Deserialize, Serialize};
 use tauri::AppHandle;
 
-/// Event carrying a [`NotificationResponse`] to the webview.
+/// Event carrying a [`NotificationResponse`] to the webview. macOS-only in
+/// production (the press inbox); kept on every platform for the shared tests.
+#[cfg_attr(not(target_os = "macos"), allow(dead_code))]
 pub const ACTION_EVENT: &str = "naiemail-notification-action";
 
 /// `action_id` for a click on the notification body.
+#[cfg_attr(not(target_os = "macos"), allow(dead_code))]
 pub const DEFAULT_ACTION: &str = "default";
 /// `action_id` for a notification the user swiped away.
+#[cfg_attr(not(target_os = "macos"), allow(dead_code))]
 pub const DISMISS_ACTION: &str = "dismiss";
 
 const UNAVAILABLE: &str = "Native notifications are not available on this platform";
@@ -144,6 +148,9 @@ mod inbox {
     });
 
     /// Hand back the response if the webview can take it now; keep it otherwise.
+    /// Only the macOS delegate calls in, so on other platforms it is dead code
+    /// (still exercised by the shared inbox tests).
+    #[cfg_attr(not(target_os = "macos"), allow(dead_code))]
     pub fn accept(response: NotificationResponse) -> Option<NotificationResponse> {
         let mut inbox = INBOX.lock().unwrap_or_else(|e| e.into_inner());
         if inbox.ready {
@@ -154,6 +161,7 @@ mod inbox {
         }
     }
 
+    #[cfg_attr(not(target_os = "macos"), allow(dead_code))]
     pub fn deliver(app: &AppHandle, response: NotificationResponse) {
         if let Some(response) = accept(response) {
             if let Err(e) = app.emit(ACTION_EVENT, &response) {

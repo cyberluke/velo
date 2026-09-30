@@ -81,6 +81,11 @@ pub fn save_attachment(dir: String, filename: String, data_base64: String) -> Re
     Ok(path.to_string_lossy().into_owned())
 }
 
+/// One attachment for macOS Quick Look. The fields are read only on macOS
+/// (the command errors elsewhere so the frontend falls back to its in-app
+/// preview), but they must stay: serde still deserializes them from the
+/// frontend on every platform.
+#[cfg_attr(not(target_os = "macos"), allow(dead_code))]
 #[derive(serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct QuicklookFile {
