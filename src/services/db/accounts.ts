@@ -76,10 +76,6 @@ async function decryptAccountTokens(account: DbAccount): Promise<DbAccount> {
   }
   return account;
 }
-    }
-  }
-  return account;
-}
 
 export async function getAllAccounts(): Promise<DbAccount[]> {
   const db = await getDb();
