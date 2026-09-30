@@ -42,6 +42,33 @@ mod linux {
     }
 }
 
+/// Windows 11 rounds every top-level window and, when "show accent color on
+/// title bars and window borders" is on, draws an accent outline around it.
+/// The main and splash windows are frameless and transparent — the app shell
+/// draws its own square frame — so opt out of DWM's corner rounding
+/// (DWMWCP_DONOTROUND) and let the square shell own the corners. Applied in
+/// setup, before either window is shown, so there is no rounded flash.
+#[cfg(windows)]
+fn disable_dwm_corner_rounding(window: &tauri::WebviewWindow) {
+    use std::mem::size_of;
+    use windows::Win32::Graphics::Dwm::{
+        DwmSetWindowAttribute, DWMWA_WINDOW_CORNER_PREFERENCE, DWMWCP_DONOTROUND,
+    };
+    let Ok(hwnd) = window.hwnd() else {
+        log::warn!("Could not get HWND to disable DWM corner rounding");
+        return;
+    };
+    let preference = DWMWCP_DONOTROUND.0 as u32;
+    unsafe {
+        let _ = DwmSetWindowAttribute(
+            hwnd,
+            DWMWA_WINDOW_CORNER_PREFERENCE,
+            &preference as *const u32 as *const core::ffi::c_void,
+            size_of::<u32>() as u32,
+        );
+    }
+}
+
 #[tauri::command]
 fn close_splashscreen(app: tauri::AppHandle) {
     if let Some(w) = app.get_webview_window("splashscreen") {
@@ -384,6 +411,17 @@ pub fn run() {
             {
                 if let Some(window) = app.get_webview_window("main") {
                     let _ = window.set_decorations(false);
+                }
+            }
+
+            // Frameless windows get square corners on Windows 11 (the app
+            // shell draws the frame); pop-out windows keep their system frame.
+            #[cfg(windows)]
+            {
+                for label in ["main", "splashscreen"] {
+                    if let Some(window) = app.get_webview_window(label) {
+                        disable_dwm_corner_rounding(&window);
+                    }
                 }
             }
 

@@ -639,7 +639,7 @@ export default function App() {
   }
 
   return (
-    <div className="app-workspace relative m-3 flex h-[calc(100vh-1.5rem)] flex-col overflow-hidden rounded-[1.75rem] text-text-primary">
+    <div className="app-workspace relative flex h-screen flex-col overflow-hidden text-text-primary">
       <OfflineBanner />
       <ToastHost />
       <DndProvider>

@@ -181,7 +181,9 @@ body {
 
 .app-workspace {
   background: color-mix(in srgb, var(--color-workspace-mix) 88%, var(--color-accent));
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
+  /* Square window: the shell fills the frameless window edge to edge and its
+     1px accent border is the frame. The old drop shadow was for the floating
+     rounded panel and is clipped by the window bounds anyway. */
   border: 1px solid color-mix(in srgb, var(--color-accent) 16%, transparent);
 }
 
