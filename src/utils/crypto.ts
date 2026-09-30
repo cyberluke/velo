@@ -4,9 +4,9 @@
  * The key lives in the OS credential store (macOS Keychain, Windows Credential
  * Manager, Linux Secret Service) via the `keychain_*` Tauri commands.
  *
- * Earlier versions wrote the key in cleartext to `velo.key` alongside the
- * database it protects, which meant anything able to read `velo.db` could also
- * read the key. On first launch after upgrading, an existing `velo.key` is
+ * Earlier versions wrote the key in cleartext to `naiemail.key` alongside the
+ * database it protects, which meant anything able to read `naiemail.db` could also
+ * read the key. On first launch after upgrading, an existing `naiemail.key` is
  * migrated into the credential store and the file is deleted.
  *
  * If no credential store is reachable (e.g. headless Linux with no Secret
@@ -24,7 +24,7 @@ import {
 } from "@tauri-apps/plugin-fs";
 import { invoke } from "@tauri-apps/api/core";
 
-const KEY_FILE_NAME = "velo.key";
+const KEY_FILE_NAME = "naiemail.key";
 const ALGORITHM = "AES-GCM";
 const KEY_LENGTH = 256;
 const IV_LENGTH = 12;
@@ -96,7 +96,7 @@ async function deleteLegacyKeyFile(): Promise<void> {
   } catch (err) {
     // Non-fatal: the key is already safe in the keychain, the stale file is
     // just noise. Surface it so it can be removed by hand if needed.
-    console.warn("Could not delete legacy velo.key after migration:", err);
+    console.warn("Could not delete legacy naiemail.key after migration:", err);
   }
 }
 
@@ -113,7 +113,7 @@ async function writeFallbackKeyFile(rawKeyB64: string): Promise<void> {
 /**
  * Resolve the raw base64 key, in priority order:
  *   1. OS credential store
- *   2. legacy velo.key on disk  → migrated into the store, then deleted
+ *   2. legacy naiemail.key on disk  → migrated into the store, then deleted
  *   3. freshly generated        → written to the store (or to disk if unavailable)
  */
 async function resolveRawKey(): Promise<string> {
@@ -139,7 +139,7 @@ async function resolveRawKey(): Promise<string> {
     try {
       await keychainSet(legacy);
       await deleteLegacyKeyFile();
-      console.info("Migrated encryption key from velo.key into the OS credential store.");
+      console.info("Migrated encryption key from naiemail.key into the OS credential store.");
     } catch (err) {
       console.warn("Could not migrate key into the keychain, leaving it on disk:", err);
       usingInsecureFallback = true;

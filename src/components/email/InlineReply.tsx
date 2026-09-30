@@ -143,8 +143,8 @@ export function InlineReply({ thread, messages, accountId, noReply, onSent }: In
         activateMode(detail.mode);
       }
     };
-    window.addEventListener("velo-inline-reply", handler);
-    return () => window.removeEventListener("velo-inline-reply", handler);
+    window.addEventListener("naiemail-inline-reply", handler);
+    return () => window.removeEventListener("naiemail-inline-reply", handler);
   }, [activateMode]);
 
   // Scroll into view when activated

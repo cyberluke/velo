@@ -6,14 +6,14 @@ describe("public mail links", () => {
     expect(parseMailLink(createMailLink(target))).toEqual(target);
   });
   it("allows a thread-only link", () => {
-    expect(parseMailLink("velo://open?account=a&thread=t")).toEqual({ accountId: "a", threadId: "t" });
+    expect(parseMailLink("naiemail://open?account=a&thread=t")).toEqual({ accountId: "a", threadId: "t" });
   });
   it.each([
-    "velo://delete?account=a&thread=t", "https://open?account=a&thread=t",
-    "velo://user@open?account=a&thread=t", "velo://open/file?account=a&thread=t",
-    "velo://open?account=a&thread=t#x", "velo://open?account=a&thread=t&thread=other",
-    "velo://open?account=a&thread=t&message=", "velo://open?account=a&thread=t&execute=x",
-    "velo://open?account=a&thread=%00", "velo://open?thread=t",
+    "naiemail://delete?account=a&thread=t", "https://open?account=a&thread=t",
+    "naiemail://user@open?account=a&thread=t", "naiemail://open/file?account=a&thread=t",
+    "naiemail://open?account=a&thread=t#x", "naiemail://open?account=a&thread=t&thread=other",
+    "naiemail://open?account=a&thread=t&message=", "naiemail://open?account=a&thread=t&execute=x",
+    "naiemail://open?account=a&thread=%00", "naiemail://open?thread=t",
   ])("rejects malformed or ambiguous input: %s", (url) => {
     expect(() => parseMailLink(url)).toThrow();
   });

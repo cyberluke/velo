@@ -1,9 +1,9 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "Velo Pro",
+  "productName": "NAI E-Mail",
   "version": "0.4.21",
-  "identifier": "com.anydaysomething.velopro",
-  "mainBinaryName": "Velo Pro",
+  "identifier": "com.anydaysomething.naiemail",
+  "mainBinaryName": "NAI E-Mail",
   "build": {
     "frontendDist": "../dist",
     "devUrl": "http://localhost:1420",
@@ -14,7 +14,7 @@
     "windows": [
       {
         "label": "main",
-        "title": "Velo Pro",
+        "title": "NAI E-Mail",
         "width": 1200,
         "height": 800,
         "minWidth": 800,
@@ -69,7 +69,7 @@
   "plugins": {
     "sql": {
       "preload": [
-        "sqlite:velo.db"
+        "sqlite:naiemail.db"
       ]
     },
     "updater": {
@@ -83,7 +83,7 @@
       "desktop": {
         "schemes": [
           "mailto",
-          "velo"
+          "naiemail"
         ]
       }
     }

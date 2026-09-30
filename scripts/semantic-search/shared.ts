@@ -23,7 +23,7 @@ export interface IndexerConfig extends TypesenseConnection {
   obsidianVaults: string[];
   veloExportPath?: string;
   veloDbPath?: string;
-  sourceFilter?: Array<"velo" | "obsidian" | "file">;
+  sourceFilter?: Array<"naiemail" | "obsidian" | "file">;
 }
 
 export function createTypesenseConnection(config: {

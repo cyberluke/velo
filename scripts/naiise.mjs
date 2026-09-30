@@ -1,29 +1,28 @@
 #!/usr/bin/env node
 /**
- * Two-way product rename: upstream "Velo" <-> fork "NAI E-Mail".
+ * Product rename: upstream "Velo" -> fork "NAI E-Mail" (one-way, permanent).
  *
- * The repository is kept upstream-compatible: the default (denaiised) tree
- * carries the upstream names so `git diff` against the upstream repo stays
- * clean and merges/pulls apply without conflicts. Before building the NAI
- * E-Mail product, run `naiise`; after a build, or before committing/merging
- * upstream work, run `denaiise` to restore the upstream names byte-for-byte.
+ * The fork is permanently branded as NAI E-Mail. The tree is committed in the
+ * branded state and the upstream name is never restored, so `denaiise` is
+ * disabled forever. `naiise` remains available (idempotent) so a fresh clone
+ * or a rebase/merge that brought upstream names back can be re-branded in one
+ * step.
  *
- *   node scripts/naiise.mjs naiise     # Velo -> NAI E-Mail
- *   node scripts/naiise.mjs denaiise   # NAI E-Mail -> Velo
+ *   node scripts/naiise.mjs naiise     # Velo -> NAI E-Mail (idempotent)
  *   node scripts/naiise.mjs naiise --dry-run
+ *   node scripts/naiise.mjs denaiise   # ERROR — permanently disabled
  *
- * or through npm: `npm run naiise`, `npm run denaiise`, `npm run build:nai`
- * (the last one builds the branded app and denaiises the tree afterwards).
+ * or through npm: `npm run naiise`. `npm run build` builds the branded app
+ * directly (the tree is already branded; no round-trip is performed).
  *
  * Design notes:
- * - Every replacement is exactly reversible and ordered so no token
- *   collides: the full identifier and "Velo Pro" are replaced before the
- *   boundary-matched short forms, and the reverse order is used when going
- *   back. Running a direction twice is a no-op (idempotent).
- * - Historical values that must survive either direction are either
- *   protected strings (upstream URLs, the velomail.app domain) or, in Rust,
- *   spelled with a hex escape (`\x76elopro`) so no rule can match them —
- *   see `PREVIOUS_IDENTIFIER`/`PREVIOUS_SERVICE` in src-tauri/src.
+ * - Every replacement is ordered so no token collides: the full identifier
+ *   and "Velo Pro" are replaced before the boundary-matched short forms.
+ *   Running the direction twice is a no-op (idempotent).
+ * - Historical values that must survive are either protected strings
+ *   (upstream URLs, the velomail.app domain) or, in Rust, spelled with a hex
+ *   escape (`\x76elopro`) so no rule can match them — see
+ *   `PREVIOUS_IDENTIFIER`/`PREVIOUS_SERVICE` in src-tauri/src.
  * - Excluded from renaming: `.git`, node_modules, .kilo worktrees, build
  *   output, `.github` release/CI infrastructure (it points at upstream
  *   repos), LICENSE/NOTICE (legal text), release-please config, the
@@ -31,14 +30,19 @@
  */
 
 import { readdirSync, readFileSync, writeFileSync, statSync, renameSync } from "node:fs";
-import { join, relative, basename, dirname, extname } from "node:path";
+import { join, relative, basename, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const MODE = process.argv[2] ?? "naiise";
 const DRY_RUN = process.argv.includes("--dry-run");
 
-if (!["naiise", "denaiise"].includes(MODE)) {
-  console.error(`Usage: node scripts/naiise.mjs <naiise|denaiise> [--dry-run]`);
+if (MODE === "denaiise") {
+  console.error(`denaiise is permanently disabled: the fork is NAI E-Mail and stays that way.`);
+  process.exit(1);
+}
+
+if (MODE !== "naiise") {
+  console.error(`Usage: node scripts/naiise.mjs naiise [--dry-run]`);
   process.exit(1);
 }
 
@@ -54,20 +58,12 @@ const PROTECTED = [
 ];
 
 /** Ordered [from, to] pairs. String pairs are exact; RegExp pairs use /g. */
-const RULES = {
-  naiise: [
-    ["com.anydaysomething.velopro", "com.anydaysomething.naiemail"],
-    ["Velo Pro", "NAI E-Mail"],
-    [/\bVelo\b/g, "NAI"],
-    [/\bvelo\b/g, "naiemail"],
-  ],
-  denaiise: [
-    ["com.anydaysomething.naiemail", "com.anydaysomething.velopro"],
-    ["NAI E-Mail", "Velo Pro"],
-    [/\bNAI\b/g, "Velo"],
-    [/\bnaiemail\b/g, "velo"],
-  ],
-};
+const RULES = [
+  ["com.anydaysomething.velopro", "com.anydaysomething.naiemail"],
+  ["Velo Pro", "NAI E-Mail"],
+  [/\bVelo\b/g, "NAI"],
+  [/\bvelo\b/g, "naiemail"],
+];
 
 /** Directories skipped by name at any depth. */
 const EXCLUDED_DIRS = new Set([
@@ -100,7 +96,7 @@ function transform(text) {
   PROTECTED.forEach((value, i) => {
     out = out.split(value).join(`\u0000S${i}\u0000`);
   });
-  for (const [from, to] of RULES[MODE]) {
+  for (const [from, to] of RULES) {
     out = typeof from === "string" ? out.split(from).join(to) : out.replace(from, to);
   }
   PROTECTED.forEach((value, i) => {
@@ -161,7 +157,7 @@ for (const file of walk(ROOT)) {
   }
 }
 
-const direction = MODE === "naiise" ? "Velo -> NAI E-Mail" : "NAI E-Mail -> Velo";
+const direction = "Velo -> NAI E-Mail";
 console.log(
   `\n${DRY_RUN ? "[dry-run] " : ""}${MODE}: ${direction} — ` +
     `${contentChanged} files with changed content, ${renamedFiles} files renamed.`,

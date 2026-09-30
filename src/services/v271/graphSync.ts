@@ -148,7 +148,7 @@ export async function syncGraph(transportOverride?: GraphTransport): Promise<Gra
   }
 
   const payload: GraphSyncPayload = {
-    client: "velo",
+    client: "naiemail",
     entities: changedEntities,
     edges: changedEdges,
     syncedAt: Date.now(),

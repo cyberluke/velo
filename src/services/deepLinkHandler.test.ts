@@ -20,14 +20,14 @@ beforeEach(() => {
 
 describe("native mail link delivery", () => {
   it("opens a cold-start link after registering listeners", async () => {
-    mocks.current.mockResolvedValue(["velo://open?account=a&thread=t&message=m"]);
+    mocks.current.mockResolvedValue(["naiemail://open?account=a&thread=t&message=m"]);
     const cleanup = await initDeepLinkHandler();
     expect(mocks.openMail).toHaveBeenCalledWith({ accountId: "a", threadId: "t", messageId: "m" });
     expect(mocks.onOpen.mock.invocationCallOrder[0]).toBeLessThan(mocks.current.mock.invocationCallOrder[0]!);
     cleanup(); expect(mocks.cleanup).toHaveBeenCalledTimes(2);
   });
   it("coalesces warm OS, single-instance, and startup duplicate deliveries", async () => {
-    const url = "velo://open?account=a&thread=t";
+    const url = "naiemail://open?account=a&thread=t";
     mocks.onOpen.mockImplementation(async (receive) => { receive([url]); return mocks.cleanup; });
     mocks.listen.mockImplementation(async (_name, receive) => { receive({ payload: ["app", url] }); return mocks.cleanup; });
     mocks.current.mockResolvedValue([url]);
@@ -35,7 +35,7 @@ describe("native mail link delivery", () => {
     expect(mocks.openMail).toHaveBeenCalledTimes(1); cleanup();
   });
   it("reports failures and continues processing subsequent links", async () => {
-    mocks.current.mockResolvedValue(["velo://open?account=a", "velo://open?account=a&thread=t"]);
+    mocks.current.mockResolvedValue(["naiemail://open?account=a", "naiemail://open?account=a&thread=t"]);
     const cleanup = await initDeepLinkHandler();
     expect(mocks.report).toHaveBeenCalledWith("Could not open mail link", expect.any(Error));
     expect(mocks.openMail).toHaveBeenCalledTimes(1); cleanup();

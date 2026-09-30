@@ -1,10 +1,10 @@
 #!/bin/sh
 set -eu
 
-REPO_SLUG="cyberluke/velo"
+REPO_SLUG="cyberluke/naiemail"
 API_URL="https://api.github.com/repos/$REPO_SLUG/releases/latest"
-USER_AGENT="velo-install-script"
-TMP_DIR="$(mktemp -d "${TMPDIR:-/tmp}/velo-install.XXXXXX")"
+USER_AGENT="naiemail-install-script"
+TMP_DIR="$(mktemp -d "${TMPDIR:-/tmp}/naiemail-install.XXXXXX")"
 MOUNT_POINT=""
 
 cleanup() {
@@ -94,7 +94,7 @@ install_macos() {
   asset_url="$(asset_url_for 'universal\.dmg$')"
   [ -n "$asset_url" ] || fail "Could not find a macOS universal DMG in the latest release"
 
-  dmg_path="$TMP_DIR/velo.dmg"
+  dmg_path="$TMP_DIR/naiemail.dmg"
   info "Downloading macOS installer..."
   download "$asset_url" "$dmg_path"
 
@@ -105,7 +105,7 @@ install_macos() {
   MOUNT_POINT="$mount_point"
 
   set -- "$mount_point"/*.app
-  [ -e "$1" ] || fail "Could not find Velo.app in the mounted disk image"
+  [ -e "$1" ] || fail "Could not find NAI.app in the mounted disk image"
   app_path="$1"
   app_name="$(basename "$app_path")"
 
@@ -136,7 +136,7 @@ install_macos() {
   hdiutil detach "$mount_point" >/dev/null
   MOUNT_POINT=""
 
-  info "Velo installed at $target_path"
+  info "NAI installed at $target_path"
 }
 
 # Prefer the Debian package on Debian-like systems, otherwise fall back to AppImage.
@@ -147,14 +147,14 @@ install_linux() {
   if command -v apt-get >/dev/null 2>&1 && command -v dpkg >/dev/null 2>&1; then
     asset_url="$(asset_url_for '_amd64\.deb$')"
     [ -n "$asset_url" ] || fail "Could not find a Linux .deb asset in the latest release"
-    deb_path="$TMP_DIR/velo.deb"
+    deb_path="$TMP_DIR/naiemail.deb"
 
     info "Downloading Debian package..."
     download "$asset_url" "$deb_path"
 
     info "Installing Debian package..."
     run_sudo apt-get install -y "$deb_path"
-    info "Velo installed from the latest .deb release"
+    info "NAI installed from the latest .deb release"
     return
   fi
 
@@ -162,14 +162,14 @@ install_linux() {
   [ -n "$asset_url" ] || fail "Could not find a Linux AppImage asset in the latest release"
 
   install_dir="$HOME/.local/bin"
-  install_path="$install_dir/velo"
+  install_path="$install_dir/naiemail"
   mkdir -p "$install_dir"
 
   info "Downloading AppImage fallback..."
   download "$asset_url" "$install_path"
   chmod +x "$install_path"
 
-  info "Velo installed at $install_path"
+  info "NAI installed at $install_path"
   case ":$PATH:" in
     *":$install_dir:"*)
       ;;
@@ -191,7 +191,7 @@ need_cmd mktemp
 RELEASE_JSON="$(release_json)"
 case "$RELEASE_JSON" in
   *'"message": "API rate limit exceeded"'*)
-    fail "GitHub API rate limit exceeded. Please try again later or download Velo manually from Releases."
+    fail "GitHub API rate limit exceeded. Please try again later or download NAI manually from Releases."
     ;;
 esac
 OS_NAME="$(current_os)"

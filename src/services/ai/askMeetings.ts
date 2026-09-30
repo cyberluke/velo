@@ -11,7 +11,7 @@ import { extractEmailAddresses } from "@/utils/emailUtils";
 
 /**
  * Cross-source meeting intelligence: the "V271 AI" queries from the spec,
- * answered from Velo's own stores (which the graph references):
+ * answered from NAI's own stores (which the graph references):
  *
  *   - "What meetings do I have today?"
  *   - "What did we decide in yesterday's meeting with X?"

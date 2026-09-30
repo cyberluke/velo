@@ -292,9 +292,9 @@ export function Sidebar({ collapsed }: SidebarProps) {
         useUIStore.getState().setSyncingFolder(null);
       }, 500);
     };
-    window.addEventListener("velo-sync-done", handler);
+    window.addEventListener("naiemail-sync-done", handler);
     return () => {
-      window.removeEventListener("velo-sync-done", handler);
+      window.removeEventListener("naiemail-sync-done", handler);
       if (timer) clearTimeout(timer);
     };
   }, [activeAccountId, loadLabels, refreshSmartFolderCounts]);
@@ -308,8 +308,8 @@ export function Sidebar({ collapsed }: SidebarProps) {
       loadLabels(activeAccountId);
       refreshSmartFolderCounts(activeAccountId);
     };
-    window.addEventListener("velo-sync-progress", handler);
-    return () => window.removeEventListener("velo-sync-progress", handler);
+    window.addEventListener("naiemail-sync-progress", handler);
+    return () => window.removeEventListener("naiemail-sync-progress", handler);
   }, [activeAccountId, loadLabels, refreshSmartFolderCounts]);
 
   const handleDeleteLabel = useCallback(async (labelId: string) => {

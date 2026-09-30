@@ -74,6 +74,6 @@ export async function startEmailNavigationListener(): Promise<() => void> {
       dispatchEmailNavigation(url);
     }
   };
-  window.addEventListener("velo-email-navigation", handleNavigation);
-  return () => window.removeEventListener("velo-email-navigation", handleNavigation);
+  window.addEventListener("naiemail-email-navigation", handleNavigation);
+  return () => window.removeEventListener("naiemail-email-navigation", handleNavigation);
 }

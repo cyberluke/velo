@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 import { lstat, mkdir, readFile, rmdir, unlink, writeFile } from "node:fs/promises";
 import { dirname, isAbsolute, join, resolve } from "node:path";
 import { createTypesenseConnection, type TypesenseConnection } from "./shared";
-import { collectVeloDocuments } from "./providers/velo";
+import { collectVeloDocuments } from "./providers/naiemail";
 import { beginSemanticSource, ensureCollection, ensureSemanticCollections, failSemanticSource,
   finishSemanticSource, indexSemanticBatch, type SemanticSourceState } from "./typesense";
 import { indexingCpuBudgetPercent } from "./indexing-budget";
@@ -28,7 +28,7 @@ function emit(type: string, fields: Record<string, string | number | boolean> = 
   else if (typeof fields.processed === "number") indexedDocuments = fields.processed;
   if (type === "progress" && process.stdout.writableLength > 65536) return;
   if (!process.stdout.destroyed) process.stdout.write(JSON.stringify({ state: nativeState, indexedDocuments,
-    type, timestamp: Date.now(), source: "velo", ...fields }) + "\n");
+    type, timestamp: Date.now(), source: "naiemail", ...fields }) + "\n");
 }
 
 function safeFailure(error: unknown): { code: string; message: string } {
@@ -60,7 +60,7 @@ async function loadConfig(path: string): Promise<WorkerConfig> {
   }
   if (value.lockPath !== undefined || value.lockOwnerToken !== undefined) {
     if (typeof value.lockPath !== "string" || !isAbsolute(value.lockPath) ||
-      resolve(value.lockPath) !== resolve(dirname(path), "velo-worker-v1.lock") ||
+      resolve(value.lockPath) !== resolve(dirname(path), "naiemail-worker-v1.lock") ||
       typeof value.lockOwnerToken !== "string" ||
       !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value.lockOwnerToken)) {
       throw new WorkerError("invalid_lock_config", "Managed worker locking requires its dedicated lock path and a launch ownership token.");
@@ -134,7 +134,7 @@ async function awaitNativeOwnership(configPath: string, ownerToken: string): Pro
   while (performance.now() < deadline) {
     workerSignal.throwIfAborted();
     if (supervisorPid <= 1 || process.ppid !== supervisorPid) {
-      throw new WorkerError("owner_handshake_failed", "The Velo worker supervisor exited before ownership was recorded.");
+      throw new WorkerError("owner_handshake_failed", "The NAI worker supervisor exited before ownership was recorded.");
     }
     try {
       const file = await lstat(path);
@@ -158,7 +158,7 @@ async function awaitNativeOwnership(configPath: string, ownerToken: string): Pro
         (owner as { groupId: number }).groupId === supervisorPid) {
         workerSignal.throwIfAborted();
         if (process.ppid !== supervisorPid) {
-          throw new WorkerError("owner_handshake_failed", "The Velo worker supervisor exited before lock acquisition.");
+          throw new WorkerError("owner_handshake_failed", "The NAI worker supervisor exited before lock acquisition.");
         }
         return;
       }
@@ -169,7 +169,7 @@ async function awaitNativeOwnership(configPath: string, ownerToken: string): Pro
     }
     await waitForNextWork(50);
   }
-  throw new WorkerError("owner_handshake_timeout", "Velo did not confirm worker ownership before the startup deadline.");
+  throw new WorkerError("owner_handshake_timeout", "NAI did not confirm worker ownership before the startup deadline.");
 }
 
 function scanIntervalMs(): number {
@@ -184,7 +184,7 @@ async function scan(connection: TypesenseConnection, config: WorkerConfig): Prom
   // this worker. Typesense can otherwise try its own public-model download.
   await ensureCollection(connection);
   await ensureSemanticCollections(connection);
-  const sourceFilter = ["velo"] as const;
+  const sourceFilter = ["naiemail"] as const;
   for (const source of sourceFilter) {
     let state: SemanticSourceState | undefined;
     let processed = 0;
@@ -231,7 +231,7 @@ async function run(): Promise<void> {
     throw new WorkerError("invalid_arguments", "Usage: indexer.cjs <private-config-file>");
   }
   const parentPid = process.ppid;
-  if (parentPid <= 1) throw new WorkerError("parent_required", "The semantic worker must be started by its Velo parent process.");
+  if (parentPid <= 1) throw new WorkerError("parent_required", "The semantic worker must be started by its NAI parent process.");
   process.on("SIGTERM", stopWorker);
   process.on("SIGINT", stopWorker);
   process.stdout.on("error", stopWorker);

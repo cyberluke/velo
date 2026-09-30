@@ -1,9 +1,9 @@
 [Desktop Entry]
-Name=Velo
+Name=NAI
 Comment=Fast, beautiful desktop email client
-Exec=velo
-Icon=com.anydaysomething.velopro
+Exec=naiemail
+Icon=com.anydaysomething.naiemail
 Type=Application
 Categories=Network;Email;
-StartupWMClass=Velo
+StartupWMClass=NAI
 StartupNotify=true

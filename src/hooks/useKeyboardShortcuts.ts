@@ -152,7 +152,7 @@ export function useKeyboardShortcuts() {
           const paletteBinding = keyMap["app.commandPalette"];
           if (paletteBinding === "Ctrl+K" || paletteBinding === "/" || !paletteBinding) {
             e.preventDefault();
-            window.dispatchEvent(new Event("velo-toggle-command-palette"));
+            window.dispatchEvent(new Event("naiemail-toggle-command-palette"));
             return;
           }
         }
@@ -349,18 +349,18 @@ async function executeAction(actionId: string): Promise<void> {
     case "action.reply": {
       if (selectedId) {
         const replyMode = useUIStore.getState().defaultReplyMode;
-        window.dispatchEvent(new CustomEvent("velo-inline-reply", { detail: { mode: replyMode } }));
+        window.dispatchEvent(new CustomEvent("naiemail-inline-reply", { detail: { mode: replyMode } }));
       }
       break;
     }
     case "action.replyAll":
       if (selectedId) {
-        window.dispatchEvent(new CustomEvent("velo-inline-reply", { detail: { mode: "replyAll" } }));
+        window.dispatchEvent(new CustomEvent("naiemail-inline-reply", { detail: { mode: "replyAll" } }));
       }
       break;
     case "action.forward":
       if (selectedId) {
-        window.dispatchEvent(new CustomEvent("velo-inline-reply", { detail: { mode: "forward" } }));
+        window.dispatchEvent(new CustomEvent("naiemail-inline-reply", { detail: { mode: "forward" } }));
       }
       break;
     case "action.archive": {
@@ -539,7 +539,7 @@ async function executeAction(actionId: string): Promise<void> {
     }
     case "action.createTaskFromEmail": {
       if (selectedId) {
-        window.dispatchEvent(new CustomEvent("velo-extract-task", { detail: { threadId: selectedId } }));
+        window.dispatchEvent(new CustomEvent("naiemail-extract-task", { detail: { threadId: selectedId } }));
       }
       break;
     }
@@ -547,24 +547,24 @@ async function executeAction(actionId: string): Promise<void> {
       const multiMoveIds = useThreadStore.getState().selectedThreadIds;
       const moveThreadIds = multiMoveIds.size > 0 ? [...multiMoveIds] : selectedId ? [selectedId] : [];
       if (moveThreadIds.length > 0) {
-        window.dispatchEvent(new CustomEvent("velo-move-to-folder", { detail: { threadIds: moveThreadIds } }));
+        window.dispatchEvent(new CustomEvent("naiemail-move-to-folder", { detail: { threadIds: moveThreadIds } }));
       }
       break;
     }
     case "app.commandPalette":
-      window.dispatchEvent(new Event("velo-toggle-command-palette"));
+      window.dispatchEvent(new Event("naiemail-toggle-command-palette"));
       break;
     case "app.toggleSidebar":
       useUIStore.getState().toggleSidebar();
       break;
     case "app.askInbox":
-      window.dispatchEvent(new Event("velo-toggle-ask-inbox"));
+      window.dispatchEvent(new Event("naiemail-toggle-ask-inbox"));
       break;
     case "app.aiAgent":
-      window.dispatchEvent(new Event("velo-toggle-agent-panel"));
+      window.dispatchEvent(new Event("naiemail-toggle-agent-panel"));
       break;
     case "app.help":
-      window.dispatchEvent(new Event("velo-toggle-shortcuts-help"));
+      window.dispatchEvent(new Event("naiemail-toggle-shortcuts-help"));
       break;
     case "app.syncFolder": {
       // The unified list shows every mailbox, so refresh all of them

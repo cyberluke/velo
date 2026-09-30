@@ -1,7 +1,7 @@
-# Upstream Velo PR Shortlist — Top 100
+# Upstream NAI PR Shortlist — Top 100
 
 Source: https://github.com/avihaymenahem/velo/pulls (228 PRs total; 47 open, 181 closed).
-Compiled 2026-09-29 for the Velo Pro fork. Dependabot/CI-release noise excluded.
+Compiled 2026-09-29 for the NAI E-Mail fork. Dependabot/CI-release noise excluded.
 
 Legend:
 - **NEW** — not in this fork yet; prime port candidate.
@@ -123,7 +123,7 @@ Legend:
 66. **#224 — improve sync status bar UX** (edvintb, merged) — PAR (same)
 67. **#229 — aggregate sync status across accounts** (edvintb, merged) — FORK (unified-inbox status)
 68. **#284 — reload the view the user is on, not the previous one** (heathweaver, merged) — NEW
-    Debounced reload captured stale activeLabel; reloads now use a ref. Check fork's `velo-sync-done` handler.
+    Debounced reload captured stale activeLabel; reloads now use a ref. Check fork's `naiemail-sync-done` handler.
 69. **#285 — scheduled send via the provider (IMAP delivers)** (heathweaver, merged) — NEW
     `checkScheduledEmails` reached for Gmail client directly → IMAP marks failed. Fork's scheduled sends must go through `getEmailProvider`.
 70. **#219 — UTC methods in iCal all-day formatting** (edvintb, open) — NEW/check

@@ -11,7 +11,7 @@ import {
 /**
  * V271 Identity client.
  *
- * The Velo app registers as one shared client ("velo") on the V271 identity
+ * The NAI app registers as one shared client ("naiemail") on the V271 identity
  * server and authenticates with Authorization Code + PKCE — the same flow
  * the Gmail path uses, against a configurable identity URL instead of
  * Google. The localhost callback server, the token exchange and the token

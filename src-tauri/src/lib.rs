@@ -78,7 +78,7 @@ fn open_devtools(app: tauri::AppHandle) {
     }
 }
 
-/// The identifier the app carried before it was renamed to Velo Pro.
+/// The identifier the app carried before it was renamed to NAI E-Mail.
 #[cfg(any(target_os = "macos", target_os = "linux"))]
 const LEGACY_IDENTIFIER: &str = "com.velomail.app";
 
@@ -133,20 +133,20 @@ fn migrate_legacy_data_dir(identifier: &str) {
 pub fn run() {
     // Before any plugin opens a file under it
     #[cfg(any(target_os = "macos", target_os = "linux"))]
-    migrate_legacy_data_dir("com.anydaysomething.velopro");
+    migrate_legacy_data_dir("com.anydaysomething.naiemail");
 
     // And before any window exists: this one can put a system dialog on
     // screen, which must not end up behind the always-on-top splash
     keychain::migrate_legacy_key();
 
-    // Set explicit AUMID on Windows so toast notifications show "Velo Pro"
+    // Set explicit AUMID on Windows so toast notifications show "NAI E-Mail"
     // instead of "Windows PowerShell"
     #[cfg(windows)]
     {
         use windows::core::w;
         use windows::Win32::UI::Shell::SetCurrentProcessExplicitAppUserModelID;
         unsafe {
-            let _ = SetCurrentProcessExplicitAppUserModelID(w!("com.anydaysomething.velopro"));
+            let _ = SetCurrentProcessExplicitAppUserModelID(w!("com.anydaysomething.naiemail"));
         }
     }
 
@@ -261,14 +261,14 @@ pub fn run() {
             }
 
             // Before the app finishes launching: a notification click that
-            // starts Velo is delivered to whatever delegate exists by then
+            // starts NAI is delivered to whatever delegate exists by then
             notifications::install(app.handle().clone());
             semantic_search::install(app.handle());
 
             #[cfg(not(target_os = "linux"))]
             {
                 // Build system tray menu
-                let show = MenuItem::with_id(app, "show", "Show Velo", true, None::<&str>)?;
+                let show = MenuItem::with_id(app, "show", "Show NAI", true, None::<&str>)?;
                 let check_mail =
                     MenuItem::with_id(app, "check_mail", "Check for Mail", true, None::<&str>)?;
                 let quit = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;
@@ -281,7 +281,7 @@ pub fn run() {
 
                 TrayIconBuilder::with_id("main-tray")
                     .icon(icon)
-                    .tooltip("Velo Pro")
+                    .tooltip("NAI E-Mail")
                     .menu(&menu)
                     .show_menu_on_left_click(false)
                     .on_menu_event(|app, event| match event.id.as_ref() {
@@ -330,7 +330,7 @@ pub fn run() {
                 let app_handle = app.handle().clone();
 
                 std::thread::spawn(move || {
-                    let mut tray = match TrayItem::new("Velo Pro", IconSource::Resource("mail-read")) {
+                    let mut tray = match TrayItem::new("NAI E-Mail", IconSource::Resource("mail-read")) {
                         Ok(t) => t,
                         Err(e) => {
                             log::warn!("Failed to create system tray: {e}");
@@ -339,13 +339,13 @@ pub fn run() {
                     };
 
                     let app_handle_show = app_handle.clone();
-                    if let Err(e) = tray.add_menu_item("Show Velo", move || {
+                    if let Err(e) = tray.add_menu_item("Show NAI", move || {
                         if let Some(window) = app_handle_show.get_webview_window("main") {
                             let _ = window.show();
                             let _ = window.set_focus();
                         }
                     }) {
-                        log::warn!("Failed to add tray menu item 'Show Velo': {e}");
+                        log::warn!("Failed to add tray menu item 'Show NAI': {e}");
                     }
 
                     let app_handle_check = app_handle.clone();

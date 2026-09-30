@@ -15,10 +15,10 @@ import {
 import { extractEmailAddresses } from "@/utils/emailUtils";
 
 /**
- * Adapters that summarize Velo's own stores into V271 graph entities.
+ * Adapters that summarize NAI's own stores into V271 graph entities.
  *
  * These are the defined adapter boundary the spec asks for: the graph never
- * holds a second copy of the mail or calendar database, it references Velo
+ * holds a second copy of the mail or calendar database, it references NAI
  * data through these entity/edge shapes.
  */
 

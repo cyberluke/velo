@@ -39,7 +39,7 @@ export type AgentEventCallback = (event: AgentEvent) => void;
 // System prompt
 // ---------------------------------------------------------------------------
 
-const AGENT_SYSTEM_PROMPT = `You are an intelligent email assistant in Velo. You help users manage their inbox by calling tools to read email data and take actions.
+const AGENT_SYSTEM_PROMPT = `You are an intelligent email assistant in NAI. You help users manage their inbox by calling tools to read email data and take actions.
 
 When finding subscriptions: call get_subscriptions first (finds senders with unsubscribe headers), then call get_newsletter_threads for both "Newsletters" and "Promotions" categories. Combine results, deduplicate by sender, and present a numbered list organized by email volume.
 

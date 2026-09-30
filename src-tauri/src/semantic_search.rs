@@ -1,7 +1,7 @@
-//! Velo semantic search over the shared NPU retrieval gateway.
+//! NAI semantic search over the shared NPU retrieval gateway.
 //!
 //! The gateway (OpenVINO on an Intel NPU + Qdrant) is the canonical
-//! embedding/reranking/vector-store service for every desktop AI app. Velo is
+//! embedding/reranking/vector-store service for every desktop AI app. NAI is
 //! a thin client: no bundled runtime, no child processes, no platform gate,
 //! no local model downloads. The same code path runs on Windows, macOS and
 //! Linux; indexing and search work wherever the gateway is reachable.
@@ -23,7 +23,7 @@ use std::{
 use tauri::Manager;
 use tokio_util::sync::CancellationToken;
 
-const APP_ID: &str = "velo";
+const APP_ID: &str = "naiemail";
 const DEFAULT_URL: &str = "http://127.0.0.1:8010";
 const DEFAULT_MODEL: &str = "Qwen3-Embedding-0.6B-int4";
 const DEFAULT_DATASETS: [&str; 3] = ["messages", "attachments", "calendar"];
@@ -117,7 +117,7 @@ fn unix_seconds() -> i64 {
 fn private_write(path: &Path, bytes: &[u8]) -> Result<(), String> {
     let parent = path.parent().ok_or("Invalid semantic search file path.")?;
     fs::create_dir_all(parent).map_err(|_| "Cannot create the private semantic search directory.".to_string())?;
-    let temp = parent.join(".velo-config.tmp");
+    let temp = parent.join(".naiemail-config.tmp");
     let result = (|| {
         let mut options = OpenOptions::new();
         options.write(true).create(true).truncate(true);
@@ -235,7 +235,7 @@ impl SemanticSearchManager {
             if token.is_cancelled() || !manager.current(generation) { return; }
             match response {
                 Ok(response) if response.status().is_success() => {
-                    // Register Velo's instruction profile once the gateway is
+                    // Register NAI's instruction profile once the gateway is
                     // reachable (idempotent on the gateway side), so searches
                     // use the mail/calendar instruction rather than neutral.
                     let registration = manager.gateway(
@@ -244,7 +244,7 @@ impl SemanticSearchManager {
                         reqwest::Method::POST,
                         Some(serde_json::json!({
                             "app_id": APP_ID,
-                            "display_name": "Velo mail",
+                            "display_name": "NAI mail",
                             "based_on": "mail",
                         })),
                         Duration::from_secs(8),
@@ -310,7 +310,7 @@ impl SemanticSearchManager {
     fn set_enabled(self: &Arc<Self>, enabled: bool) -> Result<Status, String> {
         let _transition = self.transition.lock().unwrap();
         let mut inner = self.inner.lock().unwrap();
-        if inner.closing { return Err("Velo is quitting.".into()); }
+        if inner.closing { return Err("NAI is quitting.".into()); }
         if inner.status.enabled == enabled { return Ok(inner.status.clone()); }
         let mut config = inner.config.clone();
         config.enabled = enabled;
@@ -351,7 +351,7 @@ impl SemanticSearchManager {
             return Err("Choose at least one dataset to index.".into());
         }
         let mut inner = self.inner.lock().unwrap();
-        if inner.closing { return Err("Velo is quitting.".into()); }
+        if inner.closing { return Err("NAI is quitting.".into()); }
         inner.config.url = url;
         // An empty api_key keeps the saved key (the UI cannot read the key
         // back); a non-empty value replaces it.
@@ -416,7 +416,7 @@ impl SemanticSearchManager {
     fn reindex(self: &Arc<Self>) -> Result<Status, String> {
         let _transition = self.transition.lock().unwrap();
         let mut inner = self.inner.lock().unwrap();
-        if inner.closing { return Err("Velo is quitting.".into()); }
+        if inner.closing { return Err("NAI is quitting.".into()); }
         if !inner.status.enabled { return Err("Enable semantic search before updating the index.".into()); }
         if inner.status.model_state != "ready" {
             return Err("The retrieval gateway is not ready. Check the connection in Settings.".into());
@@ -431,7 +431,7 @@ impl SemanticSearchManager {
     async fn upsert_batch(self: &Arc<Self>, dataset: String, items: Vec<IndexItem>) -> Result<Status, String> {
         let (run_id, config, generation) = {
             let inner = self.inner.lock().unwrap();
-            if inner.closing { return Err("Velo is quitting.".into()); }
+            if inner.closing { return Err("NAI is quitting.".into()); }
             let run_id = inner.run_id.ok_or_else(|| "Start an index update before sending batches.".to_string())?;
             (run_id, inner.config.clone(), inner.generation)
         };
@@ -460,7 +460,7 @@ impl SemanticSearchManager {
     async fn gc(self: &Arc<Self>, dataset: String) -> Result<Status, String> {
         let (run_id, config) = {
             let inner = self.inner.lock().unwrap();
-            if inner.closing { return Err("Velo is quitting.".into()); }
+            if inner.closing { return Err("NAI is quitting.".into()); }
             let run_id = inner.run_id.ok_or_else(|| "Start an index update before collecting stale points.".to_string())?;
             (run_id, inner.config.clone())
         };
@@ -473,7 +473,7 @@ impl SemanticSearchManager {
     fn finish_index(self: &Arc<Self>) -> Result<Status, String> {
         let _transition = self.transition.lock().unwrap();
         let mut inner = self.inner.lock().unwrap();
-        if inner.closing { return Err("Velo is quitting.".into()); }
+        if inner.closing { return Err("NAI is quitting.".into()); }
         inner.status.state = "ready".into();
         inner.status.message = None;
         inner.run_id = None;
@@ -483,7 +483,7 @@ impl SemanticSearchManager {
     fn index_error(self: &Arc<Self>, message: String) -> Result<Status, String> {
         let _transition = self.transition.lock().unwrap();
         let mut inner = self.inner.lock().unwrap();
-        if inner.closing { return Err("Velo is quitting.".into()); }
+        if inner.closing { return Err("NAI is quitting.".into()); }
         inner.status.state = "error".into();
         inner.status.message = Some(message);
         inner.run_id = None;

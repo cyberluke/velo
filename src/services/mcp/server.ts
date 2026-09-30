@@ -21,7 +21,7 @@ export async function startMcpBridge(): Promise<void> {
     const portRaw = await getSetting("mcp_port");
     const port = portRaw ? Number(portRaw) : DEFAULT_MCP_PORT;
     unlisten?.();
-    unlisten = await listen<McpRequestEvent>("velo-mcp-request", async (event) => {
+    unlisten = await listen<McpRequestEvent>("naiemail-mcp-request", async (event) => {
       try {
         const result = await dispatchMcpTool(event.payload.name, event.payload.arguments);
         await invoke("mcp_respond", { payload: { id: event.payload.id, result } });
@@ -50,7 +50,7 @@ export async function stopMcpBridge(): Promise<void> {
 export async function setMcpEnabled(enabled: boolean, port = DEFAULT_MCP_PORT): Promise<string> {
   if (enabled) {
     unlisten?.();
-    unlisten = await listen<McpRequestEvent>("velo-mcp-request", async (event) => {
+    unlisten = await listen<McpRequestEvent>("naiemail-mcp-request", async (event) => {
       try {
         const result = await dispatchMcpTool(event.payload.name, event.payload.arguments);
         await invoke("mcp_respond", { payload: { id: event.payload.id, result } });

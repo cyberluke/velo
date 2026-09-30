@@ -624,7 +624,7 @@ export async function sendEmail(
 
   // Notify the UI to refresh (so sent message appears in Sent folder)
   if (result.success) {
-    window.dispatchEvent(new Event("velo-sync-done"));
+    window.dispatchEvent(new Event("naiemail-sync-done"));
   }
 
   return result;

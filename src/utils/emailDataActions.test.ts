@@ -87,7 +87,7 @@ describe("emailDataActions", () => {
     const doc = documentWith(`${html}<br><a href="https://example.com/unsubscribe">Unsubscribe</a>`);
     const before = doc.body.textContent;
     decorateEmailData(doc);
-    const addresses = [...doc.querySelectorAll<HTMLAnchorElement>('a[data-velo-kind="address"]')];
+    const addresses = [...doc.querySelectorAll<HTMLAnchorElement>('a[data-naiemail-kind="address"]')];
     expect(addresses.length).toBeGreaterThan(0);
     expect(addresses.every((anchor) => actionForAnchor(anchor)?.value === expected)).toBe(true);
     expect(addresses[0]!.textContent).toContain(expected.split(" ")[0]);

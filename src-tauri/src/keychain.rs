@@ -1,6 +1,6 @@
 //! OS keychain storage for the database encryption key.
 //!
-//! Replaces the previous plaintext `velo.key` file in the app data directory.
+//! Replaces the previous plaintext `naiemail.key` file in the app data directory.
 //! The key is stored in the platform credential store:
 //!   - macOS/iOS  : Keychain Services
 //!   - Windows    : Credential Manager
@@ -12,7 +12,7 @@
 
 use keyring::Entry;
 
-const SERVICE: &str = "com.anydaysomething.velopro";
+const SERVICE: &str = "com.anydaysomething.naiemail";
 const ACCOUNT: &str = "db-encryption-key";
 
 /// The service the key was stored under before the app was renamed. The

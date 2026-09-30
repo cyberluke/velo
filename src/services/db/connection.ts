@@ -7,10 +7,10 @@ export async function getDb(): Promise<Database> {
     // Dev uses its own database file so a running installed build (same
     // bundle identifier, same data directory) can never lock it — two
     // processes on one SQLite file race on every write. Copy the release
-    // velo.db* files to velo-dev.db* once (apps closed) to develop against
+    // naiemail.db* files to naiemail-dev.db* once (apps closed) to develop against
     // real data: stored tokens still decrypt because the keychain service
     // name is hardcoded, not derived from the database path.
-    const dbName = import.meta.env.DEV ? "sqlite:velo-dev.db" : "sqlite:velo.db";
+    const dbName = import.meta.env.DEV ? "sqlite:naiemail-dev.db" : "sqlite:naiemail.db";
     db = await Database.load(dbName);
     // WAL + busy timeout + synchronous: even the isolated dev file can be
     // touched by a second dev instance, and SQLite aborts with "database is

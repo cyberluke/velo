@@ -137,7 +137,7 @@ export const HELP_CATEGORIES: HelpCategory[] = [
         title: "Initial sync",
         summary: "First sync downloads your email history.",
         description:
-          "When you add a new account, the app performs an initial sync that downloads your last year of email (configurable). This builds a local database for fast offline search and browsing. Depending on your inbox size, this can take a few minutes. You can use the app normally while it runs. After that, Gmail push and IMAP IDLE notify Velo when something changes; Velo then fetches only the delta instead of polling every mailbox on a timer.",
+          "When you add a new account, the app performs an initial sync that downloads your last year of email (configurable). This builds a local database for fast offline search and browsing. Depending on your inbox size, this can take a few minutes. You can use the app normally while it runs. After that, Gmail push and IMAP IDLE notify NAI when something changes; NAI then fetches only the delta instead of polling every mailbox on a timer.",
         tips: [
           { text: "Change the sync period (30 days to 1 year) in Settings > Accounts." },
           { text: "The app is fully usable during the initial sync." },
@@ -217,8 +217,8 @@ export const HELP_CATEGORIES: HelpCategory[] = [
         title: "Links to individual emails",
         summary: "Open a specific message from Raycast or another app.",
         description:
-          "Right-click a message and choose Copy Message Link to reference it from another app. Opening the link brings Velo forward, opens the correct mailbox and conversation, and expands the linked message. Copy Message IDs provides the account, thread, and message identifiers for integrations; links work only where that mail is available locally.",
-        tips: [{ text: "The receiving Mac needs a Velo version that supports velo:// links installed." }],
+          "Right-click a message and choose Copy Message Link to reference it from another app. Opening the link brings NAI forward, opens the correct mailbox and conversation, and expands the linked message. Copy Message IDs provides the account, thread, and message identifiers for integrations; links work only where that mail is available locally.",
+        tips: [{ text: "The receiving Mac needs a NAI version that supports naiemail:// links installed." }],
       },
       {
         id: "thread-view",
@@ -463,7 +463,7 @@ export const HELP_CATEGORIES: HelpCategory[] = [
         title: "Read receipts",
         summary: "Request and answer read confirmations.",
         description:
-          "Ask recipients to confirm when they open your email, using the standard read-receipt mechanism (MDN) that most mail clients understand. Toggle the request per message with the double-check icon in the composer footer, or turn it on for all messages in Settings. When a receipt comes back, your sent message shows an \"Opened\" badge — with a count when it was confirmed more than once. When someone requests a receipt from you, a banner appears on the opened message so you decide whether to answer — or set Velo to always or never send receipts. Note that receiving a receipt back always depends on the recipient's mail client and their choice.",
+          "Ask recipients to confirm when they open your email, using the standard read-receipt mechanism (MDN) that most mail clients understand. Toggle the request per message with the double-check icon in the composer footer, or turn it on for all messages in Settings. When a receipt comes back, your sent message shows an \"Opened\" badge — with a count when it was confirmed more than once. When someone requests a receipt from you, a banner appears on the opened message so you decide whether to answer — or set NAI to always or never send receipts. Note that receiving a receipt back always depends on the recipient's mail client and their choice.",
         tips: [
           { text: "Click the double-check icon in the composer footer to request a receipt for that message." },
           { text: "Sent messages show an \"Opened\" badge once a receipt arrives; hover it for when." },
@@ -1043,10 +1043,10 @@ export const HELP_CATEGORIES: HelpCategory[] = [
         title: "Buttons on notifications",
         summary: "Reply, archive or copy a code straight from the notification.",
         description:
-          "On macOS a notification carries the actions that fit it: Reply and Archive on a new mail, Copy code and Open sign-in link on a login mail — each acting on the exact message it announced, even with several stacked up. macOS only shows a banner's buttons while you hover, so Velo asks for the Alerts style; change it under System Settings → Notifications → Velo. Windows and Linux draw no buttons on notifications, so there the same actions sit on Velo's in-app toast.",
+          "On macOS a notification carries the actions that fit it: Reply and Archive on a new mail, Copy code and Open sign-in link on a login mail — each acting on the exact message it announced, even with several stacked up. macOS only shows a banner's buttons while you hover, so NAI asks for the Alerts style; change it under System Settings → Notifications → NAI. Windows and Linux draw no buttons on notifications, so there the same actions sit on NAI's in-app toast.",
         tips: [
           { text: "Settings > Notifications has a \"Send a test\" button — its Copy code really copies." },
-          { text: "Pick Alerts under System Settings > Notifications > Velo to keep the buttons visible without hovering." },
+          { text: "Pick Alerts under System Settings > Notifications > NAI to keep the buttons visible without hovering." },
           { text: "Buttons need the installed app; a development build shows plain notifications." },
         ],
         relatedSettingsTab: "notifications",
@@ -1166,7 +1166,7 @@ export const HELP_CATEGORIES: HelpCategory[] = [
         title: "Meeting links, reminders & related email",
         summary: "Join meetings, get reminders, and see the email behind an event.",
         description:
-          "Events with a conference link show a Join meeting button right in the event detail, and new events can be created with a video meeting attached. Calendar reminders from your provider fire as notifications before each event. Velo also links events to their email threads automatically — the event detail shows the related conversation, and an open thread shows its Related meetings. When a meeting has a finalized record, its summary, decisions and action items appear on the event.",
+          "Events with a conference link show a Join meeting button right in the event detail, and new events can be created with a video meeting attached. Calendar reminders from your provider fire as notifications before each event. NAI also links events to their email threads automatically — the event detail shows the related conversation, and an open thread shows its Related meetings. When a meeting has a finalized record, its summary, decisions and action items appear on the event.",
         tips: [
           { text: "Event detail opens via clicking any event in Day, Week, Month, or the agenda list." },
           { text: "Join meeting appears when the provider supplies a conference link." },
@@ -1188,7 +1188,7 @@ export const HELP_CATEGORIES: HelpCategory[] = [
         title: "Task manager",
         summary: "Full task management with priorities, due dates, and subtasks.",
         description:
-          "Velo includes a built-in task manager accessible from the sidebar or via the g then k shortcut. Create tasks with titles, descriptions, priorities (none, low, medium, high, urgent), due dates, and tags. Tasks can have one level of subtasks for breaking down complex items. Drag to reorder tasks, filter by status or priority, and group by priority, due date, or tag. Completed tasks can be shown or hidden. The task sidebar panel shows tasks linked to the current email thread.",
+          "NAI includes a built-in task manager accessible from the sidebar or via the g then k shortcut. Create tasks with titles, descriptions, priorities (none, low, medium, high, urgent), due dates, and tags. Tasks can have one level of subtasks for breaking down complex items. Drag to reorder tasks, filter by status or priority, and group by priority, due date, or tag. Completed tasks can be shown or hidden. The task sidebar panel shows tasks linked to the current email thread.",
         tips: [
           { text: "Go to Tasks page", shortcut: "g k" },
           { text: "Open tasks from the Tasks item in the sidebar." },
@@ -1341,7 +1341,7 @@ export const HELP_CATEGORIES: HelpCategory[] = [
         title: "Refresh mail & account tooltip",
         summary: "Force a sync from the account avatar or with F5.",
         description:
-          "Hover the account avatar at the top of the sidebar and it turns into a refresh button — click it to manually check every mailbox the current list shows. Normal delivery is automatic through Gmail push or IMAP IDLE, so Velo does not periodically refresh every account. The account tooltip shows live sync status; a spinning ring means work is in progress and turns red when it fails.",
+          "Hover the account avatar at the top of the sidebar and it turns into a refresh button — click it to manually check every mailbox the current list shows. Normal delivery is automatic through Gmail push or IMAP IDLE, so NAI does not periodically refresh every account. The account tooltip shows live sync status; a spinning ring means work is in progress and turns red when it fails.",
         tips: [
           { text: "Refresh mail", shortcut: "F5" },
           { text: "Hover the avatar, then click the refresh icon to sync now." },

@@ -126,7 +126,7 @@ export function buildMdnRaw(opts: MdnOptions): string {
     `--${boundary}`,
     "Content-Type: message/disposition-notification",
     "",
-    "Reporting-UA: Velo Mail",
+    "Reporting-UA: NAI Mail",
     `Final-Recipient: rfc822;${opts.fromEmail}`,
   );
   if (opts.originalMessageId) {

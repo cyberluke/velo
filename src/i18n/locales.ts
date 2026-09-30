@@ -18,7 +18,7 @@ type Dict = Record<string, string>;
 
 export const translations: Record<Locale, Dict> = {
   en: {
-    "app.name": "Velo",
+    "app.name": "NAI",
     "toolbar.compose": "Compose",
     "toolbar.back": "Back",
     "toolbar.forward": "Forward",
@@ -128,7 +128,7 @@ export const translations: Record<Locale, Dict> = {
     "addAccount.googleDescription": "Connect via OAuth with full Gmail API support",
     "addAccount.orPickProvider": "or pick your provider",
     "addAccount.addGmail": "Add Gmail Account",
-    "addAccount.gmailDescription": "Sign in with your Google account to connect it to Velo.",
+    "addAccount.gmailDescription": "Sign in with your Google account to connect it to NAI.",
     "addAccount.waitingForSignIn": "Waiting for Google sign-in…",
     "addAccount.completeSignIn": "Complete the sign-in in your browser, then return here.",
     "addAccount.gmailEasy": "Easy Setup",
@@ -282,7 +282,7 @@ export const translations: Record<Locale, Dict> = {
     "command.toggleRead": "Mark as Read / Unread",
   },
   cs: {
-    "app.name": "Velo",
+    "app.name": "NAI",
     "toolbar.compose": "Napsat",
     "toolbar.back": "Zpět",
     "toolbar.forward": "Vpřed",
@@ -392,7 +392,7 @@ export const translations: Record<Locale, Dict> = {
     "addAccount.googleDescription": "Připojení přes OAuth s plnou podporou Gmail API",
     "addAccount.orPickProvider": "nebo vyberte poskytovatele",
     "addAccount.addGmail": "Přidat účet Gmail",
-    "addAccount.gmailDescription": "Přihlaste se svým účtem Google pro připojení k Velo.",
+    "addAccount.gmailDescription": "Přihlaste se svým účtem Google pro připojení k NAI.",
     "addAccount.waitingForSignIn": "Čekám na přihlášení přes Google…",
     "addAccount.completeSignIn": "Dokončete přihlášení v prohlížeči a vraťte se sem.",
     "addAccount.gmailEasy": "Snadné nastavení",
@@ -546,7 +546,7 @@ export const translations: Record<Locale, Dict> = {
     "command.toggleRead": "Označit jako přečtené / nepřečtené",
   },
   sk: {
-    "app.name": "Velo",
+    "app.name": "NAI",
     "toolbar.compose": "Napísať",
     "toolbar.back": "Späť",
     "toolbar.forward": "Vpred",
@@ -656,7 +656,7 @@ export const translations: Record<Locale, Dict> = {
     "addAccount.googleDescription": "Pripojenie cez OAuth s plnou podporou Gmail API",
     "addAccount.orPickProvider": "alebo si vyberte poskytovateľa",
     "addAccount.addGmail": "Pridať účet Gmail",
-    "addAccount.gmailDescription": "Prihláste sa svojím účtom Google a pripojte ho k Velo.",
+    "addAccount.gmailDescription": "Prihláste sa svojím účtom Google a pripojte ho k NAI.",
     "addAccount.waitingForSignIn": "Čakám na prihlásenie cez Google…",
     "addAccount.completeSignIn": "Dokončite prihlásenie v prehliadači a vráťte sa sem.",
     "addAccount.gmailEasy": "Jednoduché nastavenie",
@@ -810,7 +810,7 @@ export const translations: Record<Locale, Dict> = {
     "command.toggleRead": "Označiť ako prečítané / neprečítané",
   },
   vi: {
-    "app.name": "Velo",
+    "app.name": "NAI",
     "toolbar.compose": "Soạn thư",
     "toolbar.back": "Quay lại",
     "toolbar.forward": "Tiến",
@@ -920,7 +920,7 @@ export const translations: Record<Locale, Dict> = {
     "addAccount.googleDescription": "Kết nối qua OAuth với hỗ trợ đầy đủ Gmail API",
     "addAccount.orPickProvider": "hoặc chọn nhà cung cấp",
     "addAccount.addGmail": "Thêm tài khoản Gmail",
-    "addAccount.gmailDescription": "Đăng nhập bằng tài khoản Google của bạn để kết nối với Velo.",
+    "addAccount.gmailDescription": "Đăng nhập bằng tài khoản Google của bạn để kết nối với NAI.",
     "addAccount.waitingForSignIn": "Đang chờ đăng nhập Google…",
     "addAccount.completeSignIn": "Hoàn tất đăng nhập trong trình duyệt rồi quay lại đây.",
     "addAccount.gmailEasy": "Thiết lập dễ dàng",

@@ -1,6 +1,6 @@
 # Keyboard Shortcuts
 
-Velo is designed to be used entirely from the keyboard. All shortcuts are customizable in Settings.
+NAI is designed to be used entirely from the keyboard. All shortcuts are customizable in Settings.
 
 ## Navigation
 
@@ -68,7 +68,7 @@ Velo is designed to be used entirely from the keyboard. All shortcuts are custom
 
 ## Two-key sequences
 
-Velo supports Vim-style two-key sequences. Press the first key, then the second within 1 second:
+NAI supports Vim-style two-key sequences. Press the first key, then the second within 1 second:
 
 - `g` is the only prefix key currently
 - If the second key isn't pressed in time, the sequence resets

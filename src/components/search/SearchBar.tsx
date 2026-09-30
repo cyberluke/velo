@@ -73,8 +73,8 @@ export function SearchBar() {
   }, [activeLabel, accountKey]);
   useEffect(() => {
     const refresh = () => setRevision((v) => v + 1);
-    window.addEventListener("velo-sync-done", refresh);
-    return () => window.removeEventListener("velo-sync-done", refresh);
+    window.addEventListener("naiemail-sync-done", refresh);
+    return () => window.removeEventListener("naiemail-sync-done", refresh);
   }, []);
   useEffect(() => {
     let cancelled = false;

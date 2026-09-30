@@ -137,7 +137,7 @@ async fn handle_rpc(app: &AppHandle, pending: &Pending, body: &str) -> Value {
             json!({
                 "protocolVersion": PROTOCOL_VERSION,
                 "capabilities": { "tools": { "listChanged": false } },
-                "serverInfo": { "name": "velo", "version": env!("CARGO_PKG_VERSION") }
+                "serverInfo": { "name": "naiemail", "version": env!("CARGO_PKG_VERSION") }
             }),
         ),
         "notifications/initialized" | "ping" => json_rpc_result(&id, json!({})),
@@ -159,7 +159,7 @@ async fn handle_rpc(app: &AppHandle, pending: &Pending, body: &str) -> Value {
             let (tx, rx) = oneshot::channel();
             pending.lock().unwrap().insert(request_id.clone(), tx);
             let emitted = app.emit(
-                "velo-mcp-request",
+                "naiemail-mcp-request",
                 McpFrontendRequest {
                     id: request_id.clone(),
                     name,

@@ -17,7 +17,7 @@ export async function updateBadgeCount(): Promise<void> {
       // and a browser Vite tab has no Tauri window metadata
     }
 
-    const tooltip = count > 0 ? `Velo Pro - ${count} unread` : "Velo Pro";
+    const tooltip = count > 0 ? `NAI E-Mail - ${count} unread` : "NAI E-Mail";
     try {
       await invoke("set_tray_tooltip", { tooltip });
     } catch {

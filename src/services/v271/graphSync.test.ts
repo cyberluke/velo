@@ -146,7 +146,7 @@ describe("syncGraph", () => {
       enabled: true,
       identityUrl: "https://identity.v271.example",
       graphUrl: "https://graph.v271.example",
-      clientId: "velo",
+      clientId: "naiemail",
     });
     vi.mocked(collectMailEntities).mockResolvedValue(empty);
     vi.mocked(collectCalendarEntities).mockResolvedValue(baseCalendarData);
@@ -174,7 +174,7 @@ describe("syncGraph", () => {
     expect(result.pushed).toBe(3);
     expect(transport.pushed).toHaveLength(1);
     const payload = transport.pushed[0]!;
-    expect(payload.client).toBe("velo");
+    expect(payload.client).toBe("naiemail");
     expect(payload.entities.map((e) => e.type)).toContain("calendar.event");
     // RELATED_TO edge to the mail thread is included.
     expect(payload.edges.some((e) => e.type === "RELATED_TO")).toBe(true);

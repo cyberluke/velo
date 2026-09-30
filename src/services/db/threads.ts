@@ -321,7 +321,7 @@ export async function setThreadLabels(
   labelIds: string[],
 ): Promise<void> {
   const db = await getDb();
-  // Velo renders spam at thread level. If any synced message makes the thread
+  // NAI renders spam at thread level. If any synced message makes the thread
   // spam, do not persist a contradictory Inbox label alongside it.
   const normalizedLabelIds = labelIds.includes("SPAM")
     ? labelIds.filter((labelId) => labelId !== "INBOX")

@@ -11,7 +11,7 @@ use tauri::{
     Runtime, Url, Webview,
 };
 
-pub const EMAIL_NAVIGATION_EVENT: &str = "velo-email-navigation";
+pub const EMAIL_NAVIGATION_EVENT: &str = "naiemail-email-navigation";
 const EMAIL_ACTION_PREFIX: &str = "/__velo_email_action__/";
 
 fn is_external_scheme(url: &Url) -> bool {

@@ -4,15 +4,15 @@ param()
 $ErrorActionPreference = 'Stop'
 $ProgressPreference = 'SilentlyContinue'
 
-$repoSlug = 'cyberluke/velo'
+$repoSlug = 'cyberluke/naiemail'
 $apiUrl = "https://api.github.com/repos/$repoSlug/releases/latest"
 $headers = @{
   Accept = 'application/vnd.github+json'
-  'User-Agent' = 'velo-install-script'
+  'User-Agent' = 'naiemail-install-script'
 }
 
 # Prefer the MSI because msiexec has predictable unattended install flags.
-Write-Host 'Fetching latest Velo release metadata...'
+Write-Host 'Fetching latest NAI release metadata...'
 $release = Invoke-RestMethod -Uri $apiUrl -Headers $headers
 $asset = $release.assets | Where-Object { $_.name -like '*_x64_en-US.msi' } | Select-Object -First 1
 $fallback = $release.assets | Where-Object { $_.name -like '*_x64-setup.exe' } | Select-Object -First 1
@@ -48,7 +48,7 @@ try {
     }
   }
 
-  Write-Host 'Velo installation completed.'
+  Write-Host 'NAI installation completed.'
 }
 finally {
   if (Test-Path $tempInstaller) {

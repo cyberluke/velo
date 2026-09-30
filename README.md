@@ -1,8 +1,8 @@
 <p align="center">
-  <img src="assets/icon.png?v1" alt="Velo" width="200" height="200" style="border-radius: 24px;" />
+  <img src="assets/icon.png?v1" alt="NAI" width="200" height="200" style="border-radius: 24px;" />
 </p>
 
-<h1 align="center">Velo</h1>
+<h1 align="center">NAI</h1>
 
 <p align="center">
   <strong>Email at the speed of thought.</strong>
@@ -30,9 +30,9 @@
 
 ---
 
-## Why Velo?
+## Why NAI?
 
-Most email clients are slow, bloated, or send your data to someone else's server. Velo is different:
+Most email clients are slow, bloated, or send your data to someone else's server. NAI is different:
 
 - **Local-first** -- Your emails live in a local SQLite database. No middleman servers. Read your mail offline.
 - **Keyboard-driven** -- Superhuman-inspired shortcuts let you fly through your inbox without touching the mouse.
@@ -88,7 +88,7 @@ Thread summaries, smart reply suggestions, AI compose & reply, text transform (i
 
 ### Calendar
 
-Google Calendar sync with month, week, and day views. Create events without leaving Velo.
+Google Calendar sync with month, week, and day views. Create events without leaving NAI.
 
 ### UI & Design
 
@@ -124,18 +124,18 @@ Google Calendar sync with month, week, and day views. Create events without leav
 #### macOS and Linux
 
 ```bash
-curl -fsSL https://install.cat/cyberluke/velo | sh
+curl -fsSL https://install.cat/cyberluke/naiemail | sh
 ```
 
-The installer downloads the latest Velo release and installs:
+The installer downloads the latest NAI release and installs:
 
-- **macOS**: the universal `.dmg`, copies `Velo.app`, and runs `xattr -cr` automatically
+- **macOS**: the universal `.dmg`, copies `NAI.app`, and runs `xattr -cr` automatically
 - **Linux**: the latest `.deb` on Debian-like systems, with AppImage fallback elsewhere
 
 #### Windows PowerShell
 
 ```powershell
-irm https://install.cat/cyberluke/velo | iex
+irm https://install.cat/cyberluke/naiemail | iex
 ```
 
 The PowerShell installer downloads the latest Windows release and prefers the MSI installer when available.
@@ -144,25 +144,25 @@ The PowerShell installer downloads the latest Windows release and prefers the MS
 
 Download the latest release for your platform:
 
-**[Download Velo](https://github.com/cyberluke/velo/releases/latest)** -- Windows `.msi` / `.exe` &nbsp;&bull;&nbsp; macOS `.dmg` &nbsp;&bull;&nbsp; Linux `.deb` / `.AppImage`
+**[Download NAI](https://github.com/cyberluke/velo/releases/latest)** -- Windows `.msi` / `.exe` &nbsp;&bull;&nbsp; macOS `.dmg` &nbsp;&bull;&nbsp; Linux `.deb` / `.AppImage`
 
 No build tools or programming knowledge required -- just download, install, and run.
 
 ### Account setup
 
-**Gmail:** Create OAuth credentials in [Google Cloud Console](https://console.cloud.google.com/) (enable Gmail API + Calendar API), then enter your Client ID in Velo's Settings. No client secret needed (PKCE).
+**Gmail:** Create OAuth credentials in [Google Cloud Console](https://console.cloud.google.com/) (enable Gmail API + Calendar API), then enter your Client ID in NAI's Settings. No client secret needed (PKCE).
 
-**IMAP/SMTP:** Click "Add IMAP Account" in the account switcher. Enter your email and password -- Velo auto-discovers server settings for popular providers (Outlook, Yahoo, iCloud, Fastmail, etc.). For other providers, enter IMAP/SMTP server details manually. No Google Cloud project needed.
+**IMAP/SMTP:** Click "Add IMAP Account" in the account switcher. Enter your email and password -- NAI auto-discovers server settings for popular providers (Outlook, Yahoo, iCloud, Fastmail, etc.). For other providers, enter IMAP/SMTP server details manually. No Google Cloud project needed.
 
 **AI (optional):** Add an API key for [Anthropic](https://console.anthropic.com/), [OpenAI](https://platform.openai.com/), or [Google Gemini](https://aistudio.google.com/) in Settings. Then select which model to use for each provider.
 
 ### Building from source
 
-For developers who want to build Velo themselves or contribute:
+For developers who want to build NAI themselves or contribute:
 
 ```bash
 git clone https://github.com/avihaymenahem/velo.git
-cd velo
+cd naiemail
 npm install
 npm run tauri dev
 ```
@@ -204,10 +204,10 @@ npm run tauri build
 
 [Apache-2.0](LICENSE)
 
-Velo Pro is a modified version of [Velo](https://github.com/avihaymenahem/velo)
+NAI E-Mail is a modified version of [NAI](https://github.com/avihaymenahem/velo)
 by Avihay Menahem, used under the Apache License 2.0. Changes have been made to
-the original software. Velo Pro is not affiliated with, endorsed by, or
-supported by the Velo project.
+the original software. NAI E-Mail is not affiliated with, endorsed by, or
+supported by the NAI project.
 
 ---
 

@@ -745,7 +745,7 @@ export function SettingsPage() {
                   <Section title="Startup">
                     <ToggleRow
                       label="Launch at login"
-                      description="Start Velo automatically when you log in (minimized to tray)"
+                      description="Start NAI automatically when you log in (minimized to tray)"
                       checked={autostartEnabled}
                       onToggle={handleAutostartToggle}
                     />
@@ -1460,7 +1460,7 @@ export function SettingsPage() {
                         size="md"
                         value={gmailPushTopicName}
                         onChange={(e) => setGmailPushTopicName(e.target.value)}
-                        placeholder="projects/PROJECT_ID/topics/velo-gmail"
+                        placeholder="projects/PROJECT_ID/topics/naiemail-gmail"
                       />
                       <TextField
                         label="Relay secret"
@@ -2672,11 +2672,11 @@ function AboutTab() {
 
   return (
     <>
-      <Section title="Velo Mail">
+      <Section title="NAI Mail">
         <div className="flex items-center gap-3 mb-2">
-          <img src={appIcon} alt="Velo" className="w-12 h-12 rounded-xl" />
+          <img src={appIcon} alt="NAI" className="w-12 h-12 rounded-xl" />
           <div>
-            <h3 className="text-base font-semibold text-text-primary">Velo</h3>
+            <h3 className="text-base font-semibold text-text-primary">NAI</h3>
             <p className="text-sm text-text-tertiary">
               {appVersion ? `Version ${appVersion}` : "Loading..."}
             </p>
@@ -2708,7 +2708,7 @@ function AboutTab() {
             <Github size={16} className="text-text-tertiary shrink-0" />
             <div className="min-w-0 flex-1">
               <span className="text-sm text-text-primary">GitHub Repository</span>
-              <p className="text-xs text-text-tertiary">avihaymenahem/velo</p>
+              <p className="text-xs text-text-tertiary">avihaymenahem/naiemail</p>
             </div>
             <ExternalLink size={14} className="text-text-tertiary shrink-0" />
           </button>
@@ -2743,7 +2743,7 @@ function AboutTab() {
             </button>
           </p>
           <p className="text-xs text-text-tertiary leading-relaxed">
-            Copyright 2025 Velo Mail. You may use, distribute, and modify this software under the terms of the Apache 2.0 license. This software is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND.
+            Copyright 2025 NAI Mail. You may use, distribute, and modify this software under the terms of the Apache 2.0 license. This software is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND.
           </p>
         </div>
       </Section>
@@ -2752,12 +2752,12 @@ function AboutTab() {
         <div className="px-4 py-3 bg-bg-secondary rounded-lg">
           <div className="flex items-center gap-2 mb-2">
             <GitFork size={15} className="text-text-tertiary" />
-            <span className="text-sm font-medium text-text-primary">Modified from Velo</span>
+            <span className="text-sm font-medium text-text-primary">Modified from NAI</span>
           </div>
           <p className="text-xs text-text-secondary leading-relaxed">
-            Velo Pro is a modified version of Velo by Avihay Menahem, used under
-            the Apache License 2.0. Velo Pro is not affiliated with, endorsed by,
-            or supported by the Velo project. Changes have been made to the
+            NAI E-Mail is a modified version of NAI by Avihay Menahem, used under
+            the Apache License 2.0. NAI E-Mail is not affiliated with, endorsed by,
+            or supported by the NAI project. Changes have been made to the
             original software.
           </p>
         </div>
@@ -3114,7 +3114,7 @@ function NotificationButtonsRow({ backend }: { backend: NotificationBackend }) {
   let note: string;
   if (backend === "native") {
     note =
-      "Reply, Archive and Copy code sit on the notification. macOS hides a banner's buttons until you hover, so Velo asks for the Alerts style; System Settings → Notifications → Velo is where to change it.";
+      "Reply, Archive and Copy code sit on the notification. macOS hides a banner's buttons until you hover, so NAI asks for the Alerts style; System Settings → Notifications → NAI is where to change it.";
   } else if (backend === "plugin") {
     note =
       os === "macos"
@@ -3124,10 +3124,10 @@ function NotificationButtonsRow({ backend }: { backend: NotificationBackend }) {
           // here would send the user looking in the wrong place.
           ? `The macOS notification centre turned this build down (${failure}), so notifications are plain text. An app bundle has to be code-signed before the centre will accept it.`
           : "Buttons need the installed app: a development build runs outside an app bundle, which the macOS notification centre refuses, so notifications here are plain text."
-        : "Notifications are plain text on this platform. The buttons live in Velo's own toasts instead.";
+        : "Notifications are plain text on this platform. The buttons live in NAI's own toasts instead.";
   } else {
     note =
-      "Notifications are off, or the system has not allowed them. On macOS, check System Settings → Notifications → Velo.";
+      "Notifications are off, or the system has not allowed them. On macOS, check System Settings → Notifications → NAI.";
   }
 
   return (

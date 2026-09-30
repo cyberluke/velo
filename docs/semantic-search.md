@@ -1,8 +1,8 @@
 # Semantic search over the NPU retrieval gateway
 
-Velo's semantic search is a thin client of the shared retrieval gateway
+NAI's semantic search is a thin client of the shared retrieval gateway
 (OpenVINO on an Intel NPU + Qdrant, see the Zoo-Code `infra/openvino-npu`
-stack). Velo no longer bundles a Typesense server, a Node worker, or an
+stack). NAI no longer bundles a Typesense server, a Node worker, or an
 embedding model; there is no platform gate — the gateway path runs identically
 on Windows, macOS and Linux.
 
@@ -11,7 +11,7 @@ on Windows, macOS and Linux.
 - The gateway is canonical for every desktop AI app: per-app instruction
   profiles, per-app Qdrant collections, stable point IDs, payload filters,
   int8 quantization, server-side reranking, and per-app telemetry.
-- Velo registers as the `velo` app (mail instruction profile) and never talks
+- NAI registers as the `naiemail` app (mail instruction profile) and never talks
   to Qdrant directly.
 - Indexing is frontend-driven: Settings (or the startup timer) runs
   `runSemanticSearchIndexer()`, which pages messages, extracted attachment
@@ -40,6 +40,6 @@ an empty field keeps the saved key — model picker from `/v1/models`, dataset
 checkboxes) plus the enable toggle, status, indexed count and Update index.
 
 Mail and embeddings stay on the computer; the gateway binds 127.0.0.1 only.
-Search inside Velo continues to use its existing full-text search; the
+Search inside NAI continues to use its existing full-text search; the
 semantic runtime serves the search model and its index to the gateway
 ecosystem.

@@ -218,10 +218,10 @@ export default function App() {
       const detail = (e as CustomEvent<{ threadIds: string[] }>).detail;
       setMoveToFolderState({ open: true, threadIds: detail.threadIds });
     };
-    window.addEventListener("velo-toggle-command-palette", togglePalette);
-    window.addEventListener("velo-toggle-shortcuts-help", toggleHelp);
-    window.addEventListener("velo-toggle-ask-inbox", toggleAskInbox);
-    window.addEventListener("velo-toggle-agent-panel", toggleAgentPanel);
+    window.addEventListener("naiemail-toggle-command-palette", togglePalette);
+    window.addEventListener("naiemail-toggle-shortcuts-help", toggleHelp);
+    window.addEventListener("naiemail-toggle-ask-inbox", toggleAskInbox);
+    window.addEventListener("naiemail-toggle-agent-panel", toggleAgentPanel);
     // A sign-in link opened from a notification goes past the phishing check
     // rather than straight to the browser — a link in mail is the vector
     const handleSignInLink = async (e: Event) => {
@@ -242,7 +242,7 @@ export default function App() {
         .then(({ syncAccount }) => syncAccount(detail.accountId!))
         .catch((err) => console.error("Sync after IDLE failed:", err));
     };
-    window.addEventListener("velo-idle-sync", handleIdleSync);
+    window.addEventListener("naiemail-idle-sync", handleIdleSync);
 
     // Anything nobody caught. Not a substitute for catching things — the
     // message is whatever the browser gives us — but it means an error can no
@@ -256,19 +256,19 @@ export default function App() {
     window.addEventListener("error", handleUncaught);
     window.addEventListener("unhandledrejection", handleRejection);
 
-    window.addEventListener("velo-open-signin-link", handleSignInLink);
+    window.addEventListener("naiemail-open-signin-link", handleSignInLink);
 
-    window.addEventListener("velo-move-to-folder", handleMoveToFolder);
+    window.addEventListener("naiemail-move-to-folder", handleMoveToFolder);
     return () => {
-      window.removeEventListener("velo-toggle-command-palette", togglePalette);
-      window.removeEventListener("velo-toggle-shortcuts-help", toggleHelp);
-      window.removeEventListener("velo-toggle-ask-inbox", toggleAskInbox);
-      window.removeEventListener("velo-toggle-agent-panel", toggleAgentPanel);
-      window.removeEventListener("velo-idle-sync", handleIdleSync);
+      window.removeEventListener("naiemail-toggle-command-palette", togglePalette);
+      window.removeEventListener("naiemail-toggle-shortcuts-help", toggleHelp);
+      window.removeEventListener("naiemail-toggle-ask-inbox", toggleAskInbox);
+      window.removeEventListener("naiemail-toggle-agent-panel", toggleAgentPanel);
+      window.removeEventListener("naiemail-idle-sync", handleIdleSync);
       window.removeEventListener("error", handleUncaught);
       window.removeEventListener("unhandledrejection", handleRejection);
-      window.removeEventListener("velo-open-signin-link", handleSignInLink);
-      window.removeEventListener("velo-move-to-folder", handleMoveToFolder);
+      window.removeEventListener("naiemail-open-signin-link", handleSignInLink);
+      window.removeEventListener("naiemail-move-to-folder", handleMoveToFolder);
     };
   }, []);
 
@@ -565,12 +565,12 @@ export default function App() {
             );
             // Threads are written to the DB as they arrive, so show them as they
             // land instead of leaving the list empty until the whole sync ends.
-            // A separate event from velo-sync-done: this one must not disturb an
+            // A separate event from naiemail-sync-done: this one must not disturb an
             // active search or a scrolled-in page.
             const now = Date.now();
             if (now - lastIncrementalRefreshRef.current > INCREMENTAL_REFRESH_MS) {
               lastIncrementalRefreshRef.current = now;
-              window.dispatchEvent(new Event("velo-sync-progress"));
+              window.dispatchEvent(new Event("naiemail-sync-progress"));
             }
           } else if (progress.phase === "labels") {
             setSyncStatus("Syncing labels...");
@@ -594,7 +594,7 @@ export default function App() {
         setTimeout(() => setSyncStatus(null), 2_000);
       }
       // One store/list refresh for the whole mailbox batch, never one per account.
-      window.dispatchEvent(new Event("velo-sync-done"));
+      window.dispatchEvent(new Event("naiemail-sync-done"));
       void updateBadgeCount();
 
       // Keep post-sync categorization out of the per-mailbox loop and start it

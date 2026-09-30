@@ -75,7 +75,7 @@ describe("email navigation", () => {
     const target = handler();
     const off = registerEmailNavigationHandler("target", target);
     const unlisten = await startEmailNavigationListener();
-    window.dispatchEvent(new CustomEvent("velo-email-navigation", {
+    window.dispatchEvent(new CustomEvent("naiemail-email-navigation", {
       detail: "tauri://localhost/__velo_email_action__/target/9",
     }));
     expect(target.run).toHaveBeenCalledWith("9");

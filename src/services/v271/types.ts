@@ -2,11 +2,11 @@
  * V271 Identity + Personal Graph integration types.
  *
  * V271 is the external identity/graph platform this application registers
- * with (one shared Velo client, Authorization Code + PKCE) and syncs a
+ * with (one shared NAI client, Authorization Code + PKCE) and syncs a
  * summary of the user's mail and calendar into — never a second mail or
- * calendar store. The graph references Velo data through these adapters.
+ * calendar store. The graph references NAI data through these adapters.
  *
- * All entities carry `sourceId`s built from Velo's own ids, which is what
+ * All entities carry `sourceId`s built from NAI's own ids, which is what
  * makes repeated sync idempotent: the same source id always produces the
  * same entity, and the graph upserts on it.
  */
