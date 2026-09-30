@@ -18,6 +18,30 @@ mod oauth;
 mod semantic_search;
 mod smtp;
 
+/// Linux-only startup workarounds.
+#[cfg(target_os = "linux")]
+mod linux {
+    /// WebKitGTK's dmabuf renderer aborts on NVIDIA/nouveau hosts (see
+    /// tauri-apps/tauri#10702 and #9304): the app dies before a window ever
+    /// appears, leaving an empty splashscreen. The driver is detected at
+    /// runtime — `/sys/module/<name>` exists once the kernel module is
+    /// loaded — and dmabuf is switched off before WebKit initializes.
+    fn nvidia_or_nouveau_loaded() -> bool {
+        ["nvidia", "nouveau"].iter().any(|module| {
+            std::path::Path::new(&format!("/sys/module/{module}")).exists()
+        })
+    }
+
+    pub fn disable_webkit_dmabuf_rendering_if_needed() {
+        if nvidia_or_nouveau_loaded() {
+            eprintln!(
+                "Note: NVIDIA or Nouveau detected, disabling dmabuf renderer. Expect degraded renderer performance."
+            );
+            std::env::set_var("WEBKIT_DISABLE_DMABUF_RENDERER", "1");
+        }
+    }
+}
+
 #[tauri::command]
 fn close_splashscreen(app: tauri::AppHandle) {
     if let Some(w) = app.get_webview_window("splashscreen") {
@@ -125,6 +149,11 @@ pub fn run() {
             let _ = SetCurrentProcessExplicitAppUserModelID(w!("com.anydaysomething.velopro"));
         }
     }
+
+    // Must run before any WebKit view is created: on NVIDIA/nouveau hosts the
+    // dmabuf renderer aborts at startup, so it is disabled at runtime.
+    #[cfg(target_os = "linux")]
+    linux::disable_webkit_dmabuf_rendering_if_needed();
 
     tauri::Builder::default()
         // Single instance MUST be first
