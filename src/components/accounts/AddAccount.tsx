@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Calendar, Loader2, Mail, Server } from "lucide-react";
+import { Calendar, Loader2, Mail, Server, Shield, Zap } from "lucide-react";
 import { startOAuthFlow } from "@/services/gmail/auth";
 import { insertAccount } from "@/services/db/accounts";
 import { getClientId, getClientSecret } from "@/services/gmail/tokenManager";
@@ -7,8 +7,10 @@ import { useAccountStore } from "@/stores/accountStore";
 import { Modal } from "@/components/ui/Modal";
 import { SetupClientId } from "./SetupClientId";
 import { AddImapAccount, type ImapPreset } from "./AddImapAccount";
+import { AddJmapAccount } from "./AddJmapAccount";
 import { AddCalDavAccount } from "./AddCalDavAccount";
 import { getCurrentUnixTimestamp } from "@/utils/timestamp";
+import { useI18n } from "@/i18n";
 
 interface AddAccountProps {
   onClose: () => void;
@@ -17,7 +19,7 @@ interface AddAccountProps {
   zIndex?: string;
 }
 
-type View = "select-provider" | "imap" | "caldav";
+type View = "select-provider" | "gmail" | "gmail-imap" | "imap" | "jmap" | "caldav";
 
 /**
  * One-click providers. Picking one skips the "which server?" guesswork — the
@@ -58,6 +60,7 @@ function GoogleLogo({ className = "w-5 h-5" }: { className?: string }) {
 }
 
 export function AddAccount({ onClose, onSuccess, zIndex }: AddAccountProps) {
+  const { t } = useI18n();
   const [view, setView] = useState<View>("select-provider");
   const [imapPreset, setImapPreset] = useState<ImapPreset | null>(null);
   const [status, setStatus] = useState<
@@ -66,8 +69,6 @@ export function AddAccount({ onClose, onSuccess, zIndex }: AddAccountProps) {
   const [error, setError] = useState<string | null>(null);
   const [needsSetup, setNeedsSetup] = useState(false);
   const addAccount = useAccountStore((s) => s.addAccount);
-
-  const busy = status === "checking" || status === "authenticating";
 
   const handleAddGmailAccount = async () => {
     setStatus("checking");
@@ -145,6 +146,32 @@ export function AddAccount({ onClose, onSuccess, zIndex }: AddAccountProps) {
     );
   }
 
+  if (view === "gmail-imap") {
+    return (
+      <AddImapAccount
+        zIndex={zIndex}
+        onClose={onClose}
+        onSuccess={onSuccess}
+        onBack={() => {
+          setView("gmail");
+          setStatus("idle");
+          setError(null);
+        }}
+      />
+    );
+  }
+
+  if (view === "jmap") {
+    return (
+      <AddJmapAccount
+        zIndex={zIndex}
+        onClose={onClose}
+        onSuccess={onSuccess}
+        onBack={backToPicker}
+      />
+    );
+  }
+
   if (view === "caldav") {
     return (
       <AddCalDavAccount
@@ -168,43 +195,133 @@ export function AddAccount({ onClose, onSuccess, zIndex }: AddAccountProps) {
     );
   }
 
+  if (view === "gmail") {
+    return (
+      <Modal isOpen={true} onClose={onClose} title={t("addAccount.addGmail")} width="w-full max-w-md" zIndex={zIndex}>
+        <div className="p-4">
+          <p className="text-text-secondary text-sm mb-4">
+            {t("addAccount.gmailDescription")}
+          </p>
+
+          {error && (
+            <div className="bg-danger/10 border border-danger/20 rounded-lg p-3 mb-4 text-sm text-danger">
+              {error}
+            </div>
+          )}
+
+          {status === "authenticating" ? (
+            <div className="text-center py-4 text-text-secondary text-sm">
+              <div className="mb-2">{t("addAccount.waitingForSignIn")}</div>
+              <div className="text-xs text-text-tertiary">
+                {t("addAccount.completeSignIn")}
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {/* Easy Setup — IMAP + App Password */}
+              <button
+                onClick={() => setView("gmail-imap")}
+                className="w-full flex items-center gap-4 p-4 rounded-lg border-2 border-accent/30 bg-accent/5 hover:bg-accent/10 transition-colors text-left group"
+              >
+                <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-accent/10 flex items-center justify-center">
+                  <Shield className="w-5 h-5 text-accent" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-medium text-text-primary group-hover:text-accent transition-colors">
+                    {t("addAccount.gmailEasy")}
+                  </div>
+                  <div className="text-xs text-text-tertiary mt-0.5">
+                    {t("addAccount.gmailEasyDescription")}
+                  </div>
+                </div>
+              </button>
+
+              {/* Fast Sync — Gmail API */}
+              <button
+                onClick={handleAddGmailAccount}
+                disabled={status === "checking"}
+                className="w-full flex items-center gap-4 p-4 rounded-lg border border-border-primary bg-bg-secondary hover:bg-bg-hover transition-colors text-left group disabled:opacity-50"
+              >
+                <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-bg-tertiary flex items-center justify-center">
+                  {status === "checking" ? (
+                    <Loader2 className="w-5 h-5 text-accent animate-spin" />
+                  ) : (
+                    <Zap className="w-5 h-5 text-text-secondary" />
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-medium text-text-primary group-hover:text-accent transition-colors">
+                    {status === "checking" ? t("addAccount.checking") : t("addAccount.gmailApi")}
+                  </div>
+                  <div className="text-xs text-text-tertiary mt-0.5">
+                    {t("addAccount.gmailApiDescription")}
+                  </div>
+                </div>
+              </button>
+            </div>
+          )}
+
+          <div className="flex gap-3 justify-between mt-4">
+            <button
+              onClick={() => {
+                setView("select-provider");
+                setStatus("idle");
+                setError(null);
+              }}
+              className="px-4 py-2 text-sm text-text-secondary hover:text-text-primary transition-colors"
+            >
+              {t("common.back")}
+            </button>
+            <button
+              onClick={onClose}
+              className="px-4 py-2 text-sm text-text-secondary hover:text-text-primary transition-colors"
+            >
+              {t("common.cancel")}
+            </button>
+          </div>
+        </div>
+      </Modal>
+    );
+  }
+
+  // Provider selection view
   return (
     <Modal
       isOpen={true}
       onClose={onClose}
-      title="Add Account"
+      title={t("addAccount.title")}
       width="w-full max-w-md"
       zIndex={zIndex}
     >
       <div className="p-4">
+        <p className="text-text-secondary text-sm mb-4">
+          {t("addAccount.description")}
+        </p>
+
         {error && (
           <div className="bg-danger/10 border border-danger/20 rounded-lg p-3 mb-4 text-sm text-danger">
             {error}
           </div>
         )}
 
-        {/* Google — one click straight into the browser OAuth flow */}
+        {/* Google — two-path: Easy Setup (IMAP + App Password) or Fast Sync (Gmail API) */}
         <button
-          onClick={handleAddGmailAccount}
-          disabled={busy}
-          className="w-full flex items-center gap-4 p-4 rounded-lg border border-border-primary bg-bg-secondary hover:bg-bg-hover transition-colors text-left group disabled:cursor-wait"
+          onClick={() => {
+            setView("gmail");
+            setStatus("idle");
+            setError(null);
+          }}
+          className="w-full flex items-center gap-4 p-4 rounded-lg border border-border-primary bg-bg-secondary hover:bg-bg-hover transition-colors text-left group"
         >
           <div className="shrink-0 w-10 h-10 rounded-lg bg-bg-tertiary flex items-center justify-center">
-            {busy ? (
-              <Loader2 className="w-5 h-5 text-accent animate-spin" />
-            ) : (
-              <GoogleLogo />
-            )}
+            <GoogleLogo />
           </div>
           <div className="flex-1 min-w-0">
             <div className="text-sm font-medium text-text-primary group-hover:text-accent transition-colors">
-              Continue with Google
+              {t("addAccount.google")}
             </div>
             <div className="text-xs text-text-tertiary mt-0.5">
-              {status === "checking" && "Opening your browser..."}
-              {status === "authenticating" &&
-                "Finish signing in in your browser, then come back here."}
-              {!busy && "Gmail via OAuth — full Gmail API support"}
+              {t("addAccount.googleDescription")}
             </div>
           </div>
         </button>
@@ -212,7 +329,7 @@ export function AddAccount({ onClose, onSuccess, zIndex }: AddAccountProps) {
         <div className="flex items-center gap-3 my-4">
           <div className="h-px flex-1 bg-border-primary" />
           <span className="text-[0.625rem] uppercase tracking-wider text-text-tertiary">
-            or pick your provider
+            {t("addAccount.orPickProvider")}
           </span>
           <div className="h-px flex-1 bg-border-primary" />
         </div>
@@ -225,7 +342,7 @@ export function AddAccount({ onClose, onSuccess, zIndex }: AddAccountProps) {
                 openImap({ id: preset.id, name: preset.name, domain: preset.domain })
               }
               className="flex flex-col items-center gap-1.5 px-1 py-3 rounded-lg border border-border-primary bg-bg-secondary hover:bg-bg-hover hover:border-accent transition-colors"
-              title={`Set up ${preset.name}`}
+              title={`${t("addImap.setupPreset")} ${preset.name}`}
             >
               <span
                 className={`w-7 h-7 rounded-md bg-bg-tertiary flex items-center justify-center text-sm font-semibold ${preset.tint}`}
@@ -249,10 +366,27 @@ export function AddAccount({ onClose, onSuccess, zIndex }: AddAccountProps) {
             </div>
             <div className="flex-1 min-w-0">
               <div className="text-sm font-medium text-text-primary group-hover:text-accent transition-colors">
-                Other mail account (IMAP/SMTP)
+                {t("addAccount.imapSmtp")}
               </div>
               <div className="text-xs text-text-tertiary mt-0.5">
-                Servers are detected from your address where possible
+                {t("addAccount.imapSmtpDescription")}
+              </div>
+            </div>
+          </button>
+
+          <button
+            onClick={() => setView("jmap")}
+            className="w-full flex items-center gap-3 p-3 rounded-lg border border-border-primary bg-bg-secondary hover:bg-bg-hover transition-colors text-left group"
+          >
+            <div className="shrink-0 w-8 h-8 rounded-lg bg-bg-tertiary flex items-center justify-center">
+              <Mail className="w-4 h-4 text-text-secondary" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="text-sm font-medium text-text-primary group-hover:text-accent transition-colors">
+                {t("addAccount.jmap")}
+              </div>
+              <div className="text-xs text-text-tertiary mt-0.5">
+                {t("addAccount.jmapDescription")}
               </div>
             </div>
           </button>
@@ -266,10 +400,10 @@ export function AddAccount({ onClose, onSuccess, zIndex }: AddAccountProps) {
             </div>
             <div className="flex-1 min-w-0">
               <div className="text-sm font-medium text-text-primary group-hover:text-accent transition-colors">
-                CalDAV calendar only
+                {t("addAccount.caldav")}
               </div>
               <div className="text-xs text-text-tertiary mt-0.5">
-                iCloud, Fastmail, Nextcloud — no mailbox
+                {t("addAccount.caldavDescription")}
               </div>
             </div>
           </button>
@@ -278,13 +412,13 @@ export function AddAccount({ onClose, onSuccess, zIndex }: AddAccountProps) {
         <div className="flex items-center justify-between mt-4">
           <span className="flex items-center gap-1.5 text-xs text-text-tertiary">
             <Mail className="w-3.5 h-3.5" />
-            Passwords are encrypted locally
+            {t("addAccount.passwordsEncrypted")}
           </span>
           <button
             onClick={onClose}
             className="px-4 py-2 text-sm text-text-secondary hover:text-text-primary transition-colors"
           >
-            Cancel
+            {t("common.cancel")}
           </button>
         </div>
       </div>

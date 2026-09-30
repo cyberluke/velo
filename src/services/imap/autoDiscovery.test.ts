@@ -43,6 +43,25 @@ describe("extractDomain", () => {
 });
 
 describe("findWellKnownProvider", () => {
+  it("returns settings for gmail.com", () => {
+    const result = findWellKnownProvider("gmail.com");
+    expect(result).not.toBeNull();
+    expect(result!.settings.imapHost).toBe("imap.gmail.com");
+    expect(result!.settings.imapPort).toBe(993);
+    expect(result!.settings.imapSecurity).toBe("ssl");
+    expect(result!.settings.smtpHost).toBe("smtp.gmail.com");
+    expect(result!.settings.smtpPort).toBe(465);
+    expect(result!.settings.smtpSecurity).toBe("ssl");
+    expect(result!.authMethods).toEqual(["password"]);
+  });
+
+  it("returns settings for googlemail.com (Gmail alias)", () => {
+    const result = findWellKnownProvider("googlemail.com");
+    expect(result).not.toBeNull();
+    expect(result!.settings.imapHost).toBe("imap.gmail.com");
+    expect(result!.settings.smtpHost).toBe("smtp.gmail.com");
+  });
+
   it("returns settings for outlook.com", () => {
     const result = findWellKnownProvider("outlook.com");
     expect(result).not.toBeNull();

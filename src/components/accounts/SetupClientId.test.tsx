@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { SetupClientId } from "./SetupClientId";
 
 vi.mock("@/services/db/settings", () => ({
@@ -102,12 +102,29 @@ describe("SetupClientId", () => {
     expect(onCancel).toHaveBeenCalled();
   });
 
-  it("opens the Google Cloud credentials page in the browser", () => {
+  it("opens the Gmail API page in the browser", () => {
     render(<SetupClientId onComplete={() => {}} onCancel={() => {}} />);
-    fireEvent.click(screen.getByText("Open Google Cloud credentials"));
+    fireEvent.click(screen.getByText("Open Gmail API page"));
     expect(openUrl).toHaveBeenCalledWith(
-      "https://console.cloud.google.com/apis/credentials",
+      "https://console.cloud.google.com/apis/library/gmail.googleapis.com",
     );
+  });
+
+  it("opens the OAuth credentials page in the browser", () => {
+    render(<SetupClientId onComplete={() => {}} onCancel={() => {}} />);
+    fireEvent.click(screen.getByText("Create OAuth credentials"));
+    expect(openUrl).toHaveBeenCalledWith(
+      "https://console.cloud.google.com/apis/credentials/oauthclient",
+    );
+  });
+
+  it("copies the redirect URI to the clipboard", async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.assign(navigator, { clipboard: { writeText } });
+    render(<SetupClientId onComplete={() => {}} onCancel={() => {}} />);
+
+    fireEvent.click(screen.getByText("Copy"));
+    await waitFor(() => expect(writeText).toHaveBeenCalledWith("http://127.0.0.1:17248"));
   });
 
   it("shows the redirect URI the user has to authorize", () => {

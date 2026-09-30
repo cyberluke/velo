@@ -12,6 +12,7 @@ vi.mock("@/services/db/accounts", () => ({
   insertImapAccount: vi.fn(),
   insertOAuthImapAccount: vi.fn(),
   insertCalDavAccount: vi.fn(),
+  insertJmapAccount: vi.fn(),
 }));
 vi.mock("@/services/gmail/tokenManager", () => ({ getClientId, getClientSecret }));
 vi.mock("@/services/db/settings", () => ({
@@ -20,6 +21,7 @@ vi.mock("@/services/db/settings", () => ({
 }));
 vi.mock("@tauri-apps/api/core", () => ({ invoke: vi.fn() }));
 vi.mock("@tauri-apps/plugin-opener", () => ({ openUrl: vi.fn() }));
+vi.mock("@tauri-apps/plugin-http", () => ({ fetch: vi.fn() }));
 vi.mock("@/services/calendar/autoDiscovery", () => ({
   discoverCalDavSettings: vi.fn(),
   testCalDavConnection: vi.fn(),
@@ -38,25 +40,36 @@ describe("AddAccount", () => {
   it("offers Google, provider presets and a manual IMAP option", () => {
     render(<AddAccount onClose={() => {}} onSuccess={() => {}} />);
 
-    expect(screen.getByText("Continue with Google")).toBeInTheDocument();
+    expect(screen.getByText("Google (Gmail)")).toBeInTheDocument();
     expect(screen.getByText("iCloud")).toBeInTheDocument();
     expect(screen.getByText("Fastmail")).toBeInTheDocument();
     expect(
       screen.getByText("Other mail account (IMAP/SMTP)"),
     ).toBeInTheDocument();
+    expect(screen.getByText("JMAP")).toBeInTheDocument();
   });
 
-  it("starts the browser OAuth flow directly from the Google tile", async () => {
+  it("shows the two-path Gmail choice from the Google tile", () => {
     render(<AddAccount onClose={() => {}} onSuccess={() => {}} />);
 
-    fireEvent.click(screen.getByText("Continue with Google"));
+    fireEvent.click(screen.getByText("Google (Gmail)"));
+
+    expect(screen.getByText("Easy Setup")).toBeInTheDocument();
+    expect(screen.getByText("Fast Sync")).toBeInTheDocument();
+  });
+
+  it("starts the browser OAuth flow from the Fast Sync path", async () => {
+    render(<AddAccount onClose={() => {}} onSuccess={() => {}} />);
+
+    fireEvent.click(screen.getByText("Google (Gmail)"));
+    fireEvent.click(screen.getByText("Fast Sync"));
 
     await waitFor(() =>
       expect(startOAuthFlow).toHaveBeenCalledWith("client-id", "client-secret"),
     );
     expect(
       await screen.findByText(
-        "Finish signing in in your browser, then come back here.",
+        "Complete the sign-in in your browser, then return here.",
       ),
     ).toBeInTheDocument();
   });
@@ -65,7 +78,8 @@ describe("AddAccount", () => {
     getClientId.mockRejectedValue(new Error("Client ID not configured"));
 
     render(<AddAccount onClose={() => {}} onSuccess={() => {}} />);
-    fireEvent.click(screen.getByText("Continue with Google"));
+    fireEvent.click(screen.getByText("Google (Gmail)"));
+    fireEvent.click(screen.getByText("Fast Sync"));
 
     expect(await screen.findByText("Google API Setup")).toBeInTheDocument();
   });
@@ -74,7 +88,8 @@ describe("AddAccount", () => {
     startOAuthFlow.mockRejectedValue(new Error("user closed the browser"));
 
     render(<AddAccount onClose={() => {}} onSuccess={() => {}} />);
-    fireEvent.click(screen.getByText("Continue with Google"));
+    fireEvent.click(screen.getByText("Google (Gmail)"));
+    fireEvent.click(screen.getByText("Fast Sync"));
 
     expect(
       await screen.findByText("user closed the browser"),
@@ -109,6 +124,6 @@ describe("AddAccount", () => {
     expect(await screen.findByText("Add IMAP/SMTP Account")).toBeInTheDocument();
 
     fireEvent.click(screen.getByText("Back"));
-    expect(await screen.findByText("Continue with Google")).toBeInTheDocument();
+    expect(await screen.findByText("Google (Gmail)")).toBeInTheDocument();
   });
 });
