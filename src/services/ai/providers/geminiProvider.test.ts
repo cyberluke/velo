@@ -41,7 +41,9 @@ describe("geminiProvider", () => {
   it("reports a failed call as a failed connection test", async () => {
     generateContent.mockRejectedValue(new Error("404 model not found"));
     const provider = createGeminiProvider("key", "gemini-2.5-flash-preview-05-20");
-    expect(await provider.testConnection()).toBe(false);
+    const result = await provider.testConnection();
+    expect(result.ok).toBe(false);
+    expect(result.error).toContain("404 model not found");
   });
 
   it("reuses one client per api key", () => {

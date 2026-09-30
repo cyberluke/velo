@@ -1,19 +1,19 @@
 import OpenAI from "openai";
 import { fetch } from "@tauri-apps/plugin-http";
 import type { AiProviderClient, AiCompletionRequest, AiTestResult } from "../types";
-import { localApiKey, normalizeLocalBaseUrl } from "../localOpenAi";
 
 let instance: OpenAI | null = null;
 let cachedKey: string | null = null;
 
-function getClient(serverUrl: string, model: string, apiKey?: string | null): OpenAI {
-  const resolvedKey = localApiKey(apiKey);
-  const cacheKey = `${serverUrl}|${model}|${resolvedKey}`;
+function getClient(apiKey: string, baseUrl: string): OpenAI {
+  const cacheKey = `${apiKey}|${baseUrl}`;
   if (!instance || cachedKey !== cacheKey) {
     instance = new OpenAI({
-      baseURL: normalizeLocalBaseUrl(serverUrl),
-      apiKey: resolvedKey,
+      apiKey,
+      baseURL: baseUrl.replace(/\/+$/, ""),
       dangerouslyAllowBrowser: true,
+      // Route through the Tauri HTTP plugin so non-CORS endpoints (Azure,
+      // Groq, Together AI, self-hosted gateways) still work from the webview.
       fetch,
     });
     cachedKey = cacheKey;
@@ -21,12 +21,19 @@ function getClient(serverUrl: string, model: string, apiKey?: string | null): Op
   return instance;
 }
 
-export function createOllamaProvider(
-  serverUrl: string,
+/**
+ * OpenAI-compatible custom provider. Unlike the fixed OpenAI/Copilot
+ * providers, both the base URL and the model id are free text — any
+ * OpenAI-compatible endpoint (Azure OpenAI, Groq, Together AI, vLLM, ...) can
+ * be pointed at, so the settings UI shows plain text fields rather than a
+ * model picker.
+ */
+export function createCustomProvider(
+  apiKey: string,
+  baseUrl: string,
   model: string,
-  apiKey?: string | null,
 ): AiProviderClient {
-  const client = getClient(serverUrl, model, apiKey);
+  const client = getClient(apiKey, baseUrl);
 
   return {
     async complete(req: AiCompletionRequest): Promise<string> {
@@ -58,7 +65,7 @@ export function createOllamaProvider(
   };
 }
 
-export function clearOllamaProvider(): void {
+export function clearCustomProvider(): void {
   instance = null;
   cachedKey = null;
 }
