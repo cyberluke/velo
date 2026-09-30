@@ -14,6 +14,7 @@ import { useKeyboardShortcuts } from "./hooks/useKeyboardShortcuts";
 import { runMigrations } from "./services/db/migrations";
 import { getAllAccounts } from "./services/db/accounts";
 import { getSetting } from "./services/db/settings";
+import { detectLocale, isLocale, setLocale } from "@/i18n";
 import {
   startInitialSync,
   triggerSync,
@@ -295,6 +296,12 @@ export default function App() {
           reportError("Database update failed — the app cannot start properly", err);
           throw err;
         }
+
+        // Restore persisted UI language. The setting is written on change in
+        // Settings, but nothing read it back — the app always started in
+        // English. Fall back to OS detection when unset.
+        const savedLocale = await getSetting("locale");
+        setLocale(isLocale(savedLocale) ? savedLocale : detectLocale());
 
         const ui = useUIStore.getState();
 

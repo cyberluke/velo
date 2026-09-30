@@ -1,4 +1,4 @@
-import { getDb } from "./connection";
+import { getDb, withTransaction } from "./connection";
 
 export const MIGRATIONS = [
   {
@@ -1080,8 +1080,13 @@ export function splitStatements(sql: string): string[] {
 }
 
 export async function runMigrations(): Promise<void> {
-  const db = await getDb();
-
+  // Serialize the whole migration run behind the JS transaction queue: the
+  // runner issues raw BEGIN/COMMIT across the plugin's connection pool, and a
+  // concurrent writer (a settings write, a second dev instance) makes a fresh
+  // pool connection collide — that is the "database is locked" startup
+  // failure. The queue stops this process from writing concurrently with
+  // itself; busy_timeout covers the residual cross-process window.
+  await withTransaction(async (db) => {
   // Ensure migrations table exists
   await db.execute(`
     CREATE TABLE IF NOT EXISTS _migrations (
@@ -1172,4 +1177,5 @@ export async function runMigrations(): Promise<void> {
       "INSERT OR REPLACE INTO settings (key, value) VALUES ('imap_attachment_repair_v1', '1')",
     );
   }
+  });
 }

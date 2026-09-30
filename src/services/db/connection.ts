@@ -27,7 +27,7 @@ export async function getDb(): Promise<Database> {
       // pragma unsupported — nothing to do
     }
     try {
-      await db.execute("PRAGMA busy_timeout=15000");
+      await db.execute("PRAGMA busy_timeout=30000");
     } catch {
       // pragma unsupported — nothing to do
     }
