@@ -5,6 +5,7 @@ import { TextField } from "@/components/ui/TextField";
 import { discoverCalDavSettings, testCalDavConnection } from "@/services/calendar/autoDiscovery";
 import { updateAccountCalDav, type DbAccount } from "@/services/db/accounts";
 import { removeCalendarProvider } from "@/services/calendar/providerFactory";
+import { useI18n } from "@/i18n";
 
 interface CalDavSettingsProps {
   account: DbAccount;
@@ -12,6 +13,7 @@ interface CalDavSettingsProps {
 }
 
 export function CalDavSettings({ account, onSaved }: CalDavSettingsProps) {
+  const { t } = useI18n();
   const [caldavUrl, setCaldavUrl] = useState(account.caldav_url ?? "");
   const [username, setUsername] = useState(account.caldav_username ?? account.email);
   const [password, setPassword] = useState(account.caldav_password ?? "");
@@ -83,37 +85,37 @@ export function CalDavSettings({ account, onSaved }: CalDavSettingsProps) {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h4 className="text-sm font-medium text-text-primary">Calendar (CalDAV)</h4>
+        <h4 className="text-sm font-medium text-text-primary">{t("settings.calendarCalDav")}</h4>
         {isConfigured && (
-          <span className="text-xs text-success font-medium">Connected</span>
+          <span className="text-xs text-success font-medium">{t("caldav.connected")}</span>
         )}
       </div>
       <p className="text-xs text-text-tertiary">
-        Connect a CalDAV calendar server to enable calendar features for this IMAP account.
+        {t("caldav.connectDesc")}
       </p>
 
       <TextField
-        label="CalDAV Server URL"
+        label={t("addCalDav.serverUrl")}
         type="url"
         value={caldavUrl}
         onChange={(e) => setCaldavUrl(e.target.value)}
-        placeholder="https://caldav.example.com/"
+        placeholder={t("addCalDav.serverUrlPlaceholder")}
       />
 
       <TextField
-        label="Username"
+        label={t("addCalDav.username")}
         type="text"
         value={username}
         onChange={(e) => setUsername(e.target.value)}
-        placeholder="your@email.com"
+        placeholder={t("addCalDav.emailPlaceholder")}
       />
 
       <TextField
-        label="Password / App Password"
+        label={t("caldav.passwordLabel")}
         type="password"
         value={password}
         onChange={(e) => setPassword(e.target.value)}
-        placeholder="App-specific password"
+        placeholder={t("addCalDav.appPasswordPlaceholder")}
       />
 
       {testResult && (
@@ -131,7 +133,7 @@ export function CalDavSettings({ account, onSaved }: CalDavSettingsProps) {
           disabled={testing || !caldavUrl || !password}
         >
           {testing && <Loader2 size={14} className="animate-spin" />}
-          {testing ? "Testing..." : "Test Connection"}
+          {testing ? t("caldav.testing") : t("addJmap.testConnection")}
         </Button>
 
         <Button
@@ -140,7 +142,7 @@ export function CalDavSettings({ account, onSaved }: CalDavSettingsProps) {
           onClick={handleSave}
           disabled={saving || !caldavUrl || !password}
         >
-          {saving ? "Saving..." : "Save"}
+          {saving ? t("common.saving") : t("ai.save")}
         </Button>
 
         {isConfigured && (
@@ -150,7 +152,7 @@ export function CalDavSettings({ account, onSaved }: CalDavSettingsProps) {
             onClick={handleRemove}
             disabled={saving}
           >
-            Remove
+            {t("settings.remove")}
           </Button>
         )}
       </div>

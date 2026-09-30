@@ -12,9 +12,11 @@ import {
   type FilterCriteria,
   type FilterActions,
 } from "@/services/db/filters";
+import { useI18n } from "@/i18n";
 
 export function FilterEditor() {
   const activeAccountId = useAccountStore((s) => s.activeAccountId);
+  const { t, locale } = useI18n();
   const [filters, setFilters] = useState<DbFilterRule[]>([]);
   const [labels, setLabels] = useState<DbLabel[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -146,18 +148,19 @@ export function FilterEditor() {
       try {
         const c = JSON.parse(filter.criteria_json) as FilterCriteria;
         const parts: string[] = [];
-        if (c.from) parts.push(`from: ${c.from}`);
-        if (c.to) parts.push(`to: ${c.to}`);
-        if (c.subject) parts.push(`subject: ${c.subject}`);
-        if (c.body) parts.push(`body: ${c.body}`);
-        if (c.hasAttachment) parts.push("has attachment");
-        map.set(filter.id, parts.join(", ") || "No criteria");
+        if (c.from) parts.push(t("filter.fromValue").replace("{value}", c.from));
+        if (c.to) parts.push(t("filter.toValue").replace("{value}", c.to));
+        if (c.subject) parts.push(t("filter.subjectValue").replace("{value}", c.subject));
+        if (c.body) parts.push(t("filter.bodyValue").replace("{value}", c.body));
+        if (c.hasAttachment) parts.push(t("filter.hasAttachment"));
+        map.set(filter.id, parts.join(", ") || t("filter.noCriteria"));
       } catch {
-        map.set(filter.id, "Invalid criteria");
+        map.set(filter.id, t("filter.invalidCriteria"));
       }
     }
     return map;
-  }, [filters]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filters, locale]);
 
   return (
     <div className="space-y-3">
@@ -171,12 +174,12 @@ export function FilterEditor() {
               {filter.name}
               {filter.is_enabled !== 1 && (
                 <span className="text-[0.625rem] bg-bg-tertiary text-text-tertiary px-1.5 py-0.5 rounded">
-                  Disabled
+                  {t("filter.disabled")}
                 </span>
               )}
             </div>
             <div className="text-xs text-text-tertiary truncate">
-              {filterDescriptions.get(filter.id) ?? "No criteria"}
+              {filterDescriptions.get(filter.id) ?? t("filter.noCriteria")}
             </div>
           </div>
           <div className="flex items-center gap-1">
@@ -185,7 +188,7 @@ export function FilterEditor() {
               className={`w-8 h-4 rounded-full transition-colors relative ${
                 filter.is_enabled === 1 ? "bg-accent" : "bg-bg-tertiary"
               }`}
-              title={filter.is_enabled === 1 ? "Disable" : "Enable"}
+              title={filter.is_enabled === 1 ? t("filter.disable") : t("filter.enable")}
             >
               <span
                 className={`absolute top-0.5 left-0.5 w-3 h-3 bg-white rounded-full transition-transform shadow ${
@@ -215,35 +218,35 @@ export function FilterEditor() {
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="Filter name"
+            placeholder={t("filter.namePlaceholder")}
           />
 
           <div>
-            <div className="text-xs font-medium text-text-secondary mb-1.5">Match criteria</div>
+            <div className="text-xs font-medium text-text-secondary mb-1.5">{t("filter.matchCriteria")}</div>
             <div className="space-y-1.5">
               <TextField
                 type="text"
                 value={criteriaFrom}
                 onChange={(e) => setCriteriaFrom(e.target.value)}
-                placeholder="From contains..."
+                placeholder={t("filter.fromContains")}
               />
               <TextField
                 type="text"
                 value={criteriaTo}
                 onChange={(e) => setCriteriaTo(e.target.value)}
-                placeholder="To contains..."
+                placeholder={t("filter.toContains")}
               />
               <TextField
                 type="text"
                 value={criteriaSubject}
                 onChange={(e) => setCriteriaSubject(e.target.value)}
-                placeholder="Subject contains..."
+                placeholder={t("filter.subjectContains")}
               />
               <TextField
                 type="text"
                 value={criteriaBody}
                 onChange={(e) => setCriteriaBody(e.target.value)}
-                placeholder="Body contains..."
+                placeholder={t("filter.bodyContains")}
               />
               <label className="flex items-center gap-1.5 text-xs text-text-secondary">
                 <input
@@ -252,23 +255,23 @@ export function FilterEditor() {
                   onChange={(e) => setCriteriaHasAttachment(e.target.checked)}
                   className="rounded"
                 />
-                Has attachment
+                {t("filter.hasAttachment")}
               </label>
             </div>
           </div>
 
           <div>
-            <div className="text-xs font-medium text-text-secondary mb-1.5">Actions</div>
+            <div className="text-xs font-medium text-text-secondary mb-1.5">{t("filter.actions")}</div>
             <div className="space-y-1.5">
               {labels.length > 0 && (
                 <div className="flex items-center gap-2">
-                  <span className="text-xs text-text-secondary w-20">Apply label</span>
+                  <span className="text-xs text-text-secondary w-20">{t("filter.applyLabel")}</span>
                   <select
                     value={actionLabel}
                     onChange={(e) => setActionLabel(e.target.value)}
                     className="flex-1 bg-bg-tertiary text-text-primary text-xs px-2 py-1 rounded border border-border-primary"
                   >
-                    <option value="">None</option>
+                    <option value="">{t("filter.none")}</option>
                     {labels.map((l) => (
                       <option key={l.id} value={l.id}>{l.name}</option>
                     ))}
@@ -278,26 +281,26 @@ export function FilterEditor() {
               <div className="flex flex-wrap gap-3">
                 <label className="flex items-center gap-1.5 text-xs text-text-secondary">
                   <input type="checkbox" checked={actionArchive} onChange={(e) => setActionArchive(e.target.checked)} className="rounded" />
-                  Archive
+                  {t("filter.actionArchive")}
                 </label>
                 <label className="flex items-center gap-1.5 text-xs text-text-secondary">
                   <input type="checkbox" checked={actionStar} onChange={(e) => setActionStar(e.target.checked)} className="rounded" />
-                  Star
+                  {t("filter.actionStar")}
                 </label>
                 <label className="flex items-center gap-1.5 text-xs text-text-secondary">
                   <input type="checkbox" checked={actionMarkRead} onChange={(e) => setActionMarkRead(e.target.checked)} className="rounded" />
-                  Mark as read
+                  {t("filter.actionMarkRead")}
                 </label>
                 <label className="flex items-center gap-1.5 text-xs text-text-secondary">
                   <input type="checkbox" checked={actionTrash} onChange={(e) => setActionTrash(e.target.checked)} className="rounded" />
-                  Trash
+                  {t("filter.actionTrash")}
                 </label>
                 <label
                   className="flex items-center gap-1.5 text-xs text-text-secondary"
-                  title="Always notify for a message this rule matches, whatever the notification filters say"
+                  title={t("filter.notifyMeTitle")}
                 >
                   <input type="checkbox" checked={actionNotify} onChange={(e) => setActionNotify(e.target.checked)} className="rounded" />
-                  Notify me
+                  {t("filter.notifyMe")}
                 </label>
               </div>
             </div>
@@ -309,13 +312,13 @@ export function FilterEditor() {
               disabled={!name.trim()}
               className="px-3 py-1.5 text-xs font-medium text-on-accent bg-accent hover:bg-accent-hover rounded-md transition-colors disabled:opacity-50"
             >
-              {editingId ? "Update" : "Save"}
+              {editingId ? t("filter.update") : t("filter.save")}
             </button>
             <button
               onClick={resetForm}
               className="px-3 py-1.5 text-xs text-text-secondary hover:text-text-primary rounded-md transition-colors"
             >
-              Cancel
+              {t("common.cancel")}
             </button>
           </div>
         </div>
@@ -324,7 +327,7 @@ export function FilterEditor() {
           onClick={() => setShowForm(true)}
           className="text-xs text-accent hover:text-accent-hover"
         >
-          + Add filter
+          {t("filter.addFilter")}
         </button>
       )}
     </div>

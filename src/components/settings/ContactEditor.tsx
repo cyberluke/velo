@@ -6,12 +6,14 @@ import {
   deleteContact,
   type DbContact,
 } from "@/services/db/contacts";
+import { useI18n } from "@/i18n";
 
 export function ContactEditor() {
   const [contacts, setContacts] = useState<DbContact[]>([]);
   const [search, setSearch] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
+  const { t } = useI18n();
 
   const loadContacts = useCallback(async () => {
     const all = await getAllContacts();
@@ -61,14 +63,14 @@ export function ContactEditor() {
           type="text"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search contacts..."
+          placeholder={t("contact.searchPlaceholder")}
           className="w-full pl-8 pr-3 py-1.5 bg-bg-tertiary border border-border-primary rounded text-sm text-text-primary outline-none focus:border-accent"
         />
       </div>
 
       {filtered.length === 0 ? (
         <p className="text-sm text-text-tertiary py-2">
-          {search ? "No matching contacts" : "No contacts yet"}
+          {search ? t("contact.noMatches") : t("contact.noContacts")}
         </p>
       ) : (
         <div className="space-y-1 max-h-[300px] overflow-y-auto">
@@ -89,7 +91,7 @@ export function ContactEditor() {
                     }}
                     className="flex-1 min-w-0 px-2 py-0.5 bg-bg-tertiary border border-border-primary rounded text-sm text-text-primary outline-none focus:border-accent"
                     autoFocus
-                    placeholder="Display name"
+                    placeholder={t("contact.displayNamePlaceholder")}
                   />
                   <button
                     onClick={handleSaveEdit}
@@ -123,14 +125,14 @@ export function ContactEditor() {
                     <button
                       onClick={() => handleEdit(contact)}
                       className="p-1 text-text-tertiary hover:text-text-primary opacity-0 group-hover:opacity-100 transition-opacity"
-                      title="Edit name"
+                      title={t("contact.editName")}
                     >
                       <Pencil size={13} />
                     </button>
                     <button
                       onClick={() => handleDelete(contact.id)}
                       className="p-1 text-text-tertiary hover:text-danger opacity-0 group-hover:opacity-100 transition-opacity"
-                      title="Delete contact"
+                      title={t("contact.deleteContact")}
                     >
                       <Trash2 size={13} />
                     </button>

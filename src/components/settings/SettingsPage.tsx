@@ -643,7 +643,7 @@ export function SettingsPage() {
                         <option value="dark">{t("settings.theme.dark")}</option>
                       </select>
                     </SettingRow>
-                    <SettingRow label="Reading pane">
+                    <SettingRow label={t("settings.readingPane")}>
                       <select
                         value={readingPanePosition}
                         onChange={(e) => {
@@ -651,12 +651,12 @@ export function SettingsPage() {
                         }}
                         className="w-48 bg-bg-tertiary text-text-primary text-sm px-3 py-1.5 rounded-md border border-border-primary focus:border-accent outline-none"
                       >
-                        <option value="right">Right</option>
-                        <option value="bottom">Bottom</option>
-                        <option value="hidden">Off</option>
+                        <option value="right">{t("settings.paneRight")}</option>
+                        <option value="bottom">{t("settings.paneBottom")}</option>
+                        <option value="hidden">{t("settings.paneOff")}</option>
                       </select>
                     </SettingRow>
-                    <SettingRow label="Email density">
+                    <SettingRow label={t("settings.emailDensity")}>
                       <select
                         value={emailDensity}
                         onChange={(e) => {
@@ -664,12 +664,12 @@ export function SettingsPage() {
                         }}
                         className="w-48 bg-bg-tertiary text-text-primary text-sm px-3 py-1.5 rounded-md border border-border-primary focus:border-accent outline-none"
                       >
-                        <option value="compact">Compact</option>
-                        <option value="default">Default</option>
-                        <option value="spacious">Spacious</option>
+                        <option value="compact">{t("settings.densityCompact")}</option>
+                        <option value="default">{t("settings.densityDefault")}</option>
+                        <option value="spacious">{t("settings.densitySpacious")}</option>
                       </select>
                     </SettingRow>
-                    <SettingRow label="Thread layout">
+                    <SettingRow label={t("settings.threadLayout")}>
                       <select
                         value={threadViewMode}
                         onChange={(e) => {
@@ -677,11 +677,11 @@ export function SettingsPage() {
                         }}
                         className="w-48 bg-bg-tertiary text-text-primary text-sm px-3 py-1.5 rounded-md border border-border-primary focus:border-accent outline-none"
                       >
-                        <option value="classic">Message list</option>
-                        <option value="chat">Chat bubbles</option>
+                        <option value="classic">{t("settings.threadClassic")}</option>
+                        <option value="chat">{t("settings.threadChat")}</option>
                       </select>
                     </SettingRow>
-                    <SettingRow label="Font size">
+                    <SettingRow label={t("settings.fontSize")}>
                       <select
                         value={fontScale}
                         onChange={(e) => {
@@ -689,13 +689,13 @@ export function SettingsPage() {
                         }}
                         className="w-48 bg-bg-tertiary text-text-primary text-sm px-3 py-1.5 rounded-md border border-border-primary focus:border-accent outline-none"
                       >
-                        <option value="small">Small</option>
-                        <option value="default">Default</option>
-                        <option value="large">Large</option>
-                        <option value="xlarge">Extra Large</option>
+                        <option value="small">{t("settings.fontSmall")}</option>
+                        <option value="default">{t("settings.fontDefault")}</option>
+                        <option value="large">{t("settings.fontLarge")}</option>
+                        <option value="xlarge">{t("settings.fontExtraLarge")}</option>
                       </select>
                     </SettingRow>
-                    <SettingRow label="Accent color">
+                    <SettingRow label={t("settings.accentColor")}>
                       <div className="flex items-center gap-2">
                         {COLOR_THEMES.map((t) => {
                           const isSelected = colorTheme === t.id;
@@ -728,7 +728,7 @@ export function SettingsPage() {
                         })}
                       </div>
                     </SettingRow>
-                    <SettingRow label="Inbox view mode">
+                    <SettingRow label={t("settings.inboxViewMode")}>
                       <select
                         value={inboxViewMode}
                         onChange={(e) => {
@@ -736,11 +736,11 @@ export function SettingsPage() {
                         }}
                         className="w-48 bg-bg-tertiary text-text-primary text-sm px-3 py-1.5 rounded-md border border-border-primary focus:border-accent outline-none"
                       >
-                        <option value="unified">Unified</option>
-                        <option value="split">Split (Categories)</option>
+                        <option value="unified">{t("settings.inboxUnified")}</option>
+                        <option value="split">{t("settings.inboxSplit")}</option>
                       </select>
                     </SettingRow>
-                    <SettingRow label="Time format">
+                    <SettingRow label={t("settings.timeFormat")}>
                       <select
                         value={timeFormat}
                         onChange={(e) =>
@@ -748,14 +748,14 @@ export function SettingsPage() {
                         }
                         className="w-48 bg-bg-tertiary text-text-primary text-sm px-3 py-1.5 rounded-md border border-border-primary focus:border-accent outline-none"
                       >
-                        <option value="system">Match system</option>
-                        <option value="12h">12-hour (1:30 PM)</option>
-                        <option value="24h">24-hour (13:30)</option>
+                        <option value="system">{t("settings.timeSystem")}</option>
+                        <option value="12h">{t("settings.time12h")}</option>
+                        <option value="24h">{t("settings.time24h")}</option>
                       </select>
                     </SettingRow>
                     <ToggleRow
-                      label="Reduce motion"
-                      description="Disable UI animations and transitions"
+                      label={t("settings.reduceMotion")}
+                      description={t("settings.reduceMotionDesc")}
                       checked={reduceMotion}
                       onToggle={() => setReduceMotion(!reduceMotion)}
                     />
@@ -763,19 +763,19 @@ export function SettingsPage() {
 
                   <SidebarNavEditor />
 
-                  <Section title="Startup">
+                  <Section title={t("settings.startup")}>
                     <ToggleRow
-                      label="Launch at login"
-                      description="Start NAI automatically when you log in (minimized to tray)"
+                      label={t("settings.launchAtLogin")}
+                      description={t("settings.launchAtLoginDesc")}
                       checked={autostartEnabled}
                       onToggle={handleAutostartToggle}
                     />
                   </Section>
 
-                  <Section title="Privacy & Security">
+                  <Section title={t("settings.privacySecurity")}>
                     <ToggleRow
-                      label="Block remote images"
-                      description="Hides tracking pixels and remote images until you choose to load them"
+                      label={t("settings.blockRemoteImages")}
+                      description={t("settings.blockRemoteImagesDesc")}
                       checked={blockRemoteImages}
                       onToggle={async () => {
                         const newVal = !blockRemoteImages;
@@ -784,8 +784,8 @@ export function SettingsPage() {
                       }}
                     />
                     <ToggleRow
-                      label="Phishing link detection"
-                      description="Scan message links for phishing indicators and show warnings"
+                      label={t("settings.phishingDetection")}
+                      description={t("settings.phishingDetectionDesc")}
                       checked={phishingDetectionEnabled}
                       onToggle={async () => {
                         const newVal = !phishingDetectionEnabled;
@@ -794,7 +794,7 @@ export function SettingsPage() {
                       }}
                     />
                     {phishingDetectionEnabled && (
-                      <SettingRow label="Detection sensitivity">
+                      <SettingRow label={t("settings.detectionSensitivity")}>
                         <select
                           value={phishingSensitivity}
                           onChange={async (e) => {
@@ -804,20 +804,20 @@ export function SettingsPage() {
                           }}
                           className="w-48 bg-bg-tertiary text-text-primary text-sm px-3 py-1.5 rounded-md border border-border-primary focus:border-accent outline-none"
                         >
-                          <option value="low">Low (fewer warnings)</option>
-                          <option value="default">Default</option>
-                          <option value="high">High (more warnings)</option>
+                          <option value="low">{t("settings.sensitivityLow")}</option>
+                          <option value="default">{t("settings.sensitivityDefault")}</option>
+                          <option value="high">{t("settings.sensitivityHigh")}</option>
                         </select>
                       </SettingRow>
                     )}
                   </Section>
 
-                  <Section title="Storage">
+                  <Section title={t("settings.storage")}>
                     <div className="flex items-center justify-between">
                       <div className="min-w-0 mr-4">
-                        <span className="text-sm text-text-secondary">Downloads folder</span>
+                        <span className="text-sm text-text-secondary">{t("settings.downloadsFolder")}</span>
                         <p className="text-xs text-text-tertiary mt-0.5 truncate">
-                          {downloadDirSetting ?? "System Downloads folder"}
+                          {downloadDirSetting ?? t("settings.systemDownloadsFolder")}
                         </p>
                       </div>
                       <div className="flex items-center gap-2 shrink-0">
@@ -830,29 +830,29 @@ export function SettingsPage() {
                             }}
                             className="bg-bg-tertiary text-text-primary border border-border-primary"
                           >
-                            Reset
+                            {t("settings.reset")}
                           </Button>
                         )}
                         <Button
                           variant="secondary"
                           onClick={async () => {
                             const { open } = await import("@tauri-apps/plugin-dialog");
-                            const dir = await open({ directory: true, multiple: false, title: "Choose downloads folder" });
+                            const dir = await open({ directory: true, multiple: false, title: t("settings.chooseDownloadsFolder") });
                             if (!dir || Array.isArray(dir)) return;
                             setDownloadDirSetting(dir);
                             await setSetting("download_dir", dir);
                           }}
                           className="bg-bg-tertiary text-text-primary border border-border-primary"
                         >
-                          Choose...
+                          {t("settings.choose")}
                         </Button>
                       </div>
                     </div>
                     <div className="flex items-center justify-between">
                       <div>
-                        <span className="text-sm text-text-secondary">Attachment cache</span>
+                        <span className="text-sm text-text-secondary">{t("settings.attachmentCache")}</span>
                         <p className="text-xs text-text-tertiary mt-0.5">
-                          {cacheSizeMb !== null ? `${cacheSizeMb} MB used` : "Calculating..."}
+                          {cacheSizeMb !== null ? t("settings.cacheUsed").replace("{count}", `${cacheSizeMb} MB`) : t("settings.calculating")}
                         </p>
                       </div>
                       <Button
@@ -872,10 +872,10 @@ export function SettingsPage() {
                         disabled={clearingCache}
                         className="bg-bg-tertiary text-text-primary border border-border-primary"
                       >
-                        {clearingCache ? "Clearing..." : "Clear Cache"}
+                        {clearingCache ? t("settings.clearing") : t("settings.clearCache")}
                       </Button>
                     </div>
-                    <SettingRow label="Max cache size">
+                    <SettingRow label={t("settings.maxCacheSize")}>
                       <select
                         value={cacheMaxMb}
                         onChange={async (e) => {
@@ -898,15 +898,15 @@ export function SettingsPage() {
 
               {activeTab === "notifications" && (
                 <>
-                  <Section title="Notifications">
+                  <Section title={t("settings.notifications")}>
                     <ToggleRow
-                      label="Enable notifications"
+                      label={t("settings.enableNotifications")}
                       checked={notificationsEnabled}
                       onToggle={handleNotificationsToggle}
                     />
                     <ToggleRow
-                      label="Smart notifications"
-                      description="Only notify for selected categories and VIP senders"
+                      label={t("settings.smartNotifications")}
+                      description={t("settings.smartNotificationsDesc")}
                       checked={smartNotifications}
                       onToggle={async () => {
                         const newVal = !smartNotifications;
@@ -919,15 +919,13 @@ export function SettingsPage() {
                     )}
                   </Section>
 
-                  <Section title="One-time codes & sign-in links">
+                  <Section title={t("settings.otpSection")}>
                     <p className="text-xs text-text-tertiary mb-2">
-                      These stand on their own. A code or a sign-in link is announced
-                      even when every mailbox below is switched off — it is worthless
-                      a minute later, which is the opposite of ordinary mail.
+                      {t("settings.otpSectionDesc")}
                     </p>
                     <ToggleRow
-                      label="Detect login codes"
-                      description="Spot a verification code in arriving mail and announce it, so you never have to open the message"
+                      label={t("settings.detectLoginCodes")}
+                      description={t("settings.detectLoginCodesDesc")}
                       checked={otpDetection}
                       onToggle={async () => {
                         const next = !otpDetection;
@@ -937,8 +935,8 @@ export function SettingsPage() {
                     />
                     {otpDetection && (
                       <ToggleRow
-                        label="Copy the code automatically"
-                        description="Puts it straight on the clipboard, ready to paste. It replaces whatever you were holding"
+                        label={t("settings.copyCodeAuto")}
+                        description={t("settings.copyCodeAutoDesc")}
                         checked={otpAutoCopy}
                         onToggle={async () => {
                           const next = !otpAutoCopy;
@@ -949,10 +947,9 @@ export function SettingsPage() {
                     )}
                   </Section>
 
-                  <Section title="Which mailboxes">
+                  <Section title={t("settings.whichMailboxes")}>
                     <p className="text-xs text-text-tertiary mb-2">
-                      Only the mailboxes you pick will notify. Pick none for silence —
-                      one-time codes and sign-in links come through regardless.
+                      {t("settings.whichMailboxesDesc")}
                     </p>
                     <div className="flex flex-wrap gap-2">
                       {accounts.map((account) => (
@@ -977,19 +974,17 @@ export function SettingsPage() {
                     </div>
                   </Section>
 
-                  <Section title="Rules">
+                  <Section title={t("settings.rules")}>
                     <p className="text-xs text-text-tertiary">
-                      Any mail rule can carry a <strong>Notify me</strong> action, which always
-                      announces a match whatever the filters above say. Build one under
-                      Settings → Mail rules.
+                      {t("settings.rulesDesc1")} <strong>{t("settings.rulesNotify")}</strong> {t("settings.rulesDesc2")}
                     </p>
                   </Section>
 
                   {smartNotifications && (
                     <>
-                      <Section title="Category Filters">
+                      <Section title={t("settings.categoryFilters")}>
                         <div>
-                          <span className="text-sm text-text-secondary">Notify for categories</span>
+                          <span className="text-sm text-text-secondary">{t("settings.notifyCategories")}</span>
                           <div className="flex flex-wrap gap-2 mt-2">
                             {(["Primary", "Updates", "Promotions", "Social", "Newsletters"] as const).map((cat) => (
                               <button
@@ -1007,16 +1002,16 @@ export function SettingsPage() {
                                     : "bg-bg-tertiary text-text-tertiary border-border-primary hover:text-text-primary"
                                 }`}
                               >
-                                {cat}
+                                {t(`nav.${cat.toLowerCase()}`)}
                               </button>
                             ))}
                           </div>
                         </div>
                       </Section>
 
-                      <Section title="VIP Senders">
+                      <Section title={t("settings.vipSenders")}>
                         <p className="text-xs text-text-tertiary mb-2">
-                          These senders always trigger notifications regardless of category
+                          {t("settings.vipSendersDesc")}
                         </p>
                         <div className="space-y-1.5">
                           {vipSenders.map((vip) => (
@@ -1034,7 +1029,7 @@ export function SettingsPage() {
                                 }}
                                 className="text-xs text-danger hover:text-danger/80 ml-2 shrink-0"
                               >
-                                Remove
+                                {t("settings.remove")}
                               </button>
                             </div>
                           ))}
@@ -1044,7 +1039,7 @@ export function SettingsPage() {
                             type="email"
                             value={newVipEmail}
                             onChange={(e) => setNewVipEmail(e.target.value)}
-                            placeholder="email@example.com"
+                            placeholder={t("settings.vipEmailPlaceholder")}
                             className="flex-1 px-3 py-1.5 bg-bg-tertiary border border-border-primary rounded-md text-xs text-text-primary outline-none focus:border-accent"
                             onKeyDown={async (e) => {
                               if (e.key !== "Enter" || !newVipEmail.trim()) return;
@@ -1069,7 +1064,7 @@ export function SettingsPage() {
                             }}
                             disabled={!newVipEmail.trim()}
                           >
-                            Add
+                            {t("settings.add")}
                           </Button>
                         </div>
                       </Section>
@@ -1080,34 +1075,34 @@ export function SettingsPage() {
 
               {activeTab === "composing" && (
                 <>
-                  <Section title="Sending">
-                    <SettingRow label="Undo send delay">
+                  <Section title={t("settings.sending")}>
+                    <SettingRow label={t("settings.undoSendDelay")}>
                       <select
                         value={undoSendDelay}
                         onChange={(e) => handleUndoDelayChange(e.target.value)}
                         className="w-48 bg-bg-tertiary text-text-primary text-sm px-3 py-1.5 rounded-md border border-border-primary focus:border-accent outline-none"
                       >
-                        <option value="5">5 seconds</option>
-                        <option value="10">10 seconds</option>
-                        <option value="30">30 seconds</option>
+                        <option value="5">{t("settings.seconds").replace("{count}", "5")}</option>
+                        <option value="10">{t("settings.seconds").replace("{count}", "10")}</option>
+                        <option value="30">{t("settings.seconds").replace("{count}", "30")}</option>
                       </select>
                     </SettingRow>
                     <ToggleRow
-                      label="Send and archive"
-                      description="Automatically archive threads after sending a reply"
+                      label={t("settings.sendAndArchive")}
+                      description={t("settings.sendAndArchiveDesc")}
                       checked={sendAndArchive}
                       onToggle={() => setSendAndArchive(!sendAndArchive)}
                     />
                   </Section>
 
-                  <Section title="Read receipts">
+                  <Section title={t("settings.readReceipts")}>
                     <ToggleRow
-                      label="Request read receipts"
-                      description="Ask recipients to confirm when they open your emails. Their mail client decides whether to answer."
+                      label={t("settings.requestReadReceipts")}
+                      description={t("settings.requestReadReceiptsDesc")}
                       checked={requestReadReceipts}
                       onToggle={handleRequestReadReceiptsToggle}
                     />
-                    <SettingRow label="When a receipt is requested">
+                    <SettingRow label={t("settings.whenReceiptRequested")}>
                       <select
                         value={readReceiptResponse}
                         onChange={(e) => {
@@ -1115,15 +1110,15 @@ export function SettingsPage() {
                         }}
                         className="w-48 bg-bg-tertiary text-text-primary text-sm px-3 py-1.5 rounded-md border border-border-primary focus:border-accent outline-none"
                       >
-                        <option value="ask">Ask me</option>
-                        <option value="always">Always send</option>
-                        <option value="never">Never send</option>
+                        <option value="ask">{t("settings.receiptAsk")}</option>
+                        <option value="always">{t("settings.receiptAlways")}</option>
+                        <option value="never">{t("settings.receiptNever")}</option>
                       </select>
                     </SettingRow>
                   </Section>
 
-                  <Section title="Behavior">
-                    <SettingRow label="Default reply action">
+                  <Section title={t("settings.behavior")}>
+                    <SettingRow label={t("settings.defaultReplyAction")}>
                       <select
                         value={defaultReplyMode}
                         onChange={(e) => {
@@ -1131,11 +1126,11 @@ export function SettingsPage() {
                         }}
                         className="w-48 bg-bg-tertiary text-text-primary text-sm px-3 py-1.5 rounded-md border border-border-primary focus:border-accent outline-none"
                       >
-                        <option value="reply">Reply</option>
-                        <option value="replyAll">Reply All</option>
+                        <option value="reply">{t("settings.reply")}</option>
+                        <option value="replyAll">{t("settings.replyAll")}</option>
                       </select>
                     </SettingRow>
-                    <SettingRow label="Mark as read">
+                    <SettingRow label={t("settings.markAsRead")}>
                       <select
                         value={markAsReadBehavior}
                         onChange={(e) => {
@@ -1143,18 +1138,18 @@ export function SettingsPage() {
                         }}
                         className="w-48 bg-bg-tertiary text-text-primary text-sm px-3 py-1.5 rounded-md border border-border-primary focus:border-accent outline-none"
                       >
-                        <option value="instant">Instantly</option>
-                        <option value="2s">After 2 seconds</option>
-                        <option value="manual">Manually</option>
+                        <option value="instant">{t("settings.markInstant")}</option>
+                        <option value="2s">{t("settings.markAfter2s")}</option>
+                        <option value="manual">{t("settings.markManual")}</option>
                       </select>
                     </SettingRow>
                   </Section>
 
-                  <Section title="Signatures">
+                  <Section title={t("settings.signatures")}>
                     <SignatureEditor />
                   </Section>
 
-                  <Section title="Templates">
+                  <Section title={t("settings.templates")}>
                     <TemplateEditor />
                   </Section>
                 </>
@@ -1162,38 +1157,37 @@ export function SettingsPage() {
 
               {activeTab === "mail-rules" && (
                 <>
-                  <Section title="Labels">
+                  <Section title={t("settings.labels")}>
                     <p className="text-xs text-text-tertiary mb-3">
-                      Create, rename, recolor, delete, or reorder your Gmail labels.
+                      {t("settings.labelsDesc")}
                     </p>
                     <LabelEditor />
                   </Section>
 
-                  <Section title="Filters">
+                  <Section title={t("settings.filters")}>
                     <p className="text-xs text-text-tertiary mb-3">
-                      Filters automatically apply actions to new incoming emails during sync.
+                      {t("settings.filtersDesc")}
                     </p>
                     <FilterEditor />
                   </Section>
 
-                  <Section title="Smart Labels">
+                  <Section title={t("settings.smartLabels")}>
                     <p className="text-xs text-text-tertiary mb-3">
-                      Describe what emails should get a label using plain English. AI automatically labels matching emails during sync.
+                      {t("settings.smartLabelsDesc")}
                     </p>
                     <SmartLabelEditor />
                   </Section>
 
-                  <Section title="Smart Folders">
+                  <Section title={t("settings.smartFolders")}>
                     <p className="text-xs text-text-tertiary mb-3">
-                      Smart folders are saved searches that automatically show matching emails. Use search operators like <code className="bg-bg-tertiary px-1 rounded">is:unread</code>, <code className="bg-bg-tertiary px-1 rounded">from:</code>, <code className="bg-bg-tertiary px-1 rounded">has:attachment</code>, <code className="bg-bg-tertiary px-1 rounded">after:</code>.
+                      {t("settings.smartFoldersDesc1")} <code className="bg-bg-tertiary px-1 rounded">is:unread</code>, <code className="bg-bg-tertiary px-1 rounded">from:</code>, <code className="bg-bg-tertiary px-1 rounded">has:attachment</code>, <code className="bg-bg-tertiary px-1 rounded">after:</code>{t("settings.smartFoldersDesc2")}
                     </p>
                     <SmartFolderEditor />
                   </Section>
 
-                  <Section title="Quick Steps">
+                  <Section title={t("settings.quickSteps")}>
                     <p className="text-xs text-text-tertiary mb-3">
-                      Quick steps let you chain multiple actions together into a single click.
-                      Apply them from the right-click menu on any thread.
+                      {t("settings.quickStepsDesc")}
                     </p>
                     <QuickStepEditor />
                   </Section>
@@ -1202,16 +1196,16 @@ export function SettingsPage() {
 
               {activeTab === "people" && (
                 <>
-                  <Section title="Contacts">
+                  <Section title={t("settings.contacts")}>
                     <p className="text-xs text-text-tertiary mb-3">
-                      Contacts are automatically added when you send or receive emails. Edit display names or remove contacts below.
+                      {t("settings.contactsDesc")}
                     </p>
                     <ContactEditor />
                   </Section>
 
-                  <Section title="Subscriptions">
+                  <Section title={t("settings.subscriptions")}>
                     <p className="text-xs text-text-tertiary mb-3">
-                      View all detected newsletter and promotional senders. Unsubscribe using RFC 8058 one-click POST, mailto, or browser fallback.
+                      {t("settings.subscriptionsDesc")}
                     </p>
                     <SubscriptionManager />
                   </Section>
@@ -1221,7 +1215,7 @@ export function SettingsPage() {
               {activeTab === "accounts" && (
                 <>
                   <Section
-                    title="Mail Accounts"
+                    title={t("settings.mailAccounts")}
                     action={
                       <Button
                         variant="secondary"
@@ -1229,7 +1223,7 @@ export function SettingsPage() {
                         icon={<Plus size={14} />}
                         onClick={() => setShowAddAccount(true)}
                       >
-                        Add account
+                        {t("accountSwitcher.addAccount")}
                       </Button>
                     }
                   >
@@ -1240,10 +1234,10 @@ export function SettingsPage() {
                       >
                         <Mail className="w-6 h-6 text-text-tertiary" />
                         <span className="text-sm font-medium text-text-primary">
-                          Connect your first mailbox
+                          {t("settings.connectFirstMailbox")}
                         </span>
                         <span className="text-xs text-text-tertiary">
-                          Sign in with Google, or set up any IMAP/SMTP provider
+                          {t("settings.connectFirstMailboxDesc")}
                         </span>
                       </button>
                     ) : (
@@ -1283,17 +1277,17 @@ export function SettingsPage() {
                                   const reason = idleReasons[account.id];
                                   const explanation =
                                     state === "connected"
-                                      ? "The server is holding a connection open and will say the moment mail arrives."
+                                      ? t("settings.idleConnected")
                                       : state === "connecting"
-                                        ? "Asking the server to hold a connection. Usually a few seconds."
+                                        ? t("settings.idleConnecting")
                                         : state === "failed"
                                           ? explainIdleFailure(reason)
-                                          : "Not being watched. This account still syncs on the timer.";
+                                          : t("settings.idleOff");
                                   return (
                                     <Tooltip content={explanation} placement="bottom">
                                       <div className="mt-1 flex items-center gap-1.5 text-[0.6875rem] cursor-default w-fit">
                                         {state === "connecting" ? (
-                                          <Spinner size={11} label="Connecting" className="text-accent" />
+                                          <Spinner size={11} label={t("settings.connecting")} className="text-accent" />
                                         ) : (
                                           <span
                                             aria-hidden="true"
@@ -1333,16 +1327,16 @@ export function SettingsPage() {
                                     className="flex items-center gap-1 text-xs text-accent hover:text-accent-hover transition-colors disabled:opacity-50"
                                   >
                                     {(reconnecting[account.id] || idleStatuses[account.id] === "connecting") && (
-                                      <Spinner size={11} label="Reconnecting" />
+                                      <Spinner size={11} label={t("settings.reconnecting")} />
                                     )}
-                                    Reconnect
+                                    {t("settings.reconnect")}
                                   </button>
                                 )}
                                 <Tooltip
                                   content={
                                     reauthStatus[account.id] === "authorizing"
-                                      ? "Waiting for the sign-in to finish in your browser. If the tab is gone, click again to start over."
-                                      : "Sign in again to grant new permissions — needed once for instant delivery."
+                                      ? t("settings.reauthWaiting")
+                                      : t("settings.reauthPrompt")
                                   }
                                   placement="bottom"
                                 >
@@ -1350,10 +1344,10 @@ export function SettingsPage() {
                                   onClick={() => handleReauthorizeAccount(account.id, account.email)}
                                   className="flex items-center gap-1 text-xs text-accent hover:text-accent-hover transition-colors"
                                 >
-                                  {reauthStatus[account.id] === "authorizing" && <><Spinner size={11} label="Waiting for Google" />Waiting…</>}
-                                  {reauthStatus[account.id] === "done" && "Done!"}
-                                  {reauthStatus[account.id] === "error" && "Failed"}
-                                  {(!reauthStatus[account.id] || reauthStatus[account.id] === "idle") && "Re-authorize"}
+                                  {reauthStatus[account.id] === "authorizing" && <><Spinner size={11} label={t("settings.waitingForGoogle")} />{t("settings.waiting")}…</>}
+                                  {reauthStatus[account.id] === "done" && t("settings.doneMark")}
+                                  {reauthStatus[account.id] === "error" && t("settings.failed")}
+                                  {(!reauthStatus[account.id] || reauthStatus[account.id] === "idle") && t("settings.reauthorize")}
                                 </button>
                                 </Tooltip>
                                 <button
@@ -1361,16 +1355,16 @@ export function SettingsPage() {
                                   disabled={resyncStatus[account.id] === "syncing"}
                                   className="flex items-center gap-1 text-xs text-accent hover:text-accent-hover transition-colors disabled:opacity-50"
                                 >
-                                  {resyncStatus[account.id] === "syncing" && <><Spinner size={11} label="Resyncing" />Resyncing…</>}
-                                  {resyncStatus[account.id] === "done" && "Done!"}
-                                  {resyncStatus[account.id] === "error" && "Failed"}
-                                  {(!resyncStatus[account.id] || resyncStatus[account.id] === "idle") && "Resync"}
+                                  {resyncStatus[account.id] === "syncing" && <><Spinner size={11} label={t("settings.resyncing")} />{t("settings.resyncing")}…</>}
+                                  {resyncStatus[account.id] === "done" && t("settings.doneMark")}
+                                  {resyncStatus[account.id] === "error" && t("settings.failed")}
+                                  {(!resyncStatus[account.id] || resyncStatus[account.id] === "idle") && t("settings.resync")}
                                 </button>
                                 <button
                                   onClick={() => handleRemoveAccount(account.id)}
                                   className="text-xs text-danger hover:text-danger/80 transition-colors"
                                 >
-                                  Remove
+                                  {t("settings.remove")}
                                 </button>
                               </div>
                             </div>
@@ -1380,10 +1374,10 @@ export function SettingsPage() {
                     )}
                   </Section>
 
-                  <Section title="Instant delivery">
+                  <Section title={t("settings.instantDelivery")}>
                     <ToggleRow
-                      label="Let servers push new mail"
-                      description="Hold a connection open so the server says the moment something arrives, instead of being asked every minute. Falls back to the timer wherever a server refuses. Status is shown on each account above."
+                      label={t("settings.pushNewMail")}
+                      description={t("settings.pushNewMailDesc")}
                       checked={imapIdle}
                       onToggle={async () => {
                         const next = !imapIdle;
@@ -1398,7 +1392,7 @@ export function SettingsPage() {
                   </Section>
 
                   {accounts.some((a) => a.provider === "caldav") && (
-                    <Section title="Calendar Accounts">
+                    <Section title={t("settings.calendarAccounts")}>
                       <div className="space-y-2">
                         {accounts.filter((a) => a.provider === "caldav").map((account) => (
                           <div
@@ -1420,7 +1414,7 @@ export function SettingsPage() {
                               onClick={() => handleRemoveAccount(account.id)}
                               className="text-xs text-danger hover:text-danger/80 transition-colors"
                             >
-                              Remove
+                              {t("settings.remove")}
                             </button>
                           </div>
                         ))}
@@ -1432,24 +1426,24 @@ export function SettingsPage() {
 
                   <ImapCalDavSection />
 
-                  <Section title="Google API">
+                  <Section title={t("settings.googleApi")}>
                     <div className="space-y-3">
                       <TextField
-                        label="Client ID"
+                        label={t("addImap.clientId")}
                         size="md"
                         type="text"
                         value={clientId}
                         onChange={(e) => setClientId(e.target.value)}
-                        placeholder="1234567890-abc.apps.googleusercontent.com"
+                        placeholder={t("settings.clientIdPlaceholder")}
                         {...(clientIdError ? { error: clientIdError } : {})}
                       />
                       <TextField
-                        label="Client Secret"
+                        label={t("addImap.clientSecret")}
                         size="md"
                         type="password"
                         value={clientSecret}
                         onChange={(e) => setClientSecret(e.target.value)}
-                        placeholder="GOCSPX-..."
+                        placeholder={t("settings.clientSecretPlaceholder")}
                         {...(clientSecretError ? { error: clientSecretError } : {})}
                       />
                       <Button
@@ -1458,49 +1452,50 @@ export function SettingsPage() {
                         onClick={handleSaveApiSettings}
                         disabled={!clientId.trim() || !!clientIdError || !!clientSecretError}
                       >
-                        {apiSettingsSaved ? "Saved!" : "Save"}
+                        {apiSettingsSaved ? t("settings.savedMark") : t("ai.save")}
                       </Button>
                     </div>
                   </Section>
 
-                  <Section title="Gmail push relay">
+                  <Section title={t("settings.gmailPushRelay")}>
                     <div className="space-y-3">
                       <p className="text-xs text-text-tertiary">
-                        Optional Gmail API push relay. This is separate from Instant delivery (IMAP IDLE). The URL and secret stay in your local settings; leave them blank to use normal sync polling.
+                        {t("settings.gmailPushRelayDesc")}
                       </p>
                       <TextField
-                        label="Relay URL"
+                        label={t("settings.relayUrl")}
                         size="md"
                         type="url"
                         value={gmailPushRelayUrl}
                         onChange={(e) => setGmailPushRelayUrl(e.target.value)}
-                        placeholder="https://your-relay.example.com"
+                        placeholder={t("settings.relayUrlPlaceholder")}
                       />
                       <TextField
-                        label="Pub/Sub topic"
+                        label={t("settings.pubSubTopic")}
                         size="md"
                         value={gmailPushTopicName}
                         onChange={(e) => setGmailPushTopicName(e.target.value)}
-                        placeholder="projects/PROJECT_ID/topics/naiemail-gmail"
+                        placeholder={t("settings.pubSubTopicPlaceholder")}
                       />
                       <TextField
-                        label="Relay secret"
+                        label={t("settings.relaySecret")}
                         size="md"
                         type="password"
                         value={gmailPushRelaySecret}
                         onChange={(e) => setGmailPushRelaySecret(e.target.value)}
-                        placeholder="Bearer secret configured on the relay"
+                        placeholder={t("settings.relaySecretPlaceholder")}
                       />
                       <div className="rounded-md border border-border-primary bg-bg-secondary px-3 py-2 text-xs text-text-secondary">
                         <div className="flex items-center justify-between gap-3">
                           <span>
-                            Gmail relay: {gmailPushRelayStatus.state === "connected"
-                              ? "connected"
-                              : gmailPushRelayStatus.state === "connecting"
-                                ? "connecting..."
-                                : gmailPushRelayStatus.state === "error"
-                                  ? "error"
-                                  : "not checked"}
+                            {t("settings.relayStatus").replace("{status}",
+                              gmailPushRelayStatus.state === "connected"
+                                ? t("settings.relayConnected")
+                                : gmailPushRelayStatus.state === "connecting"
+                                  ? t("settings.relayConnecting")
+                                  : gmailPushRelayStatus.state === "error"
+                                    ? t("settings.relayError")
+                                    : t("settings.relayNotChecked"))}
                           </span>
                           <Button
                             variant="ghost"
@@ -1509,46 +1504,46 @@ export function SettingsPage() {
                             disabled={gmailPushRelayProbing}
                             icon={<RefreshCw size={13} className={gmailPushRelayProbing ? "animate-spin" : ""} />}
                           >
-                            {gmailPushRelayProbing ? "Checking..." : "Check relay"}
+                            {gmailPushRelayProbing ? t("settings.checking") : t("settings.checkRelay")}
                           </Button>
                         </div>
                         {gmailPushRelayStatus.attempted > 0 && (
                           <p className="mt-1">
-                            Watches registered: {gmailPushRelayStatus.registered.length}/{gmailPushRelayStatus.attempted}
+                            {t("settings.watchesRegistered").replace("{a}", String(gmailPushRelayStatus.registered.length)).replace("{b}", String(gmailPushRelayStatus.attempted))}
                           </p>
                         )}
                         {gmailPushRelayStatus.registered.length > 0 && (
                           <p className="mt-1 text-success">
-                            Registered: {gmailPushRelayStatus.registered.map((registration) => registration.email).join(", ")}
+                            {t("settings.registered").replace("{emails}", gmailPushRelayStatus.registered.map((registration) => registration.email).join(", "))}
                           </p>
                         )}
                         {gmailPushRelayStatus.registered.length === 0 && gmailPushRelayStatus.server && gmailPushRelayStatus.server.registrations.length > 0 && (
                           <p className="mt-1 text-success">
-                            Relay registered: {gmailPushRelayStatus.server.registrations.map((registration) => registration.email).join(", ")}
+                            {t("settings.relayRegistered").replace("{emails}", gmailPushRelayStatus.server.registrations.map((registration) => registration.email).join(", "))}
                           </p>
                         )}
                         {gmailPushRelayStatus.failures.length > 0 && (
                           <p className="mt-1 text-danger">
-                            Failed: {gmailPushRelayStatus.failures.map((failure) => `${failure.email} (${failure.message})`).join(", ")}
+                            {t("settings.relayFailed").replace("{list}", gmailPushRelayStatus.failures.map((failure) => `${failure.email} (${failure.message})`).join(", "))}
                           </p>
                         )}
                         {gmailPushRelayStatus.server && (
                           <p className="mt-1">
-                            Relay sees {gmailPushRelayStatus.server.registrationCount} registered watch{gmailPushRelayStatus.server.registrationCount === 1 ? "" : "es"} and {gmailPushRelayStatus.server.connectedClients} listener{gmailPushRelayStatus.server.connectedClients === 1 ? "" : "s"}.
+                            {(gmailPushRelayStatus.server.registrationCount === 1 ? t("settings.relaySeesWatch") : t("settings.relaySeesWatches")).replace("{count}", String(gmailPushRelayStatus.server.registrationCount))} and {(gmailPushRelayStatus.server.connectedClients === 1 ? t("settings.relaySeesListener") : t("settings.relaySeesListeners")).replace("{count}", String(gmailPushRelayStatus.server.connectedClients))}.
                           </p>
                         )}
-                        {gmailPushRelayProbeError && <p className="mt-1 text-danger">Probe failed: {gmailPushRelayProbeError}</p>}
+                        {gmailPushRelayProbeError && <p className="mt-1 text-danger">{t("settings.probeFailed").replace("{err}", gmailPushRelayProbeError)}</p>}
                       </div>
                       <Button variant="secondary" size="md" onClick={handleSaveGmailPushRelay}>
-                        {gmailPushRelaySaved ? "Saved!" : "Save relay"}
+                        {gmailPushRelaySaved ? t("settings.savedMark") : t("settings.saveRelay")}
                       </Button>
                     </div>
                   </Section>
 
-                  <Section title="Sync">
+                  <Section title={t("settings.sync")}>
                     <div className="flex items-center justify-between">
                       <span className="text-sm text-text-secondary">
-                        Check for new mail
+                        {t("settings.checkForNewMail")}
                       </span>
                       <Button
                         variant="primary"
@@ -1557,16 +1552,16 @@ export function SettingsPage() {
                         onClick={handleManualSync}
                         disabled={isSyncing || accounts.length === 0}
                       >
-                        {isSyncing ? "Syncing..." : "Sync now"}
+                        {isSyncing ? t("settings.syncing") : t("settings.syncNow")}
                       </Button>
                     </div>
                     <div className="flex items-center justify-between">
                       <div>
                         <span className="text-sm text-text-secondary">
-                          Full resync
+                          {t("settings.fullResync")}
                         </span>
                         <p className="text-xs text-text-tertiary mt-0.5">
-                          Re-download all emails from scratch
+                          {t("settings.fullResyncDesc")}
                         </p>
                       </div>
                       <Button
@@ -1577,13 +1572,13 @@ export function SettingsPage() {
                         disabled={isSyncing || accounts.length === 0}
                         className="bg-bg-tertiary text-text-primary border border-border-primary"
                       >
-                        {isSyncing ? "Syncing..." : "Full resync"}
+                        {isSyncing ? t("settings.syncing") : t("settings.fullResync")}
                       </Button>
                     </div>
                   </Section>
 
-                  <Section title="Sync Period">
-                    <SettingRow label="Sync emails from">
+                  <Section title={t("settings.syncPeriod")}>
+                    <SettingRow label={t("settings.syncEmailsFrom")}>
                       <select
                         value={syncPeriodDays}
                         onChange={async (e) => {
@@ -1593,18 +1588,17 @@ export function SettingsPage() {
                         }}
                         className="w-48 bg-bg-tertiary text-text-primary text-sm px-3 py-1.5 rounded-md border border-border-primary focus:border-accent outline-none"
                       >
-                        <option value="30">Last 30 days</option>
-                        <option value="90">Last 90 days</option>
-                        <option value="180">Last 180 days</option>
-                        <option value="365">Last 1 year</option>
-                        <option value="730">Last 2 years</option>
-                        <option value="1825">Last 5 years</option>
-                        <option value="0">All time (entire mailbox)</option>
+                        <option value="30">{t("settings.lastDays").replace("{count}", "30")}</option>
+                        <option value="90">{t("settings.lastDays").replace("{count}", "90")}</option>
+                        <option value="180">{t("settings.lastDays").replace("{count}", "180")}</option>
+                        <option value="365">{t("settings.lastYear").replace("{count}", "1")}</option>
+                        <option value="730">{t("settings.lastYears").replace("{count}", "2")}</option>
+                        <option value="1825">{t("settings.lastYears").replace("{count}", "5")}</option>
+                        <option value="0">{t("settings.allTime")}</option>
                       </select>
                     </SettingRow>
                     <p className="text-xs text-text-tertiary">
-                      Changes apply on the next full resync. "All time" fetches your
-                      entire mailbox — this can take a while and use more disk space.
+                      {t("settings.syncPeriodDesc")}
                     </p>
                   </Section>
 
@@ -1618,11 +1612,11 @@ export function SettingsPage() {
 
               {activeTab === "ai" && (
                 <>
-                  <Section title="Provider">
+                  <Section title={t("settings.provider")}>
                     <p className="text-xs text-text-tertiary mb-3">
-                      Choose which AI provider to use for summarization, compose assistance, and smart categorization.
+                      {t("ai.provider.help")}
                     </p>
-                    <SettingRow label="AI Provider">
+                    <SettingRow label={t("ai.provider")}>
                       <select
                         value={aiProvider}
                         onChange={async (e) => {
@@ -1645,13 +1639,13 @@ export function SettingsPage() {
                       </select>
                     </SettingRow>
                     <p className="text-xs text-text-tertiary">
-                      {aiProvider === "claude" && `Uses ${PROVIDER_MODELS.claude.find((m) => m.id === claudeModel)?.label ?? claudeModel}.`}
-                      {aiProvider === "openai" && `Uses ${PROVIDER_MODELS.openai.find((m) => m.id === openaiModel)?.label ?? openaiModel}.`}
-                      {aiProvider === "gemini" && `Uses ${PROVIDER_MODELS.gemini.find((m) => m.id === geminiModel)?.label ?? geminiModel}.`}
+                      {aiProvider === "claude" && t("settings.usesModel").replace("{model}", PROVIDER_MODELS.claude.find((m) => m.id === claudeModel)?.label ?? claudeModel)}
+                      {aiProvider === "openai" && t("settings.usesModel").replace("{model}", PROVIDER_MODELS.openai.find((m) => m.id === openaiModel)?.label ?? openaiModel)}
+                      {aiProvider === "gemini" && t("settings.usesModel").replace("{model}", PROVIDER_MODELS.gemini.find((m) => m.id === geminiModel)?.label ?? geminiModel)}
                       {aiProvider === "ollama" && t("ai.local.help")}
-                      {aiProvider === "copilot" && `Uses ${PROVIDER_MODELS.copilot.find((m) => m.id === copilotModel)?.label ?? copilotModel}. Requires a GitHub PAT with models:read permission.`}
+                      {aiProvider === "copilot" && t("settings.usesModelCopilot").replace("{model}", PROVIDER_MODELS.copilot.find((m) => m.id === copilotModel)?.label ?? copilotModel)}
                       {aiProvider === "custom" && t("ai.custom.help")}
-                      {aiProvider === "bedrock" && `Uses ${bedrockModel}. ${t("ai.bedrock.help")}`}
+                      {aiProvider === "bedrock" && `${t("settings.usesModel").replace("{model}", bedrockModel)} ${t("ai.bedrock.help")}`}
                     </p>
                   </Section>
 
@@ -1939,14 +1933,14 @@ export function SettingsPage() {
                       </div>
                     </Section>
                   ) : (
-                    <Section title="API Key">
+                    <Section title={t("settings.apiKey")}>
                       <div className="space-y-3">
                         <TextField
                           label={
-                            aiProvider === "claude" ? "Anthropic API Key"
-                            : aiProvider === "openai" ? "OpenAI API Key"
-                            : aiProvider === "copilot" ? "GitHub Personal Access Token"
-                            : "Google AI API Key"
+                            aiProvider === "claude" ? t("settings.anthropicApiKey")
+                            : aiProvider === "openai" ? t("settings.openaiApiKey")
+                            : aiProvider === "copilot" ? t("settings.githubPat")
+                            : t("settings.googleAiApiKey")
                           }
                           size="md"
                           type="password"
@@ -1969,7 +1963,7 @@ export function SettingsPage() {
                             : "AI..."
                           }
                         />
-                        <SettingRow label="Model">
+                        <SettingRow label={t("ai.local.model")}>
                           <select
                             value={
                               aiProvider === "claude" ? claudeModel
@@ -2031,7 +2025,7 @@ export function SettingsPage() {
                               : geminiApiKey.trim())
                             }
                           >
-                            {aiKeySaved ? "Saved!" : "Save Key"}
+                            {aiKeySaved ? t("settings.savedMark") : t("settings.saveKey")}
                           </Button>
                           <Button
                             variant="secondary"
@@ -2092,10 +2086,10 @@ export function SettingsPage() {
                     </SettingRow>
                   </Section>
 
-                  <Section title="Features">
+                  <Section title={t("settings.features")}>
                     <ToggleRow
-                      label="Enable AI features"
-                      description="Master toggle for all AI functionality"
+                      label={t("settings.enableAiFeatures")}
+                      description={t("settings.enableAiFeaturesDesc")}
                       checked={aiEnabled}
                       onToggle={async () => {
                         const newVal = !aiEnabled;
@@ -2104,8 +2098,8 @@ export function SettingsPage() {
                       }}
                     />
                     <ToggleRow
-                      label="Auto-categorize inbox"
-                      description="Use AI to refine rule-based categorization"
+                      label={t("settings.autoCategorize")}
+                      description={t("settings.autoCategorizeDesc")}
                       checked={aiAutoCategorize}
                       onToggle={async () => {
                         const newVal = !aiAutoCategorize;
@@ -2114,8 +2108,8 @@ export function SettingsPage() {
                       }}
                     />
                     <ToggleRow
-                      label="Auto-summarize threads"
-                      description="Show AI summaries on multi-message threads"
+                      label={t("settings.autoSummarize")}
+                      description={t("settings.autoSummarizeDesc")}
                       checked={aiAutoSummarize}
                       onToggle={async () => {
                         const newVal = !aiAutoSummarize;
@@ -2125,10 +2119,10 @@ export function SettingsPage() {
                     />
                   </Section>
 
-                  <Section title="Auto-Draft Replies">
+                  <Section title={t("settings.autoDraftReplies")}>
                     <ToggleRow
-                      label="Auto-draft replies"
-                      description="Pre-populate the reply editor with an AI-generated draft"
+                      label={t("settings.autoDraft")}
+                      description={t("settings.autoDraftDesc")}
                       checked={aiAutoDraftEnabled}
                       onToggle={async () => {
                         const newVal = !aiAutoDraftEnabled;
@@ -2137,8 +2131,8 @@ export function SettingsPage() {
                       }}
                     />
                     <ToggleRow
-                      label="Learn writing style"
-                      description="Analyze your sent emails to match your tone and voice"
+                      label={t("settings.learnWritingStyle")}
+                      description={t("settings.learnWritingStyleDesc")}
                       checked={aiWritingStyleEnabled}
                       onToggle={async () => {
                         const newVal = !aiWritingStyleEnabled;
@@ -2149,9 +2143,9 @@ export function SettingsPage() {
                     {aiWritingStyleEnabled && (
                       <div className="flex items-center justify-between">
                         <div>
-                          <span className="text-sm text-text-secondary">Writing style profile</span>
+                          <span className="text-sm text-text-secondary">{t("settings.writingStyleProfile")}</span>
                           <p className="text-xs text-text-tertiary mt-0.5">
-                            Reanalyze your writing style from recent sent emails
+                            {t("settings.reanalyzeWritingStyleDesc")}
                           </p>
                         </div>
                         <Button
@@ -2177,7 +2171,7 @@ export function SettingsPage() {
                           disabled={styleAnalyzing}
                           className="bg-bg-tertiary text-text-primary border border-border-primary"
                         >
-                          {styleAnalyzing ? "Analyzing..." : styleAnalyzeDone ? "Done!" : "Reanalyze"}
+                          {styleAnalyzing ? t("settings.analyzing") : styleAnalyzeDone ? t("settings.doneMark") : t("settings.reanalyze")}
                         </Button>
                       </div>
                     )}
@@ -2259,18 +2253,18 @@ export function SettingsPage() {
                     />
                   </Section>
 
-                  <Section title="Categories">
+                  <Section title={t("settings.categories")}>
                     <p className="text-xs text-text-tertiary mb-1">
-                      Incoming emails are automatically sorted using rule-based heuristics (Gmail labels, sender domain, headers). When AI is enabled, it refines results for better accuracy.
+                      {t("settings.categoriesDesc1")}
                     </p>
                     <p className="text-xs text-text-tertiary mb-3">
-                      Enable auto-archive to skip the inbox for specific categories.
+                      {t("settings.categoriesDesc2")}
                     </p>
                     {(["Updates", "Promotions", "Social", "Newsletters"] as const).map((cat) => (
                       <ToggleRow
                         key={cat}
-                        label={`Auto-archive ${cat}`}
-                        description={`Skip inbox for ${cat.toLowerCase()} emails`}
+                        label={t("settings.autoArchiveCategory").replace("{category}", t(`nav.${cat.toLowerCase()}`))}
+                        description={t("settings.skipInboxCategory").replace("{category}", t(`nav.${cat.toLowerCase()}`))}
                         checked={autoArchiveCategories.has(cat)}
                         onToggle={async () => {
                           const next = new Set(autoArchiveCategories);
@@ -2283,7 +2277,7 @@ export function SettingsPage() {
                     ))}
                   </Section>
 
-                  <Section title="Bundling & Delivery Schedules">
+                  <Section title={t("settings.bundling")}>
                     <p className="text-xs text-text-tertiary mb-3">
                       Collapse categories into a single row in the inbox. Optionally set a delivery schedule to batch emails.
                     </p>
@@ -2360,6 +2354,7 @@ function AccountColorPicker({
 function SendAsAliasesSection() {
   const accounts = useAccountStore((s) => s.accounts);
   const [aliases, setAliases] = useState<SendAsAlias[]>([]);
+  const { t } = useI18n();
 
   useEffect(() => {
     const activeAccount = accounts.find((a) => a.isActive);
@@ -2386,13 +2381,13 @@ function SendAsAliasesSection() {
   };
 
   return (
-    <Section title="Send-As Aliases">
+    <Section title={t("settings.sendAsAliases")}>
       <p className="text-xs text-text-tertiary mb-3">
-        These aliases are synced from your Gmail settings. You can select which alias to use as the default sender.
+        {t("settings.sendAsAliasesDesc")}
       </p>
       {aliases.length === 0 ? (
         <p className="text-sm text-text-tertiary">
-          No aliases found. Aliases are fetched from Gmail on startup.
+          {t("settings.noAliases")}
         </p>
       ) : (
         <div className="space-y-2">
@@ -2410,12 +2405,12 @@ function SendAsAliasesSection() {
                   <div className="flex items-center gap-2 mt-0.5">
                     {alias.isPrimary && (
                       <span className="text-[0.625rem] bg-accent/15 text-accent px-1.5 py-0.5 rounded-full">
-                        Primary
+                        {t("settings.primaryBadge")}
                       </span>
                     )}
                     {alias.isDefault && (
                       <span className="text-[0.625rem] bg-success/15 text-success px-1.5 py-0.5 rounded-full">
-                        Default
+                        {t("settings.defaultBadge")}
                       </span>
                     )}
                     {alias.verificationStatus !== "accepted" && (
@@ -2431,7 +2426,7 @@ function SendAsAliasesSection() {
                   onClick={() => handleSetDefault(alias)}
                   className="text-xs text-accent hover:text-accent-hover transition-colors shrink-0 ml-3"
                 >
-                  Set as default
+                  {t("settings.setAsDefault")}
                 </button>
               )}
             </div>
@@ -2446,6 +2441,7 @@ function SyncOfflineSection() {
   const [pendingCount, setPendingCount] = useState(0);
   const [failedCount, setFailedCount] = useState(0);
   const [loading, setLoading] = useState(false);
+  const { t } = useI18n();
 
   const loadCounts = useCallback(async () => {
     const { getPendingOpsCount, getFailedOpsCount } = await import("@/services/db/pendingOperations");
@@ -2480,13 +2476,13 @@ function SyncOfflineSection() {
   };
 
   return (
-    <Section title="Sync & Offline">
+    <Section title={t("settings.syncOffline")}>
       <div className="space-y-3">
         <div className="flex items-center justify-between">
           <div>
-            <span className="text-sm text-text-secondary">Pending operations</span>
+            <span className="text-sm text-text-secondary">{t("settings.pendingOperations")}</span>
             <p className="text-xs text-text-tertiary mt-0.5">
-              Changes waiting to sync to the server
+              {t("settings.pendingOpsDesc")}
             </p>
           </div>
           <span className="text-sm font-mono text-text-primary">{pendingCount}</span>
@@ -2494,9 +2490,9 @@ function SyncOfflineSection() {
 
         <div className="flex items-center justify-between">
           <div>
-            <span className="text-sm text-text-secondary">Failed operations</span>
+            <span className="text-sm text-text-secondary">{t("settings.failedOperations")}</span>
             <p className="text-xs text-text-tertiary mt-0.5">
-              Changes that could not be synced after multiple retries
+              {t("settings.failedOpsDesc")}
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -2508,14 +2504,14 @@ function SyncOfflineSection() {
                   disabled={loading}
                   className="text-xs text-accent hover:text-accent-hover transition-colors disabled:opacity-50"
                 >
-                  Retry
+                  {t("settings.retry")}
                 </button>
                 <button
                   onClick={handleClearFailed}
                   disabled={loading}
                   className="text-xs text-danger hover:opacity-80 transition-colors disabled:opacity-50"
                 >
-                  Clear
+                  {t("settings.clearFailed")}
                 </button>
               </>
             )}
@@ -2535,6 +2531,7 @@ function DeveloperTab() {
   const [updateVersion, setUpdateVersion] = useState<string | null>(null);
   const [updateCheckDone, setUpdateCheckDone] = useState(false);
   const [installingUpdate, setInstallingUpdate] = useState(false);
+  const { t } = useI18n();
 
   useEffect(() => {
     async function load() {
@@ -2605,24 +2602,24 @@ function DeveloperTab() {
 
   return (
     <>
-      <Section title="App Info">
-        <InfoRow label="App version" value={appVersion ? `${appVersion} (${FIX_NUMBER})` : "..."} />
-        <InfoRow label="Tauri version" value={tauriVersion || "..."} />
-        <InfoRow label="WebView version" value={webviewVersion || "..."} />
-        <InfoRow label="Platform" value={platformLabel} />
+      <Section title={t("settings.appInfo")}>
+        <InfoRow label={t("settings.appVersion")} value={appVersion ? `${appVersion} (${FIX_NUMBER})` : "..."} />
+        <InfoRow label={t("settings.tauriVersion")} value={tauriVersion || "..."} />
+        <InfoRow label={t("settings.webviewVersion")} value={webviewVersion || "..."} />
+        <InfoRow label={t("settings.platform")} value={platformLabel} />
       </Section>
 
-      <Section title="Updates">
+      <Section title={t("settings.updates")}>
         <div className="flex items-center justify-between">
           <div>
-            <span className="text-sm text-text-secondary">Software updates</span>
+            <span className="text-sm text-text-secondary">{t("settings.softwareUpdates")}</span>
             {updateVersion && (
               <p className="text-xs text-accent mt-0.5">
-                v{updateVersion} available
+                {t("settings.updateAvailable").replace("{version}", updateVersion)}
               </p>
             )}
             {updateCheckDone && !updateVersion && (
-              <p className="text-xs text-success mt-0.5">Up to date</p>
+              <p className="text-xs text-success mt-0.5">{t("settings.upToDate")}</p>
             )}
           </div>
           <div className="flex items-center gap-2">
@@ -2634,7 +2631,7 @@ function DeveloperTab() {
                 onClick={handleInstallUpdate}
                 disabled={installingUpdate}
               >
-                {installingUpdate ? "Updating..." : "Update & Restart"}
+                {installingUpdate ? t("settings.updating") : t("settings.updateRestart")}
               </Button>
             ) : (
               <Button
@@ -2645,19 +2642,19 @@ function DeveloperTab() {
                 disabled={checkingForUpdate}
                 className="bg-bg-tertiary text-text-primary border border-border-primary"
               >
-                {checkingForUpdate ? "Checking..." : "Check for Updates"}
+                {checkingForUpdate ? t("settings.checking") : t("settings.checkForUpdates")}
               </Button>
             )}
           </div>
         </div>
       </Section>
 
-      <Section title="Developer Tools">
+      <Section title={t("settings.developerTools")}>
         <div className="flex items-center justify-between">
           <div>
-            <span className="text-sm text-text-secondary">Open DevTools</span>
+            <span className="text-sm text-text-secondary">{t("settings.openDevtools")}</span>
             <p className="text-xs text-text-tertiary mt-0.5">
-              Open the WebView developer tools inspector
+              {t("settings.openDevtoolsDesc")}
             </p>
           </div>
           <Button
@@ -2669,7 +2666,7 @@ function DeveloperTab() {
             }}
             className="bg-bg-tertiary text-text-primary border border-border-primary"
           >
-            Open DevTools
+            {t("settings.openDevtools")}
           </Button>
         </div>
       </Section>
@@ -2679,6 +2676,7 @@ function DeveloperTab() {
 
 function AboutTab() {
   const [appVersion, setAppVersion] = useState("");
+  const { t } = useI18n();
 
   useEffect(() => {
     import("@tauri-apps/api/app").then(({ getVersion }) =>
@@ -2693,22 +2691,22 @@ function AboutTab() {
 
   return (
     <>
-      <Section title="NAI Mail">
+      <Section title={t("settings.naiMail")}>
         <div className="flex items-center gap-3 mb-2">
           <img src={appIcon} alt="NAI" className="w-12 h-12 rounded-xl" />
           <div>
             <h3 className="text-base font-semibold text-text-primary">NAI</h3>
             <p className="text-sm text-text-tertiary">
-              {appVersion ? `Version ${appVersion}` : "Loading..."}
+              {appVersion ? t("settings.version").replace("{version}", appVersion) : t("settings.loading")}
             </p>
           </div>
         </div>
         <p className="text-sm text-text-secondary leading-relaxed">
-          A fast, open-source desktop email client built with privacy in mind. Your emails stay on your machine — no cloud, no tracking.
+          {t("settings.aboutDesc")}
         </p>
       </Section>
 
-      <Section title="Links">
+      <Section title={t("settings.links")}>
         <div className="space-y-1">
           <button
             onClick={() => openExternal("https://velomail.app")}
@@ -2716,7 +2714,7 @@ function AboutTab() {
           >
             <Globe size={16} className="text-text-tertiary shrink-0" />
             <div className="min-w-0 flex-1">
-              <span className="text-sm text-text-primary">Website</span>
+              <span className="text-sm text-text-primary">{t("settings.website")}</span>
               <p className="text-xs text-text-tertiary">velomail.app</p>
             </div>
             <ExternalLink size={14} className="text-text-tertiary shrink-0" />
@@ -2728,7 +2726,7 @@ function AboutTab() {
           >
             <Github size={16} className="text-text-tertiary shrink-0" />
             <div className="min-w-0 flex-1">
-              <span className="text-sm text-text-primary">GitHub Repository</span>
+              <span className="text-sm text-text-primary">{t("settings.githubRepository")}</span>
               <p className="text-xs text-text-tertiary">avihaymenahem/naiemail</p>
             </div>
             <ExternalLink size={14} className="text-text-tertiary shrink-0" />
@@ -2740,7 +2738,7 @@ function AboutTab() {
           >
             <Mail size={16} className="text-text-tertiary shrink-0" />
             <div className="min-w-0 flex-1">
-              <span className="text-sm text-text-primary">Contact</span>
+              <span className="text-sm text-text-primary">{t("settings.contact")}</span>
               <p className="text-xs text-text-tertiary">info@velomail.app</p>
             </div>
             <ExternalLink size={14} className="text-text-tertiary shrink-0" />
@@ -2748,7 +2746,7 @@ function AboutTab() {
         </div>
       </Section>
 
-      <Section title="License">
+      <Section title={t("settings.license")}>
         <div className="px-4 py-3 bg-bg-secondary rounded-lg">
           <div className="flex items-center gap-2 mb-2">
             <Scale size={15} className="text-text-tertiary" />
@@ -2769,17 +2767,14 @@ function AboutTab() {
         </div>
       </Section>
 
-      <Section title="Attribution">
+      <Section title={t("settings.attribution")}>
         <div className="px-4 py-3 bg-bg-secondary rounded-lg">
           <div className="flex items-center gap-2 mb-2">
             <GitFork size={15} className="text-text-tertiary" />
-            <span className="text-sm font-medium text-text-primary">Modified from NAI</span>
+            <span className="text-sm font-medium text-text-primary">{t("settings.modifiedFromNai")}</span>
           </div>
           <p className="text-xs text-text-secondary leading-relaxed">
-            NAI E-Mail is a modified version of NAI by Avihay Menahem, used under
-            the Apache License 2.0. NAI E-Mail is not affiliated with, endorsed by,
-            or supported by the NAI project. Changes have been made to the
-            original software.
+            {t("settings.attributionDesc")}
           </p>
         </div>
       </Section>
@@ -2834,10 +2829,10 @@ function ShortcutsTab() {
 
   return (
     <>
-      <Section title="Global Shortcut">
+      <Section title={t("settings.globalShortcut")}>
         <div className="flex items-center justify-between">
           <div>
-            <span className="text-sm text-text-secondary">Quick compose</span>
+            <span className="text-sm text-text-secondary">{t("settings.quickCompose")}</span>
             <p className="text-xs text-text-tertiary mt-0.5">
               Open compose window from any app
             </p>
@@ -2858,7 +2853,7 @@ function ShortcutsTab() {
                   : "bg-bg-tertiary text-text-secondary hover:text-text-primary border border-border-primary"
               }`}
             >
-              {recordingGlobal ? "Press keys..." : "Change"}
+              {recordingGlobal ? t("settings.pressKeys") : t("settings.change")}
             </button>
           </div>
         </div>
@@ -2866,14 +2861,14 @@ function ShortcutsTab() {
 
       <div className="flex items-center justify-between mb-4">
         <p className="text-sm text-text-tertiary">
-          Click a shortcut to rebind it. Press any key or key combination to set.
+          {t("settings.rebindHint")}
         </p>
         {hasCustom && (
           <button
             onClick={resetAll}
             className="text-xs text-accent hover:text-accent-hover transition-colors shrink-0 ml-4"
           >
-            Reset all
+            {t("settings.resetAll")}
           </button>
         )}
       </div>
@@ -2906,13 +2901,13 @@ function ShortcutsTab() {
                           : "bg-bg-tertiary text-text-tertiary hover:text-text-primary border border-border-primary"
                       }`}
                     >
-                      {isRecording ? "Press key..." : currentKey}
+                      {isRecording ? t("settings.pressKey") : currentKey}
                     </button>
                     {!isDefault && (
                       <button
                         onClick={() => resetKey(item.id)}
                         className="text-xs text-text-tertiary hover:text-text-primary"
-                        title={`Reset to ${defaults[item.id]}`}
+                        title={t("settings.resetTo").replace("{key}", defaults[item.id] ?? currentKey)}
                       >
                         ×
                       </button>
@@ -2932,6 +2927,7 @@ function ImapCalDavSection() {
   const accounts = useAccountStore((s) => s.accounts);
   const activeAccountId = useAccountStore((s) => s.activeAccountId);
   const [account, setAccount] = useState<import("@/services/db/accounts").DbAccount | null>(null);
+  const { t } = useI18n();
 
   useEffect(() => {
     if (!activeAccountId) return;
@@ -2946,7 +2942,7 @@ function ImapCalDavSection() {
   if (!isImap || !account) return null;
 
   return (
-    <Section title="Calendar (CalDAV)">
+    <Section title={t("settings.calendarCalDav")}>
       <CalDavSettingsInline account={account} onSaved={() => {
         // Reload account
         import("@/services/db/accounts").then(({ getAccount }) => {
@@ -2959,12 +2955,13 @@ function ImapCalDavSection() {
 
 function CalDavSettingsInline({ account, onSaved }: { account: import("@/services/db/accounts").DbAccount; onSaved: () => void }) {
   const [CalDav, setCalDav] = useState<typeof import("@/components/settings/CalDavSettings").CalDavSettings | null>(null);
+  const { t } = useI18n();
 
   useEffect(() => {
     import("@/components/settings/CalDavSettings").then((m) => setCalDav(() => m.CalDavSettings));
   }, []);
 
-  if (!CalDav) return <div className="text-xs text-text-tertiary">Loading...</div>;
+  if (!CalDav) return <div className="text-xs text-text-tertiary">{t("settings.loading")}</div>;
 
   return <CalDav account={account} onSaved={onSaved} />;
 }
@@ -2972,6 +2969,7 @@ function CalDavSettingsInline({ account, onSaved }: { account: import("@/service
 function SidebarNavEditor() {
   const sidebarNavConfig = useUIStore((s) => s.sidebarNavConfig);
   const setSidebarNavConfig = useUIStore((s) => s.setSidebarNavConfig);
+  const { t } = useI18n();
 
   const items: SidebarNavItem[] = (() => {
     if (!sidebarNavConfig) return ALL_NAV_ITEMS.map((i) => ({ id: i.id, visible: true }));
@@ -3013,7 +3011,7 @@ function SidebarNavEditor() {
       items.every((item, i) => item.id === ALL_NAV_ITEMS[i]?.id && item.visible));
 
   return (
-    <Section title="Sidebar">
+    <Section title={t("settings.sidebar")}>
       <div className="space-y-1">
         {items.map((item, index) => {
           const nav = navLookup.get(item.id);
@@ -3031,7 +3029,7 @@ function SidebarNavEditor() {
                 onClick={() => moveItem(index, -1)}
                 disabled={index === 0}
                 className="p-0.5 rounded text-text-tertiary hover:text-text-primary disabled:opacity-25 disabled:cursor-not-allowed transition-colors"
-                title="Move up"
+                title={t("settings.moveUp")}
               >
                 <ChevronUp size={14} />
               </button>
@@ -3039,12 +3037,12 @@ function SidebarNavEditor() {
                 onClick={() => moveItem(index, 1)}
                 disabled={index === items.length - 1}
                 className="p-0.5 rounded text-text-tertiary hover:text-text-primary disabled:opacity-25 disabled:cursor-not-allowed transition-colors"
-                title="Move down"
+                title={t("settings.moveDown")}
               >
                 <ChevronDown size={14} />
               </button>
               <Icon size={16} className="shrink-0 ml-1" />
-              <span className="flex-1 truncate">{nav.label}</span>
+              <span className="flex-1 truncate">{t(`nav.${item.id}`)}</span>
               <button
                 onClick={() => toggleItem(index)}
                 disabled={isInbox}
@@ -3055,7 +3053,7 @@ function SidebarNavEditor() {
                       ? "bg-accent cursor-pointer"
                       : "bg-bg-tertiary cursor-pointer"
                 }`}
-                title={isInbox ? "Inbox is always visible" : item.visible ? "Hide" : "Show"}
+                title={isInbox ? t("settings.inboxAlwaysVisible") : item.visible ? t("settings.hide") : t("settings.show")}
               >
                 <span
                   className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${
@@ -3073,7 +3071,7 @@ function SidebarNavEditor() {
           className="flex items-center gap-1.5 text-xs text-accent hover:text-accent-hover mt-2 transition-colors"
         >
           <RotateCcw size={12} />
-          Reset to defaults
+          {t("settings.resetToDefaults")}
         </button>
       )}
     </Section>

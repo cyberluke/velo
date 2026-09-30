@@ -129,6 +129,7 @@ function DroppableLabelItem({
   onEditClick: () => void;
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: label.id });
+  const { t } = useI18n();
   const initial = (label.name[0] ?? "?").toUpperCase();
 
   return (
@@ -178,7 +179,7 @@ function DroppableLabelItem({
             onClick={(e) => { e.stopPropagation(); onEditClick(); }}
             onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); e.stopPropagation(); onEditClick(); } }}
             className="opacity-0 group-hover:opacity-100 p-0.5 text-sidebar-text/40 hover:text-sidebar-text transition-opacity"
-            title="Edit label"
+            title={t("sidebar.editLabel")}
           >
             <Pencil size={12} />
           </span>
@@ -430,7 +431,7 @@ export function Sidebar({ collapsed }: SidebarProps) {
                             setInboxViewMode(inboxViewMode === "split" ? "unified" : "split");
                           }
                         }}
-                        title={inboxViewMode === "split" ? "Switch to unified inbox" : "Switch to split inbox"}
+                        title={inboxViewMode === "split" ? t("sidebar.switchToUnified") : t("sidebar.switchToSplit")}
                         className={`p-1 rounded transition-colors ${
                           inboxViewMode === "split"
                             ? "text-accent hover:bg-accent/10"
@@ -483,7 +484,7 @@ export function Sidebar({ collapsed }: SidebarProps) {
                 <button
                   onClick={handleAddSmartFolder}
                   className="p-0.5 text-sidebar-text/40 hover:text-sidebar-text transition-colors"
-                  title="Add smart folder"
+                  title={t("sidebar.addSmartFolder")}
                 >
                   <Plus size={14} />
                 </button>
@@ -539,7 +540,7 @@ export function Sidebar({ collapsed }: SidebarProps) {
                 <button
                   onClick={handleAddLabel}
                   className="p-0.5 text-sidebar-text/40 hover:text-sidebar-text transition-colors"
-                  title="Add label"
+                  title={t("sidebar.addLabel")}
                 >
                   <Plus size={14} />
                 </button>
@@ -601,12 +602,12 @@ export function Sidebar({ collapsed }: SidebarProps) {
                 {labelsExpanded ? (
                   <>
                     <ChevronUp size={12} />
-                    <span>Show less</span>
+                    <span>{t("sidebar.showLess")}</span>
                   </>
                 ) : (
                   <>
                     <ChevronDown size={12} />
-                    <span>{labels.length - LABELS_COLLAPSED_COUNT} more</span>
+                    <span>{t("sidebar.moreLabels").replace("{count}", String(labels.length - LABELS_COLLAPSED_COUNT))}</span>
                   </>
                 )}
               </button>
@@ -655,7 +656,7 @@ export function Sidebar({ collapsed }: SidebarProps) {
         <button
           onClick={toggleSidebar}
           className="p-2 text-sidebar-text/60 hover:text-sidebar-text hover:bg-sidebar-hover rounded-md transition-colors"
-          title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          title={collapsed ? t("sidebar.expand") : t("sidebar.collapse")}
         >
           {collapsed ? <PanelLeftOpen size={16} /> : <PanelLeftClose size={16} />}
         </button>
@@ -671,10 +672,10 @@ export function Sidebar({ collapsed }: SidebarProps) {
             activeAccountId ?? undefined,
           );
         }}
-        title="New Smart Folder"
+        title={t("sidebar.newSmartFolder")}
         fields={[
-          { key: "name", label: "Name", placeholder: "e.g. Unread from boss" },
-          { key: "query", label: "Search query", placeholder: "e.g. is:unread from:boss" },
+          { key: "name", label: t("sidebar.name"), placeholder: t("sidebar.unreadFromBossPlaceholder") },
+          { key: "query", label: t("sidebar.searchQuery"), placeholder: t("sidebar.searchQueryPlaceholder") },
         ]}
       />
 
@@ -686,6 +687,7 @@ export function Sidebar({ collapsed }: SidebarProps) {
 
 function PendingOpsIndicator({ collapsed }: { collapsed: boolean }) {
   const pendingOpsCount = useUIStore((s) => s.pendingOpsCount);
+  const { t } = useI18n();
   if (pendingOpsCount <= 0) return null;
 
   return (
@@ -696,7 +698,7 @@ function PendingOpsIndicator({ collapsed }: { collapsed: boolean }) {
         </div>
       ) : (
         <div className="text-xs text-text-secondary">
-          {pendingOpsCount} pending {pendingOpsCount === 1 ? "change" : "changes"}
+          {(pendingOpsCount === 1 ? t("sidebar.pendingChange") : t("sidebar.pendingChanges")).replace("{count}", String(pendingOpsCount))}
         </div>
       )}
     </div>

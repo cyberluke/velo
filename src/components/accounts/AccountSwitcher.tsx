@@ -8,6 +8,7 @@ import { accountColor } from "@/constants/accountColors";
 import { getAliasesForAccount, mapDbAlias, type SendAsAlias } from "@/services/db/sendAsAliases";
 import { refreshMail } from "@/services/refreshMail";
 import { AtSign } from "lucide-react";
+import { useI18n } from "@/i18n";
 
 interface AccountSwitcherProps {
   collapsed: boolean;
@@ -36,6 +37,7 @@ export function AccountSwitcher({
   const dropdownRef = useRef<HTMLDivElement | null>(null);
   const syncState = useUIStore((s) => s.syncState);
   const syncMessage = useUIStore((s) => s.syncMessage);
+  const { t, locale } = useI18n();
 
   useClickOutside(dropdownRef, () => setOpen(false));
 
@@ -54,11 +56,11 @@ export function AccountSwitcher({
     if (states.length === 1) {
       return { state: states[0]!, label: describeIdleState(states[0]) };
     }
-    if (connected === states.length) return { state: "connected" as IdleState, label: "Instant delivery on" };
-    if (states.some((st) => st === "connecting")) return { state: "connecting" as IdleState, label: `Connecting… ${connected}/${states.length} live` };
-    if (connected > 0) return { state: "failed" as IdleState, label: `Instant delivery on ${connected}/${states.length}` };
+    if (connected === states.length) return { state: "connected" as IdleState, label: t("accountSwitcher.instantDeliveryOn") };
+    if (states.some((st) => st === "connecting")) return { state: "connecting" as IdleState, label: t("accountSwitcher.connectingLive").replace("{count}", `${connected}/${states.length}`) };
+    if (connected > 0) return { state: "failed" as IdleState, label: t("accountSwitcher.instantDeliveryCount").replace("{count}", `${connected}/${states.length}`) };
     return { state: states.includes("failed") ? "failed" as IdleState : "off" as IdleState, label: describeIdleState(states.includes("failed") ? "failed" : "off") };
-  }, [idleStatuses, unifiedInbox, accounts, activeAccount]);
+  }, [idleStatuses, unifiedInbox, accounts, activeAccount, locale]);
   // Unified only makes sense with more than one mailbox to unify
   const canUnify = mailAccounts(accounts).length > 1;
 
@@ -127,7 +129,7 @@ export function AccountSwitcher({
           <div className="w-8 h-8 rounded-full bg-accent/10 flex items-center justify-center shrink-0">
             <UserPlus size={16} className="text-accent" />
           </div>
-          {!collapsed && <span className="font-medium">Add Account</span>}
+          {!collapsed && <span className="font-medium">{t("addAccount.title")}</span>}
         </button>
       </div>
     );
@@ -148,7 +150,7 @@ export function AccountSwitcher({
         <span
           role="button"
           tabIndex={0}
-          aria-label="Refresh mail (F5)"
+          aria-label={t("accountSwitcher.refreshMail")}
           onClick={handleRefresh}
           onKeyDown={(e) => {
             if (e.key === "Enter" || e.key === " ") {
@@ -178,12 +180,12 @@ export function AccountSwitcher({
             <div className="flex-1 min-w-0 text-left">
               <div className="text-sm font-medium text-sidebar-text truncate leading-tight">
                 {unifiedInbox
-                  ? "All Inboxes"
+                  ? t("accountSwitcher.allInboxes")
                   : activeAccount!.displayName || activeAccount!.email.split("@")[0]}
               </div>
               <div className="text-xs text-sidebar-text/50 truncate leading-tight">
                 {unifiedInbox
-                  ? `${mailAccounts(accounts).length} accounts`
+                  ? t("accountSwitcher.accountCount").replace("{count}", String(mailAccounts(accounts).length))
                   : (activeAliasEmail ?? activeAccount!.email)}
               </div>
             </div>
@@ -207,12 +209,12 @@ export function AccountSwitcher({
         >
           <div className="text-xs font-medium text-text-primary truncate">
             {unifiedInbox
-              ? "All Inboxes"
-              : activeAccount?.displayName || activeAccount?.email || "No account"}
+              ? t("accountSwitcher.allInboxes")
+              : activeAccount?.displayName || activeAccount?.email || t("accountSwitcher.noAccount")}
           </div>
           <div className="text-[0.6875rem] text-text-secondary truncate">
             {unifiedInbox
-              ? `${mailAccounts(accounts).length} accounts`
+              ? t("accountSwitcher.accountCount").replace("{count}", String(mailAccounts(accounts).length))
               : (activeAliasEmail ?? activeAccount?.email ?? "")}
           </div>
           {syncState !== "idle" && (
@@ -221,7 +223,7 @@ export function AccountSwitcher({
                 syncState === "error" ? "text-danger" : "text-accent"
               }`}
             >
-              {syncMessage ?? (syncState === "error" ? "Sync failed" : "Syncing...")}
+              {syncMessage ?? (syncState === "error" ? t("accountSwitcher.syncFailed") : t("accountSwitcher.syncing"))}
             </div>
           )}
           {/* Whether the server is pushing to us, or we are still asking it */}
@@ -249,7 +251,7 @@ export function AccountSwitcher({
             {idleSummary.label}
           </div>
           <div className="text-[0.625rem] text-text-tertiary mt-1">
-            Click avatar to refresh · F5
+            {t("accountSwitcher.clickToRefresh")}
           </div>
         </div>
       )}
@@ -280,10 +282,10 @@ export function AccountSwitcher({
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="text-sm font-medium truncate leading-tight">
-                    All Inboxes
+                    {t("accountSwitcher.allInboxes")}
                   </div>
                   <div className="text-xs text-text-secondary truncate leading-tight">
-                    Every account in one list
+                    {t("accountSwitcher.everyAccountOneList")}
                   </div>
                 </div>
                 {unifiedInbox && <Check size={14} className="shrink-0 text-accent" />}
@@ -293,7 +295,7 @@ export function AccountSwitcher({
           )}
           {mailAccounts(accounts).length > 1 && (
             <div className="px-3 py-1.5 text-[0.625rem] font-medium text-text-tertiary uppercase tracking-wider">
-              Accounts
+              {t("accountSwitcher.accounts")}
             </div>
           )}
           {accounts.map((account, accountIndex) => {
@@ -348,7 +350,7 @@ export function AccountSwitcher({
                 <button
                   key={`${account.id}:${alias.id}`}
                   onClick={() => handleIdentity(account.id, alias.email)}
-                  title={`Send as ${alias.email} using ${account.email}`}
+                  title={t("accountSwitcher.sendAs").replace("{alias}", alias.email).replace("{account}", account.email)}
                   className={`flex items-center gap-2.5 w-full pl-8 pr-3 py-1.5 text-left transition-colors ${
                     isActiveIdentity
                       ? "bg-accent/8 text-accent"
@@ -374,7 +376,7 @@ export function AccountSwitcher({
             <div className="w-7 h-7 rounded-full bg-bg-tertiary flex items-center justify-center shrink-0">
               <Plus size={14} />
             </div>
-            <span>Add account</span>
+            <span>{t("accountSwitcher.addAccount")}</span>
           </button>
         </div>
       )}
@@ -394,6 +396,7 @@ function SyncRing({
   state: "idle" | "syncing" | "error";
   children: React.ReactNode;
 }) {
+  const { t } = useI18n();
   if (state === "idle") return <>{children}</>;
 
   return (
@@ -405,7 +408,7 @@ function SyncRing({
           state === "error" ? "border-danger/70" : "border-t-accent animate-spin"
         }`}
       />
-      <span className="sr-only">{state === "error" ? "Sync failed" : "Syncing"}</span>
+      <span className="sr-only">{state === "error" ? t("accountSwitcher.syncFailed") : t("accountSwitcher.syncing")}</span>
     </div>
   );
 }

@@ -819,17 +819,17 @@ export function EmailList({ width, listRef }: { width?: number; listRef?: React.
           <h2 className="text-sm font-semibold text-text-primary capitalize flex items-center gap-1.5">
             {isSmartFolder && <FolderSearch size={14} className="text-accent shrink-0" />}
             {searchThreadIds !== null
-              ? "Search results"
+              ? t("email.searchResults")
               : isSmartFolder
-                ? activeSmartFolder?.name ?? "Smart Folder"
+                ? activeSmartFolder?.name ?? t("email.smartFolder")
                 : activeLabel === "inbox" && inboxViewMode === "split" && activeCategory !== "All"
-                  ? `Inbox — ${activeCategory}`
+                  ? `${t("nav.inbox")} — ${t(`nav.${activeCategory.toLowerCase()}`)}`
                   : LABEL_MAP[activeLabel] !== undefined
-                    ? activeLabel
+                    ? t(`nav.${activeLabel}`)
                     : userLabels.find((l) => l.id === activeLabel)?.name ?? activeLabel}
           </h2>
           <span className="text-xs text-text-tertiary">
-            {filteredThreads.length} conversation{filteredThreads.length !== 1 ? "s" : ""}
+            {(filteredThreads.length === 1 ? t("email.conversation") : t("email.conversations")).replace("{count}", String(filteredThreads.length))}
           </span>
         </div>
         <div className="flex items-center gap-1.5">
@@ -838,10 +838,10 @@ export function EmailList({ width, listRef }: { width?: number; listRef?: React.
             disabled={!selectedThread?.fromAddress}
             title={
               selectedThread?.fromAddress && searchQuery === `from:${selectedThread.fromAddress}`
-                ? "Clear this search and go back to the mailbox"
+                ? t("email.clearSearch")
                 : selectedThread?.fromAddress
-                  ? `Show all messages from ${selectedThread.fromAddress}`
-                  : "Select a thread to search by its sender"
+                  ? t("email.showAllFrom").replace("{sender}", selectedThread.fromAddress)
+                  : t("email.selectThreadToSearch")
             }
             className={`rounded-lg p-1.5 transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
               selectedThread?.fromAddress && searchQuery === `from:${selectedThread.fromAddress}`
@@ -856,14 +856,14 @@ export function EmailList({ width, listRef }: { width?: number; listRef?: React.
             disabled={!selectedThread}
             title={
               unsubStatus === "done"
-                ? "Unsubscribed"
+                ? t("email.unsubscribed")
                 : unsubStatus === "none"
-                  ? "No unsubscribe link in this thread"
+                  ? t("email.noUnsubscribeLink")
                   : unsubStatus === "failed"
-                    ? "Unsubscribe failed — click to retry"
+                    ? t("email.unsubscribeFailed")
                     : selectedThread
-                      ? "Unsubscribe from this sender"
-                      : "Select a thread to unsubscribe"
+                      ? t("email.unsubscribeFrom")
+                      : t("email.selectThreadToUnsubscribe")
             }
             className={`rounded-lg p-1.5 transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
               unsubStatus === "done"
@@ -900,7 +900,7 @@ export function EmailList({ width, listRef }: { width?: number; listRef?: React.
                 inboxFocus === "all" ? "bg-bg-secondary text-text-primary shadow-sm" : "text-text-tertiary hover:text-text-secondary"
               }`}
             >
-              All
+              {t("email.all")}
             </button>
             <button
               onClick={() => setInboxFocus("important")}
@@ -909,7 +909,7 @@ export function EmailList({ width, listRef }: { width?: number; listRef?: React.
                 inboxFocus === "important" ? "bg-bg-secondary text-text-primary shadow-sm" : "text-text-tertiary hover:text-text-secondary"
               }`}
             >
-              Important
+              {t("email.important")}
             </button>
           </div>
           ) : (
@@ -918,9 +918,9 @@ export function EmailList({ width, listRef }: { width?: number; listRef?: React.
             onChange={(e) => setReadFilter(e.target.value as "all" | "read" | "unread")}
             className="text-xs bg-bg-tertiary text-text-secondary px-2 py-1 rounded-full border-0"
           >
-            <option value="all">All</option>
-            <option value="unread">Unread</option>
-            <option value="read">Read</option>
+            <option value="all">{t("email.all")}</option>
+            <option value="unread">{t("email.unread")}</option>
+            <option value="read">{t("email.read")}</option>
           </select>
           )}
         </div>
@@ -940,28 +940,28 @@ export function EmailList({ width, listRef }: { width?: number; listRef?: React.
         <div ref={multiSelectBarRef} className="px-3 py-2 border-b border-border-primary bg-accent/5 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className="text-xs font-medium text-text-primary">
-              {multiSelectCount} selected
+              {t("email.selected").replace("{count}", String(multiSelectCount))}
             </span>
             {multiSelectCount < visibleThreads.length && (
               <button
                 onClick={selectAll}
                 className="text-xs text-accent hover:text-accent-hover transition-colors"
               >
-                Select all
+                {t("email.selectAll")}
               </button>
             )}
           </div>
           <div className="flex items-center gap-1">
             <button
               onClick={handleBulkArchive}
-              title="Archive selected"
+              title={t("email.archiveSelected")}
               className="p-1.5 text-text-secondary hover:text-text-primary hover:bg-bg-hover rounded transition-colors"
             >
               <Archive size={14} />
             </button>
             <button
               onClick={handleBulkDelete}
-              title="Delete selected"
+              title={t("email.deleteSelected")}
               className="p-1.5 text-text-secondary hover:text-error hover:bg-bg-hover rounded transition-colors"
             >
               <Trash2 size={14} />
@@ -969,7 +969,7 @@ export function EmailList({ width, listRef }: { width?: number; listRef?: React.
             {mergeableAccountId && (
               <button
                 onClick={handleMerge}
-                title="Merge into one conversation"
+                title={t("email.mergeIntoOne")}
                 className="p-1.5 text-text-secondary hover:text-accent hover:bg-bg-hover rounded transition-colors"
               >
                 <Merge size={14} />
@@ -977,14 +977,14 @@ export function EmailList({ width, listRef }: { width?: number; listRef?: React.
             )}
             <button
               onClick={handleBulkSpam}
-              title={activeLabel === "spam" ? "Not spam" : "Report spam"}
+              title={activeLabel === "spam" ? t("email.notSpam") : t("email.reportSpam")}
               className="p-1.5 text-text-secondary hover:text-text-primary hover:bg-bg-hover rounded transition-colors"
             >
               <Ban size={14} />
             </button>
             <button
               onClick={clearMultiSelect}
-              title="Clear selection"
+              title={t("email.clearSelection")}
               className="p-1.5 text-text-secondary hover:text-text-primary hover:bg-bg-hover rounded transition-colors"
             >
               <X size={14} />
@@ -1078,7 +1078,7 @@ export function EmailList({ width, listRef }: { width?: number; listRef?: React.
                 >
                   {showDivider && (
                     <div className="px-4 py-1.5 text-xs font-medium text-text-tertiary uppercase tracking-wider bg-bg-tertiary/50 border-b border-border-secondary">
-                      Other emails
+                      {t("email.otherEmails")}
                     </div>
                   )}
 <ThreadCard
@@ -1100,12 +1100,12 @@ export function EmailList({ width, listRef }: { width?: number; listRef?: React.
             })}
             {loadingMore && (
               <div className="px-4 py-3 text-center text-xs text-text-tertiary">
-                Loading more...
+                {t("email.loadingMore")}
               </div>
             )}
             {!hasMore && threads.length > PAGE_SIZE && (
               <div className="px-4 py-3 text-center text-xs text-text-tertiary">
-                All conversations loaded
+                {t("email.allLoaded")}
               </div>
             )}
           </>
@@ -1147,11 +1147,12 @@ function EmptyStateForContext({
   readFilter: string;
   activeCategory: string;
 }) {
+  const { t } = useI18n();
   if (searchQuery) {
-    return <EmptyState illustration={NoSearchResultsIllustration} title="No results found" subtitle="Try a different search term" />;
+    return <EmptyState illustration={NoSearchResultsIllustration} title={t("email.emptyNoResults")} subtitle={t("email.emptyNoResultsHint")} />;
   }
   if (readFilter !== "all") {
-    return <EmptyState icon={Filter} title={`No ${readFilter} emails`} subtitle="Try changing the filter" />;
+    return <EmptyState icon={Filter} title={t("email.emptyFiltered").replace("{filter}", readFilter)} subtitle={t("email.emptyFilteredHint")} />;
   }
   if (!activeAccountId) {
     return <NoAccountEmptyState />;
@@ -1161,34 +1162,34 @@ function EmptyStateForContext({
     case "inbox":
       if (activeCategory !== "All") {
         const categoryMessages: Record<string, { title: string; subtitle: string }> = {
-          Primary: { title: "Primary is clear", subtitle: "No important conversations" },
-          Updates: { title: "No updates", subtitle: "Notifications and transactional emails appear here" },
-          Promotions: { title: "No promotions", subtitle: "Marketing and promotional emails appear here" },
-          Social: { title: "No social emails", subtitle: "Social network notifications appear here" },
-          Newsletters: { title: "No newsletters", subtitle: "Newsletters and subscriptions appear here" },
+          Primary: { title: t("email.emptyPrimary"), subtitle: t("email.emptyPrimaryHint") },
+          Updates: { title: t("email.emptyUpdates"), subtitle: t("email.emptyUpdatesHint") },
+          Promotions: { title: t("email.emptyPromotions"), subtitle: t("email.emptyPromotionsHint") },
+          Social: { title: t("email.emptySocial"), subtitle: t("email.emptySocialHint") },
+          Newsletters: { title: t("email.emptyNewsletters"), subtitle: t("email.emptyNewslettersHint") },
         };
         const msg = categoryMessages[activeCategory];
         if (msg) return <EmptyState illustration={InboxClearIllustration} title={msg.title} subtitle={msg.subtitle} />;
       }
-      return <EmptyState illustration={InboxClearIllustration} title="You're all caught up" subtitle="No new conversations" />;
+      return <EmptyState illustration={InboxClearIllustration} title={t("email.emptyInbox")} subtitle={t("email.emptyInboxHint")} />;
     case "starred":
-      return <EmptyState illustration={GenericEmptyIllustration} title="No starred conversations" subtitle="Star emails to find them here" />;
+      return <EmptyState illustration={GenericEmptyIllustration} title={t("email.emptyStarred")} subtitle={t("email.emptyStarredHint")} />;
     case "snoozed":
-      return <EmptyState illustration={GenericEmptyIllustration} title="No snoozed emails" subtitle="Snoozed emails will appear here" />;
+      return <EmptyState illustration={GenericEmptyIllustration} title={t("email.emptySnoozed")} subtitle={t("email.emptySnoozedHint")} />;
     case "sent":
-      return <EmptyState illustration={GenericEmptyIllustration} title="No sent messages" />;
+      return <EmptyState illustration={GenericEmptyIllustration} title={t("email.emptySent")} />;
     case "drafts":
-      return <EmptyState illustration={GenericEmptyIllustration} title="No drafts" />;
+      return <EmptyState illustration={GenericEmptyIllustration} title={t("email.emptyDrafts")} />;
     case "trash":
-      return <EmptyState illustration={GenericEmptyIllustration} title="Trash is empty" />;
+      return <EmptyState illustration={GenericEmptyIllustration} title={t("email.emptyTrash")} />;
     case "spam":
-      return <EmptyState illustration={GenericEmptyIllustration} title="No spam" subtitle="Looking good!" />;
+      return <EmptyState illustration={GenericEmptyIllustration} title={t("email.emptySpam")} subtitle={t("email.emptySpamHint")} />;
     case "all":
-      return <EmptyState illustration={GenericEmptyIllustration} title="No emails yet" />;
+      return <EmptyState illustration={GenericEmptyIllustration} title={t("email.emptyAll")} />;
     default:
       if (activeLabel.startsWith("smart-folder:")) {
-        return <EmptyState icon={FolderSearch} title="No matching emails" subtitle="Try adjusting the smart folder query" />;
+        return <EmptyState icon={FolderSearch} title={t("email.emptySmartFolder")} subtitle={t("email.emptySmartFolderHint")} />;
       }
-      return <EmptyState illustration={GenericEmptyIllustration} title="Nothing here" subtitle="No conversations with this label" />;
+      return <EmptyState illustration={GenericEmptyIllustration} title={t("email.emptyLabel")} subtitle={t("email.emptyLabelHint")} />;
   }
 }

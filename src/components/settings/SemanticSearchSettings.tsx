@@ -12,38 +12,39 @@ import {
   type SemanticSearchStatus,
 } from "@/services/search/semanticSearchRuntime";
 import { runSemanticSearchIndexer } from "@/services/search/semanticSearchIndexer";
+import { useI18n } from "@/i18n";
 
 type Action = "enable" | "disable" | "configure" | "reindex" | "refresh";
 
-const ACTION_LABELS: Record<Action, string> = {
-  enable: "Starting semantic search...",
-  disable: "Stopping semantic search...",
-  configure: "Saving gateway settings...",
-  reindex: "Requesting mail index update...",
-  refresh: "Checking status...",
+const ACTION_KEYS: Record<Action, string> = {
+  enable: "semantic.actionEnable",
+  disable: "semantic.actionDisable",
+  configure: "semantic.actionConfigure",
+  reindex: "semantic.actionReindex",
+  refresh: "semantic.actionRefresh",
 };
 
 // Agreed native state literals; unknown values are shown in the details below.
-const STATE_LABELS: Record<string, string> = {
-  disabled: "Disabled",
-  connecting: "Connecting to the gateway",
-  indexing: "Indexing mail",
-  ready: "Ready",
-  no_gateway: "Gateway not reachable",
-  conflict: "Gateway conflict",
-  error: "Semantic search needs attention",
+const STATE_KEYS: Record<string, string> = {
+  disabled: "semantic.stateDisabled",
+  connecting: "semantic.stateConnecting",
+  indexing: "semantic.stateIndexing",
+  ready: "semantic.stateReady",
+  no_gateway: "semantic.stateNoGateway",
+  conflict: "semantic.stateConflict",
+  error: "semantic.stateError",
 };
 
-const MODEL_LABELS: Record<string, string> = {
-  ready: "Gateway ready",
-  error: "Gateway unreachable",
-  missing: "Not connected yet",
+const MODEL_KEYS: Record<string, string> = {
+  ready: "semantic.modelReady",
+  error: "semantic.modelError",
+  missing: "semantic.modelMissing",
 };
 
-const DATASET_OPTIONS: Array<{ id: string; label: string }> = [
-  { id: "messages", label: "Messages" },
-  { id: "attachments", label: "Attachments (extracted text)" },
-  { id: "calendar", label: "Calendar events" },
+const DATASET_OPTIONS: Array<{ id: string; labelKey: string }> = [
+  { id: "messages", labelKey: "semantic.datasetMessages" },
+  { id: "attachments", labelKey: "semantic.datasetAttachments" },
+  { id: "calendar", labelKey: "semantic.datasetCalendar" },
 ];
 
 function errorMessage(error: unknown): string {
@@ -58,6 +59,7 @@ function errorMessage(error: unknown): string {
 
 export function SemanticSearchSettings() {
   const id = useId();
+  const { t } = useI18n();
   const [status, setStatus] = useState<SemanticSearchStatus | null>(null);
   const [statusError, setStatusError] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
@@ -105,7 +107,7 @@ export function SemanticSearchSettings() {
         }
       } catch (error) {
         if (signal.aborted) return;
-        setModelsError(`Could not list gateway models: ${errorMessage(error)}`);
+        setModelsError(t("semantic.modelsListFailed").replace("{err}", errorMessage(error)));
       }
     }
     loadModelsRef.current = loadModels;
@@ -149,9 +151,9 @@ export function SemanticSearchSettings() {
       } catch (error) {
         if (signal.aborted) return;
         if (next && next !== "refresh") {
-          setActionError(`${ACTION_LABELS[next].replace(/\.\.\.$/, "")} failed: ${errorMessage(error)}`);
+          setActionError(t("semantic.actionFailed").replace("{action}", t(ACTION_KEYS[next]).replace(/\.\.\.$/, "")).replace("{err}", errorMessage(error)));
         } else {
-          setStatusError(`Could not read search status: ${errorMessage(error)}`);
+          setStatusError(t("semantic.statusReadFailed").replace("{err}", errorMessage(error)));
         }
       } finally {
         running = false;
@@ -194,12 +196,12 @@ export function SemanticSearchSettings() {
   const canReindex = ready && enabled && !busy && !statusError;
   const toggleDisabled = busy || !status || (!enabled && (!status.supported || statusError !== null));
   const statusLabel = action
-    ? ACTION_LABELS[action]
+    ? t(ACTION_KEYS[action])
     : !status
-      ? statusError ? "Status unavailable" : "Checking semantic search..."
+      ? statusError ? t("semantic.statusUnavailable") : t("semantic.checking")
       : connecting
-        ? STATE_LABELS.connecting
-        : STATE_LABELS[status.state] ?? "Unknown runtime status";
+        ? t("semantic.stateConnecting")
+        : t(STATE_KEYS[status.state] ?? "semantic.stateUnknown");
 
   const embeddingModels = models.filter((m) => m.kind === "embedding");
   const hasModels = embeddingModels.length > 0;
@@ -207,21 +209,20 @@ export function SemanticSearchSettings() {
   return (
     <section aria-labelledby={`${id}-heading`} className="mb-6 space-y-3">
       <h3 id={`${id}-heading`} className="text-xs font-semibold uppercase tracking-wider text-text-tertiary">
-        Semantic search (NPU gateway)
+        {t("semantic.title")}
       </h3>
       <p className="text-xs text-text-tertiary">
-        Mail, attachments and calendar events are embedded on your Intel NPU by the shared retrieval gateway and searched
-        through it on every platform. No model downloads, no platform limits.
+        {t("semantic.description")}
       </p>
 
       <div className="space-y-3 rounded-lg border border-border-primary bg-bg-secondary p-4">
         <div className="flex items-center gap-2">
           <Server size={14} aria-hidden="true" className="text-text-tertiary" />
-          <p className="text-sm text-text-secondary">Gateway connection</p>
+          <p className="text-sm text-text-secondary">{t("semantic.gatewayConnection")}</p>
         </div>
         <div className="grid gap-3 sm:grid-cols-2">
           <label className="block">
-            <span className="text-xs text-text-tertiary">Gateway URL</span>
+            <span className="text-xs text-text-tertiary">{t("semantic.gatewayUrl")}</span>
             <input
               type="text"
               value={url}
@@ -233,13 +234,13 @@ export function SemanticSearchSettings() {
           </label>
           <label className="block">
             <span className="inline-flex items-center gap-1 text-xs text-text-tertiary">
-              <KeyRound size={12} aria-hidden="true" /> API key {status?.hasApiKey ? "(saved)" : "(optional)"}
+              <KeyRound size={12} aria-hidden="true" /> {t("semantic.apiKey")} {status?.hasApiKey ? t("semantic.saved") : t("semantic.optional")}
             </span>
             <input
               type="password"
               value={apiKey}
               onChange={(e) => setApiKey(e.target.value)}
-              placeholder={status?.hasApiKey ? "Leave blank to keep the saved key" : "No key set"}
+              placeholder={status?.hasApiKey ? t("semantic.keepSavedKey") : t("semantic.noKeySet")}
               spellCheck={false}
               autoComplete="off"
               className="mt-1 w-full rounded-md border border-border-primary bg-bg-primary px-2.5 py-1.5 text-sm text-text-primary outline-none focus-visible:border-accent"
@@ -248,7 +249,7 @@ export function SemanticSearchSettings() {
         </div>
         <div className="grid gap-3 sm:grid-cols-2">
           <label className="block">
-            <span className="text-xs text-text-tertiary">Embedding model</span>
+            <span className="text-xs text-text-tertiary">{t("semantic.embeddingModel")}</span>
             <select
               value={model}
               onChange={(e) => setModel(e.target.value)}
@@ -262,12 +263,12 @@ export function SemanticSearchSettings() {
                   </option>
                 ))
               ) : (
-                <option value={model || ""}>{model || "Connect to list models"}</option>
+                <option value={model || ""}>{model || t("semantic.connectToListModels")}</option>
               )}
             </select>
           </label>
           <fieldset className="block">
-            <legend className="text-xs text-text-tertiary">Datasets to index</legend>
+            <legend className="text-xs text-text-tertiary">{t("semantic.datasetsToIndex")}</legend>
             <div className="mt-1.5 flex flex-wrap gap-x-4 gap-y-1">
               {DATASET_OPTIONS.map((option) => (
                 <label key={option.id} className="flex items-center gap-1.5 text-sm text-text-secondary">
@@ -283,7 +284,7 @@ export function SemanticSearchSettings() {
                     }}
                     className="h-3.5 w-3.5 accent-[var(--color-accent)]"
                   />
-                  {option.label}
+                  {t(option.labelKey)}
                 </label>
               ))}
             </div>
@@ -299,11 +300,11 @@ export function SemanticSearchSettings() {
             disabled={busy || url.trim() === ""}
             onClick={() => requestRef.current?.("configure")}
           >
-            {action === "configure" ? "Saving..." : "Save and test connection"}
+            {action === "configure" ? t("semantic.saving") : t("semantic.saveAndTest")}
           </Button>
           {modelsError ? (
             <Button type="button" variant="secondary" disabled={busy} onClick={() => void loadModelsRef.current?.()}>
-              Retry model list
+              {t("semantic.retryModelList")}
             </Button>
           ) : null}
         </div>
@@ -311,9 +312,9 @@ export function SemanticSearchSettings() {
 
       <div className="flex items-center justify-between gap-4">
         <div>
-          <span id={`${id}-label`} className="text-sm text-text-secondary">Enable semantic search</span>
+          <span id={`${id}-label`} className="text-sm text-text-secondary">{t("semantic.enable")}</span>
           <p id={`${id}-description`} className="mt-0.5 text-xs text-text-tertiary">
-            Indexes and searches your mail through the NPU retrieval gateway. Mail stays on your device.
+            {t("semantic.enableDesc")}
           </p>
         </div>
         <button
@@ -330,7 +331,7 @@ export function SemanticSearchSettings() {
         </button>
       </div>
       <p id={`${id}-enable-help`} className="text-xs text-text-tertiary">
-        The gateway must be running (start-local-infra.ps1) and reachable before the index can update.
+        {t("semantic.gatewayMustRun")}
       </p>
 
       <div className="space-y-3 rounded-lg border border-border-primary bg-bg-secondary p-4">
@@ -347,17 +348,17 @@ export function SemanticSearchSettings() {
         ) : null}
         {statusError ? (
           <div role="alert" className="space-y-2">
-            <p className="break-words text-xs text-danger">{statusError} {status ? "Showing the last known status." : ""}</p>
-            <Button type="button" disabled={busy} onClick={() => requestRef.current?.("refresh")}>Retry status</Button>
+            <p className="break-words text-xs text-danger">{statusError} {status ? t("semantic.showingLastStatus") : ""}</p>
+            <Button type="button" disabled={busy} onClick={() => requestRef.current?.("refresh")}>{t("semantic.retryStatus")}</Button>
           </div>
         ) : null}
         {actionError ? <p role="alert" className="break-words text-xs text-danger">{actionError}</p> : null}
 
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <p className="text-sm text-text-secondary">Gateway</p>
+            <p className="text-sm text-text-secondary">{t("semantic.gateway")}</p>
             <p className="text-xs text-text-tertiary">
-              {status ? MODEL_LABELS[status.modelState] ?? `Unknown model status: ${status.modelState}` : "Waiting for status"}
+              {status ? t(MODEL_KEYS[status.modelState] ?? "semantic.modelUnknown").replace("{state}", status.modelState) : t("semantic.waitingForStatus")}
               {status ? ` at ${status.dataPath}` : ""}
             </p>
           </div>
@@ -365,12 +366,12 @@ export function SemanticSearchSettings() {
 
         <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border-primary pt-3">
           <div>
-            <p className="text-sm text-text-secondary">Mail index</p>
+            <p className="text-sm text-text-secondary">{t("semantic.mailIndex")}</p>
             <p className="text-xs text-text-tertiary">
               {status?.indexedDocuments != null
-                ? `${status.indexedDocuments.toLocaleString()} documents indexed`
-                : "Indexed count not yet available"}
-              {indexing ? ". Indexing in progress." : !enabled ? ". Indexer stopped." : ""}
+                ? t("semantic.documentsIndexed").replace("{count}", status.indexedDocuments.toLocaleString())
+                : t("semantic.indexCountUnknown")}
+              {indexing ? t("semantic.indexingInProgress") : !enabled ? t("semantic.indexerStopped") : ""}
             </p>
           </div>
           <Button
@@ -380,24 +381,23 @@ export function SemanticSearchSettings() {
             aria-describedby={`${id}-reindex-help`}
             onClick={() => requestRef.current?.("reindex")}
           >
-            {indexing ? "Updating index..." : "Update index"}
+            {indexing ? t("semantic.updatingIndex") : t("semantic.updateIndex")}
           </Button>
         </div>
         <p id={`${id}-reindex-help`} className="text-xs text-text-tertiary">
-          Update scans for new, changed and deleted mail and reuses existing embeddings without rebuilding the index.
-          Available when the gateway is ready.
+          {t("semantic.reindexHelp")}
         </p>
       </div>
 
       {status ? (
         <details className="text-xs text-text-tertiary">
-          <summary className="cursor-pointer rounded focus-visible:outline-2 focus-visible:outline-accent">Semantic search details</summary>
+          <summary className="cursor-pointer rounded focus-visible:outline-2 focus-visible:outline-accent">{t("semantic.details")}</summary>
           <dl className="mt-2 space-y-1 break-all">
-            <div><dt className="inline font-medium">Model: </dt><dd className="inline">{status.modelId || "Not reported"}</dd></div>
-            <div><dt className="inline font-medium">Gateway: </dt><dd className="inline">{status.dataPath || "Not reported"}</dd></div>
-            <div><dt className="inline font-medium">Datasets: </dt><dd className="inline">{(status.datasets ?? []).join(", ") || "None"}</dd></div>
-            <div><dt className="inline font-medium">Runtime state: </dt><dd className="inline">{status.state}</dd></div>
-            <div><dt className="inline font-medium">Model state: </dt><dd className="inline">{status.modelState}</dd></div>
+            <div><dt className="inline font-medium">{t("semantic.modelLabel")} </dt><dd className="inline">{status.modelId || t("semantic.notReported")}</dd></div>
+            <div><dt className="inline font-medium">{t("semantic.gatewayLabel")} </dt><dd className="inline">{status.dataPath || t("semantic.notReported")}</dd></div>
+            <div><dt className="inline font-medium">{t("semantic.datasetsLabel")} </dt><dd className="inline">{(status.datasets ?? []).join(", ") || t("semantic.none")}</dd></div>
+            <div><dt className="inline font-medium">{t("semantic.runtimeStateLabel")} </dt><dd className="inline">{status.state}</dd></div>
+            <div><dt className="inline font-medium">{t("semantic.modelStateLabel")} </dt><dd className="inline">{status.modelState}</dd></div>
           </dl>
         </details>
       ) : null}
