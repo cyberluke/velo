@@ -3,7 +3,7 @@
   "productName": "NAI E-Mail",
   "version": "0.4.21",
   "identifier": "com.anydaysomething.naiemail",
-  "mainBinaryName": "NAI E-Mail",
+  "mainBinaryName": "NAI-E-Mail",
   "build": {
     "frontendDist": "../dist",
     "devUrl": "http://localhost:1420",

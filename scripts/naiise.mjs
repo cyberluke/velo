@@ -61,6 +61,10 @@ const PROTECTED = [
 const RULES = [
   ["com.anydaysomething.velopro", "com.anydaysomething.naiemail"],
   ["Velo Pro", "NAI E-Mail"],
+  // Binary names must stay space-free: the generic rule above would turn an
+  // upstream "mainBinaryName": "Velo Pro" into "NAI E-Mail" (with a space).
+  // This narrow rule runs after it and normalizes exactly that key.
+  ["\"mainBinaryName\": \"NAI E-Mail\"", "\"mainBinaryName\": \"NAI-E-Mail\""],
   [/\bVelo\b/g, "NAI"],
   [/\bvelo\b/g, "naiemail"],
 ];
