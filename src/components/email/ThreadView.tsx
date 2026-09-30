@@ -12,7 +12,9 @@ import { useContextMenuStore } from "@/stores/contextMenuStore";
 import { markThreadRead, spamThread } from "@/services/emailActions";
 import { getSetting } from "@/services/db/settings";
 import { getAllowlistedSenders } from "@/services/db/imageAllowlist";
-import { VolumeX, Merge, CalendarDays } from "lucide-react";
+import { VolumeX, Merge, CalendarDays, Calendar, X } from "lucide-react";
+import type { MeetingDetectionResult } from "@/services/ai/types";
+import { useI18n } from "@/i18n";
 import { escapeHtml, sanitizeHtml } from "@/utils/sanitize";
 import { isNoReplyAddress } from "@/utils/noReply";
 import { recipientHeadersFromMessages } from "@/utils/resolveFromAddress";
@@ -71,11 +73,14 @@ async function handlePopOut(thread: Thread) {
 }
 
 export function ThreadView({ thread }: ThreadViewProps) {
+  const { t } = useI18n();
   const fallbackAccountId = useAccountStore((s) => s.activeAccountId);
+  const accounts = useAccountStore((s) => s.accounts);
   // The unified list can open a thread from any mailbox, so every read and
   // action here has to follow the thread's own account rather than the one
   // selected in the sidebar.
   const threadAccountId = thread.accountId || fallbackAccountId;
+  const threadAccount = accounts.find((a) => a.id === threadAccountId);
   const contactSidebarVisible = useUIStore((s) => s.contactSidebarVisible);
   const threadViewMode = useUIStore((s) => s.threadViewMode);
   const setThreadViewMode = useUIStore((s) => s.setThreadViewMode);
@@ -101,6 +106,7 @@ export function ThreadView({ thread }: ThreadViewProps) {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [loadAttempt, setLoadAttempt] = useState(0);
   const markedReadRef = useRef<string | null>(null);
+  const [meetingResult, setMeetingResult] = useState<MeetingDetectionResult | null>(null);
   // null = not yet loaded; defer iframe rendering until setting is known
   const [blockImages, setBlockImages] = useState<boolean | null>(null);
   const [allowlistedSenders, setAllowlistedSenders] = useState<Set<string>>(new Set());
@@ -193,6 +199,25 @@ export function ThreadView({ thread }: ThreadViewProps) {
 
     return () => { cancelled = true; };
   }, [threadAccountId, messages]);
+
+  // Meeting detection: run when messages are loaded
+  useEffect(() => {
+    if (!threadAccountId || messages.length === 0) return;
+    let cancelled = false;
+
+    getSetting("ai_meeting_detection_enabled").then(async (enabled) => {
+      if (cancelled || enabled === "false") return;
+      try {
+        const { detectMeetingIntent } = await import("@/services/ai/aiService");
+        const result = await detectMeetingIntent(thread.id, threadAccountId, messages);
+        if (!cancelled) setMeetingResult(result);
+      } catch {
+        // Silently ignore detection errors
+      }
+    });
+
+    return () => { cancelled = true; };
+  }, [threadAccountId, thread.id, messages]);
 
   // Auto-mark unread threads as read when opened (respects mark-as-read setting)
   const markAsReadBehavior = useUIStore((s) => s.markAsReadBehavior);
@@ -603,6 +628,58 @@ export function ThreadView({ thread }: ThreadViewProps) {
             )}
           </div>
         </div>
+
+        {/* Meeting detection banner */}
+        {meetingResult && (meetingResult.confidence === "medium" || meetingResult.confidence === "high") && (
+          <div className="mx-4 mt-2 bg-accent-light border border-accent rounded-md px-3 py-2 flex items-center gap-2 text-sm">
+            <Calendar size={15} className="text-accent shrink-0" />
+            <div className="flex-1 min-w-0">
+              <span className="font-medium text-text-primary truncate">
+                {t("ai.meeting.detected").replace("{title}", meetingResult.title)}
+              </span>
+              {meetingResult.dateTime && (
+                <span className="text-text-tertiary text-xs ml-2">
+                  {new Date(meetingResult.dateTime).toLocaleString()}
+                </span>
+              )}
+            </div>
+            {threadAccount?.provider === "gmail_api" && (
+              <button
+                onClick={async () => {
+                  if (!threadAccountId) return;
+                  try {
+                    const { getGmailClient } = await import("@/services/gmail/tokenManager");
+                    const { createCalendarEvent } = await import("@/services/google/calendar");
+                    const client = await getGmailClient(threadAccountId);
+                    const startIso = meetingResult.dateTime ?? new Date().toISOString();
+                    const endMs = new Date(startIso).getTime() + (meetingResult.durationMinutes ?? 60) * 60 * 1000;
+                    const endIso = new Date(endMs).toISOString();
+                    await createCalendarEvent(client, {
+                      summary: meetingResult.title,
+                      location: meetingResult.location,
+                      start: { dateTime: startIso },
+                      end: { dateTime: endIso },
+                      attendees: meetingResult.attendees.map((email) => ({ email })),
+                    });
+                    setMeetingResult(null);
+                  } catch (err) {
+                    console.error("Failed to create calendar event:", err);
+                  }
+                }}
+                className="shrink-0 text-xs px-2.5 py-1 rounded-md bg-accent text-white hover:bg-accent-hover transition-colors"
+              >
+                {t("ai.meeting.createEvent")}
+              </button>
+            )}
+            <button
+              onClick={() => setMeetingResult(null)}
+              className="shrink-0 text-text-tertiary hover:text-text-primary transition-colors"
+              aria-label={t("ai.meeting.dismiss")}
+            >
+              <X size={14} />
+            </button>
+          </div>
+        )}
 
         {/* AI Summary */}
         {threadAccountId && (

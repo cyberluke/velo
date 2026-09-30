@@ -946,6 +946,11 @@ export const MIGRATIONS = [
     `,
   },
   {
+    version: 36,
+    description: "Add ai_urgency column for AI-based thread priority scoring",
+    sql: `ALTER TABLE threads ADD COLUMN ai_urgency TEXT;`,
+  },
+  {
     version: 37,
     description: "Separate SMTP credentials",
     sql: `

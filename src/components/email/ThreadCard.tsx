@@ -8,12 +8,13 @@ import { useUIStore } from "@/stores/uiStore";
 import { useActiveLabel } from "@/hooks/useRouteNavigation";
 import { formatRelativeDate } from "@/utils/date";
 import { useTimeFormat } from "@/hooks/useTimeFormat";
-import { Paperclip, Star, Check, Pin, BellRing, VolumeX, CheckSquare } from "lucide-react";
+import { Paperclip, Star, Check, Pin, BellRing, VolumeX, CheckSquare, AlertCircle } from "lucide-react";
 import { SenderAvatar } from "./SenderAvatar";
 import type { DragData } from "@/components/dnd/DndProvider";
 import { useLabelStore } from "@/stores/labelStore";
 import { threadFolder, type ThreadFolderId } from "@/utils/threadFolder";
 import { HighlightedText } from "@/components/search/HighlightedText";
+import { useI18n } from "@/i18n";
 
 // A search result names where it lives. Trash and Spam shout: acting on a
 // hit there is not the same as acting on one in the inbox.
@@ -39,6 +40,8 @@ interface ThreadCardProps {
   showCategoryBadge?: boolean;
   hasFollowUp?: boolean;
   hasTask?: boolean;
+  /** AI-assigned urgency — the list passes the thread's score through so the row can flag it */
+  urgency?: "low" | "medium" | "high" | null;
   /** Tag the row with the folder it is in — for search hits, which can come from anywhere */
   showFolder?: boolean;
   /** Excerpt centered on the message-body match, instead of the thread's latest snippet. */
@@ -46,7 +49,8 @@ interface ThreadCardProps {
   highlightTerms?: readonly string[];
 }
 
-export const ThreadCard = memo(function ThreadCard({ thread, isSelected, onClick, onContextMenu, category, showCategoryBadge, hasFollowUp, hasTask, showFolder, searchExcerpt, highlightTerms }: ThreadCardProps) {
+export const ThreadCard = memo(function ThreadCard({ thread, isSelected, onClick, onContextMenu, category, showCategoryBadge, hasFollowUp, hasTask, urgency, showFolder, searchExcerpt, highlightTerms }: ThreadCardProps) {
+  const { t } = useI18n();
   const isMultiSelected = useThreadStore((s) => s.selectedThreadIds.has(thread.id));
   const isRemoving = useThreadStore((s) => s.removingThreadIds.has(thread.id));
   const hasMultiSelect = useThreadStore((s) => s.selectedThreadIds.size > 0);
@@ -256,6 +260,14 @@ export const ThreadCard = memo(function ThreadCard({ thread, isSelected, onClick
               <span className="shrink-0 text-accent" title="Has an open task">
                 <CheckSquare size={12} />
               </span>
+            )}
+            {urgency === "high" && (
+              <span className="shrink-0" title={t("ai.urgency.high")}>
+                <AlertCircle className="w-2.5 h-2.5 text-red-500" />
+              </span>
+            )}
+            {urgency === "medium" && (
+              <span className="shrink-0 w-2 h-2 rounded-full bg-amber-500 inline-block" title={t("ai.urgency.medium")} />
             )}
             {thread.isMuted && (
               <span className="shrink-0 text-warning" title="Muted">
