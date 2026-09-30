@@ -5,7 +5,9 @@ import { errorMessage, reportError } from "@/stores/toastStore";
 export interface SemanticSearchStatus {
   supported: boolean;
   enabled: boolean;
+  // disabled | connecting | indexing | ready | error | no_gateway
   state: string;
+  // ready | error | missing
   modelState: string;
   downloadedBytes: number;
   totalBytes: number | null;
@@ -13,6 +15,24 @@ export interface SemanticSearchStatus {
   message: string | null;
   dataPath: string;
   modelId: string;
+  datasets: string[];
+  hasApiKey: boolean;
+}
+
+export interface GatewayModel {
+  id: string;
+  kind: string;
+  dimensions: number | null;
+  maxLength: number | null;
+}
+
+/** One indexable row. createdAt is unix seconds (the gateway stores it as is). */
+export interface IndexItem {
+  id: string;
+  text: string;
+  title?: string;
+  createdAt?: number;
+  kind?: string;
 }
 
 // Serialize status reads and mutations, including across panel remounts.
@@ -31,29 +51,33 @@ function reportRuntimeFailure(title: string, error: unknown) {
 }
 
 const COMMAND_FAILURES: Record<string, string> = {
-  semantic_search_status: "Could not read local search status",
-  semantic_search_set_enabled: "Could not change local search activation",
-  semantic_search_download_model: "Could not download the search model",
+  semantic_search_status: "Could not read search status",
+  semantic_search_set_enabled: "Could not change search activation",
+  semantic_search_configure: "Could not save the gateway settings",
+  semantic_search_list_models: "Could not list gateway models",
   semantic_search_reindex: "Could not update the mail index",
+  semantic_search_upsert_batch: "Could not send an index batch",
+  semantic_search_gc: "Could not clean up the index",
+  semantic_search_finish_index: "Could not finish the index update",
+  semantic_search_index_error: "Could not record the index failure",
 };
 
 function reportStatusFailure(status: SemanticSearchStatus) {
   const quiet = !status.supported || status.state === "unsupported" ||
-    status.state === "disabled" || status.state === "cancelled" || status.state === "canceled";
+    status.state === "disabled" || status.state === "connecting" ||
+    status.state === "no_gateway" || status.state === "cancelled" || status.state === "canceled";
   const failed = status.state === "error" || status.state === "conflict" || status.modelState === "error";
   if (quiet || !failed) {
     reportedFailures.clear();
     return;
   }
-  const detail = status.message || (status.modelState === "error"
-    ? "The search model download failed. Retry the download in Settings > General."
-    : "Local search could not run. Open Settings > General for status and recovery controls.");
-  reportRuntimeFailure("Local semantic search needs attention", detail);
+  const detail = status.message || "Semantic search could not run. Open Settings > General for status and recovery controls.";
+  reportRuntimeFailure("Semantic search needs attention", detail);
 }
 
 function command(
   name: string,
-  args?: { enabled: boolean },
+  args?: Record<string, unknown>,
   signal?: AbortSignal,
 ): Promise<SemanticSearchStatus> {
   const result = commandTail.then(() => {
@@ -68,7 +92,7 @@ function command(
         return status;
       },
       (error: unknown) => {
-        const title = COMMAND_FAILURES[name] ?? "Local search request failed";
+        const title = COMMAND_FAILURES[name] ?? "Semantic search request failed";
         if (name !== "semantic_search_status" || !signal?.aborted) {
           reportRuntimeFailure(title, error);
         }
@@ -115,11 +139,37 @@ export function setSemanticSearchEnabled(enabled: boolean, signal?: AbortSignal)
   return command("semantic_search_set_enabled", { enabled }, signal);
 }
 
-export function downloadSemanticSearchModel(signal?: AbortSignal) {
-  return command("semantic_search_download_model", undefined, signal);
+export function configureSemanticSearch(
+  url: string,
+  apiKey: string,
+  model: string,
+  datasets: string[],
+  signal?: AbortSignal,
+) {
+  return command("semantic_search_configure", { url, apiKey, model, datasets }, signal);
 }
 
-/** Non-destructive incremental rescan; native retains existing embeddings. */
+export async function listSemanticSearchModels(): Promise<GatewayModel[]> {
+  return invoke<GatewayModel[]>("semantic_search_list_models");
+}
+
+/** Non-destructive incremental rescan; the gateway reuses existing embeddings. */
 export function reindexSemanticSearch(signal?: AbortSignal) {
   return command("semantic_search_reindex", undefined, signal);
+}
+
+export function upsertSemanticSearchBatch(dataset: string, items: IndexItem[]) {
+  return invoke<SemanticSearchStatus>("semantic_search_upsert_batch", { dataset, items });
+}
+
+export function gcSemanticSearch(dataset: string) {
+  return invoke<SemanticSearchStatus>("semantic_search_gc", { dataset });
+}
+
+export function finishSemanticSearchIndex() {
+  return invoke<SemanticSearchStatus>("semantic_search_finish_index");
+}
+
+export function failSemanticSearchIndex(message: string) {
+  return invoke<SemanticSearchStatus>("semantic_search_index_error", { message });
 }

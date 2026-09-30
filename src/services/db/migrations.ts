@@ -450,7 +450,10 @@ export const MIGRATIONS = [
       );
       CREATE INDEX IF NOT EXISTS idx_smart_folders_account ON smart_folders(account_id);
 
-      INSERT INTO smart_folders (id, account_id, name, query, icon, sort_order, is_default) VALUES
+      -- Idempotent seed: the table may already hold these rows when this
+      -- migration re-runs (shared DB, half-applied states), and a plain
+      -- INSERT then dies with "UNIQUE constraint failed: smart_folders.id".
+      INSERT OR IGNORE INTO smart_folders (id, account_id, name, query, icon, sort_order, is_default) VALUES
         ('sf-unread', NULL, 'Unread', 'is:unread', 'MailOpen', 0, 1),
         ('sf-attachments', NULL, 'Has Attachments', 'has:attachment', 'Paperclip', 1, 1),
         ('sf-starred-recent', NULL, 'Starred This Week', 'is:starred after:__LAST_7_DAYS__', 'Star', 2, 1);
@@ -1098,6 +1101,7 @@ export async function runMigrations(): Promise<void> {
   // (a previous half-applied run rolled back after recording, or a
   // later statement failed), drop the stale record so it re-runs.
   await requeueIfTableMissing(db, appliedVersions, 6, "follow_up_reminders");
+  await requeueIfTableMissing(db, appliedVersions, 8, "smart_folders");
   await requeueIfTableMissing(db, appliedVersions, 18, "tasks");
 
   // Run pending migrations

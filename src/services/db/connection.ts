@@ -4,16 +4,38 @@ let db: Database | null = null;
 
 export async function getDb(): Promise<Database> {
   if (!db) {
-    db = await Database.load("sqlite:velo.db");
-    // journal_mode is persisted in the database file, so this applies to every
-    // pooled connection. busy_timeout and synchronous are per-connection, and
-    // each execute() checks out an arbitrary connection from the Rust-side pool,
-    // so these two only take effect on whichever connection serves them here.
-    // They are best-effort; sqlx already defaults every connection to a 5s
-    // busy_timeout, which is what actually bounds lock waits.
-    await db.execute("PRAGMA journal_mode=WAL");
-    await db.execute("PRAGMA busy_timeout=15000");
-    await db.execute("PRAGMA synchronous=NORMAL");
+    // Dev uses its own database file so a running installed build (same
+    // bundle identifier, same data directory) can never lock it — two
+    // processes on one SQLite file race on every write. Copy the release
+    // velo.db* files to velo-dev.db* once (apps closed) to develop against
+    // real data: stored tokens still decrypt because the keychain service
+    // name is hardcoded, not derived from the database path.
+    const dbName = import.meta.env.DEV ? "sqlite:velo-dev.db" : "sqlite:velo.db";
+    db = await Database.load(dbName);
+    // WAL + busy timeout + synchronous: even the isolated dev file can be
+    // touched by a second dev instance, and SQLite aborts with "database is
+    // locked" the moment a writer collides. WAL keeps readers concurrent
+    // with the single writer; busy_timeout makes a writer wait out a brief
+    // lock instead of failing instantly. journal_mode is persisted in the
+    // database file, so it applies to every pooled connection; busy_timeout
+    // and synchronous are per-connection and best-effort (sqlx already
+    // defaults every connection to a 5s busy_timeout). All non-fatal if
+    // unsupported.
+    try {
+      await db.execute("PRAGMA journal_mode=WAL");
+    } catch {
+      // pragma unsupported — nothing to do
+    }
+    try {
+      await db.execute("PRAGMA busy_timeout=15000");
+    } catch {
+      // pragma unsupported — nothing to do
+    }
+    try {
+      await db.execute("PRAGMA synchronous=NORMAL");
+    } catch {
+      // pragma unsupported — nothing to do
+    }
   }
   return db;
 }

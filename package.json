@@ -16,7 +16,6 @@
     "naiise": "node scripts/naiise.mjs naiise",
     "denaiise": "node scripts/naiise.mjs denaiise",
     "build:nai": "node scripts/naiise.mjs naiise && npm run tauri build && node scripts/updater-json.mjs && node scripts/naiise.mjs denaiise",
-    "semantic:prepare": "node scripts/prepare-semantic-search.mjs",
     "dev:landing": "npm run dev --prefix landing",
     "flatpak": "flatpak-builder --force-clean --user --install --install-deps-from=flathub build-dir com.anydaysomething.velopro.yml",
     "build:signed": "node scripts/build-signed.mjs",

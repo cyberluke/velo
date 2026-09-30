@@ -1,45 +1,50 @@
 import { useEffect, useId, useRef, useState } from "react";
-import { Download, RefreshCw } from "lucide-react";
+import { KeyRound, RefreshCw, Save, Server } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Spinner } from "@/components/ui/Spinner";
 import {
-  downloadSemanticSearchModel,
+  configureSemanticSearch,
   getSemanticSearchStatus,
+  listSemanticSearchModels,
   reindexSemanticSearch,
   setSemanticSearchEnabled,
+  type GatewayModel,
   type SemanticSearchStatus,
 } from "@/services/search/semanticSearchRuntime";
+import { runSemanticSearchIndexer } from "@/services/search/semanticSearchIndexer";
 
-type Action = "enable" | "disable" | "download" | "cancel-download" | "reindex" | "refresh";
+type Action = "enable" | "disable" | "configure" | "reindex" | "refresh";
 
 const ACTION_LABELS: Record<Action, string> = {
-  enable: "Starting local search...",
-  disable: "Stopping local search...",
-  download: "Requesting model download...",
-  "cancel-download": "Cancelling model download...",
+  enable: "Starting semantic search...",
+  disable: "Stopping semantic search...",
+  configure: "Saving gateway settings...",
   reindex: "Requesting mail index update...",
   refresh: "Checking status...",
 };
 
 // Agreed native state literals; unknown values are shown in the details below.
 const STATE_LABELS: Record<string, string> = {
-  unsupported: "Unavailable on this platform",
   disabled: "Disabled",
-  model_required: "Model download required",
-  downloading: "Downloading model",
-  starting: "Starting local search",
+  connecting: "Connecting to the gateway",
   indexing: "Indexing mail",
   ready: "Ready",
-  conflict: "Local server cannot start",
-  error: "Local search needs attention",
+  no_gateway: "Gateway not reachable",
+  conflict: "Gateway conflict",
+  error: "Semantic search needs attention",
 };
 
 const MODEL_LABELS: Record<string, string> = {
-  missing: "Not downloaded",
-  downloading: "Downloading",
-  ready: "Downloaded and ready",
-  error: "Download needs attention",
+  ready: "Gateway ready",
+  error: "Gateway unreachable",
+  missing: "Not connected yet",
 };
+
+const DATASET_OPTIONS: Array<{ id: string; label: string }> = [
+  { id: "messages", label: "Messages" },
+  { id: "attachments", label: "Attachments (extracted text)" },
+  { id: "calendar", label: "Calendar events" },
+];
 
 function errorMessage(error: unknown): string {
   if (error instanceof Error) return error.message;
@@ -51,12 +56,6 @@ function errorMessage(error: unknown): string {
   }
 }
 
-function formatBytes(bytes: number): string {
-  return `${(Math.max(0, bytes) / 1024 / 1024).toLocaleString(undefined, {
-    maximumFractionDigits: 1,
-  })} MiB`;
-}
-
 export function SemanticSearchSettings() {
   const id = useId();
   const [status, setStatus] = useState<SemanticSearchStatus | null>(null);
@@ -64,6 +63,27 @@ export function SemanticSearchSettings() {
   const [actionError, setActionError] = useState<string | null>(null);
   const [action, setAction] = useState<Action | null>(null);
   const requestRef = useRef<((next: Action) => void) | null>(null);
+  // Local form state; seeded from the first status snapshot.
+  const [url, setUrl] = useState("");
+  const [apiKey, setApiKey] = useState("");
+  const [model, setModel] = useState("");
+  const [datasets, setDatasets] = useState<string[]>(["messages", "attachments", "calendar"]);
+  const [models, setModels] = useState<GatewayModel[]>([]);
+  const [modelsError, setModelsError] = useState<string | null>(null);
+  const autoIndexedRef = useRef(false);
+  const loadModelsRef = useRef<() => void>(() => {});
+
+  // Seed form fields once the first status arrives (do not fight the user
+  // while they type: only fill empty fields).
+  useEffect(() => {
+    if (!status) return;
+    setUrl((current) => (current || status?.dataPath || "").trim() === "" ? status.dataPath : current);
+    setModel((current) => current || status.modelId);
+    setDatasets((current) => {
+      const saved = status?.datasets?.filter((d) => DATASET_OPTIONS.some((o) => o.id === d));
+      return saved && saved.length > 0 ? saved : current;
+    });
+  }, [status]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -72,6 +92,23 @@ export function SemanticSearchSettings() {
     let running = false;
     let mutating = false;
     let pending: Action | null = null;
+
+    async function loadModels() {
+      try {
+        const list = await listSemanticSearchModels();
+        if (signal.aborted) return;
+        setModels(list);
+        setModelsError(null);
+        const embedding = list.find((m) => m.kind === "embedding");
+        if (embedding) {
+          setModel((current) => current || embedding.id);
+        }
+      } catch (error) {
+        if (signal.aborted) return;
+        setModelsError(`Could not list gateway models: ${errorMessage(error)}`);
+      }
+    }
+    loadModelsRef.current = loadModels;
 
     async function run() {
       if (signal.aborted || running) return;
@@ -84,11 +121,13 @@ export function SemanticSearchSettings() {
         switch (next) {
           case "enable":
           case "disable":
-          case "cancel-download":
             result = await setSemanticSearchEnabled(next === "enable", signal);
             break;
-          case "download":
-            result = await downloadSemanticSearchModel(signal);
+          case "configure":
+            result = await configureSemanticSearch(url, apiKey, model, datasets, signal);
+            setApiKey("");
+            setModelsError(null);
+            void loadModels();
             break;
           case "reindex":
             result = await reindexSemanticSearch(signal);
@@ -100,12 +139,19 @@ export function SemanticSearchSettings() {
         setStatus(result);
         setStatusError(null);
         if (next && next !== "refresh") setActionError(null);
+        // Auto-index once the gateway is ready: after enabling, after
+        // configuring, or when the app was started with search enabled and
+        // the user opens Settings before the startup timer fired.
+        if (result.enabled && result.state === "ready" && !autoIndexedRef.current) {
+          autoIndexedRef.current = true;
+          void runSemanticSearchIndexer();
+        }
       } catch (error) {
         if (signal.aborted) return;
         if (next && next !== "refresh") {
           setActionError(`${ACTION_LABELS[next].replace(/\.\.\.$/, "")} failed: ${errorMessage(error)}`);
         } else {
-          setStatusError(`Could not read local search status: ${errorMessage(error)}`);
+          setStatusError(`Could not read search status: ${errorMessage(error)}`);
         }
       } finally {
         running = false;
@@ -115,7 +161,7 @@ export function SemanticSearchSettings() {
           // A click during a status read runs immediately after that read.
           // Otherwise schedule from completion, never with an overlapping interval.
           if (pending) void run();
-          else timer = setTimeout(() => void run(), 2000);
+          else timer = setTimeout(() => void run(), 3000);
         }
       }
     }
@@ -134,46 +180,140 @@ export function SemanticSearchSettings() {
       if (timer !== undefined) clearTimeout(timer);
       requestRef.current = null;
     };
+    // url/apiKey/model/datasets are read at click time inside run(); the loop
+    // itself must not restart when the user types.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const modelReady = status?.modelState === "ready";
-  const downloading = status?.modelState === "downloading" || status?.state === "downloading";
+  const ready = status?.state === "ready";
   const indexing = status?.state === "indexing";
-  const starting = status?.state === "starting";
+  const connecting = status?.state === "connecting";
   const failed = status?.state === "error" || status?.state === "conflict" || status?.modelState === "error";
   const enabled = status?.enabled ?? false;
   const busy = action !== null;
-  const downloaded = Math.max(0, status?.downloadedBytes ?? 0);
-  const total = status?.totalBytes;
-  const progress = total != null && total > 0
-    ? Math.min(100, Math.max(0, downloaded / total * 100))
-    : null;
-  // The off path stays available even if native status is stale or the model fails.
-  const toggleDisabled = busy || !status || (!enabled && (
-    !status.supported || !modelReady || downloading || statusError !== null
-  ));
-  const canReindex = status?.supported && enabled && modelReady &&
-    status.state === "ready" && !statusError && !busy;
+  const canReindex = ready && enabled && !busy && !statusError;
+  const toggleDisabled = busy || !status || (!enabled && (!status.supported || statusError !== null));
   const statusLabel = action
     ? ACTION_LABELS[action]
     : !status
-      ? statusError ? "Status unavailable" : "Checking local search..."
-      : !status.supported
-        ? STATE_LABELS.unsupported
-        : downloading
-          ? STATE_LABELS.downloading
-          : STATE_LABELS[status.state] ?? "Unknown runtime status";
+      ? statusError ? "Status unavailable" : "Checking semantic search..."
+      : connecting
+        ? STATE_LABELS.connecting
+        : STATE_LABELS[status.state] ?? "Unknown runtime status";
+
+  const embeddingModels = models.filter((m) => m.kind === "embedding");
+  const hasModels = embeddingModels.length > 0;
 
   return (
     <section aria-labelledby={`${id}-heading`} className="mb-6 space-y-3">
       <h3 id={`${id}-heading`} className="text-xs font-semibold uppercase tracking-wider text-text-tertiary">
-        Local semantic search
+        Semantic search (NPU gateway)
       </h3>
+      <p className="text-xs text-text-tertiary">
+        Mail, attachments and calendar events are embedded on your Intel NPU by the shared retrieval gateway and searched
+        through it on every platform. No model downloads, no platform limits.
+      </p>
+
+      <div className="space-y-3 rounded-lg border border-border-primary bg-bg-secondary p-4">
+        <div className="flex items-center gap-2">
+          <Server size={14} aria-hidden="true" className="text-text-tertiary" />
+          <p className="text-sm text-text-secondary">Gateway connection</p>
+        </div>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <label className="block">
+            <span className="text-xs text-text-tertiary">Gateway URL</span>
+            <input
+              type="text"
+              value={url}
+              onChange={(e) => setUrl(e.target.value)}
+              placeholder="http://127.0.0.1:8010"
+              spellCheck={false}
+              className="mt-1 w-full rounded-md border border-border-primary bg-bg-primary px-2.5 py-1.5 text-sm text-text-primary outline-none focus-visible:border-accent"
+            />
+          </label>
+          <label className="block">
+            <span className="inline-flex items-center gap-1 text-xs text-text-tertiary">
+              <KeyRound size={12} aria-hidden="true" /> API key {status?.hasApiKey ? "(saved)" : "(optional)"}
+            </span>
+            <input
+              type="password"
+              value={apiKey}
+              onChange={(e) => setApiKey(e.target.value)}
+              placeholder={status?.hasApiKey ? "Leave blank to keep the saved key" : "No key set"}
+              spellCheck={false}
+              autoComplete="off"
+              className="mt-1 w-full rounded-md border border-border-primary bg-bg-primary px-2.5 py-1.5 text-sm text-text-primary outline-none focus-visible:border-accent"
+            />
+          </label>
+        </div>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <label className="block">
+            <span className="text-xs text-text-tertiary">Embedding model</span>
+            <select
+              value={model}
+              onChange={(e) => setModel(e.target.value)}
+              disabled={!hasModels}
+              className="mt-1 w-full rounded-md border border-border-primary bg-bg-primary px-2.5 py-1.5 text-sm text-text-primary outline-none focus-visible:border-accent disabled:opacity-50"
+            >
+              {hasModels ? (
+                embeddingModels.map((m) => (
+                  <option key={m.id} value={m.id}>
+                    {m.id}{m.maxLength ? ` (${m.maxLength} tokens)` : ""}
+                  </option>
+                ))
+              ) : (
+                <option value={model || ""}>{model || "Connect to list models"}</option>
+              )}
+            </select>
+          </label>
+          <fieldset className="block">
+            <legend className="text-xs text-text-tertiary">Datasets to index</legend>
+            <div className="mt-1.5 flex flex-wrap gap-x-4 gap-y-1">
+              {DATASET_OPTIONS.map((option) => (
+                <label key={option.id} className="flex items-center gap-1.5 text-sm text-text-secondary">
+                  <input
+                    type="checkbox"
+                    checked={datasets.includes(option.id)}
+                    onChange={(e) => {
+                      setDatasets((current) =>
+                        e.target.checked
+                          ? [...current, option.id]
+                          : current.filter((d) => d !== option.id),
+                      );
+                    }}
+                    className="h-3.5 w-3.5 accent-[var(--color-accent)]"
+                  />
+                  {option.label}
+                </label>
+              ))}
+            </div>
+          </fieldset>
+        </div>
+        {modelsError ? (
+          <p role="alert" className="break-words text-xs text-danger">{modelsError}</p>
+        ) : null}
+        <div className="flex flex-wrap items-center gap-3">
+          <Button
+            type="button"
+            icon={<Save size={14} aria-hidden="true" />}
+            disabled={busy || url.trim() === ""}
+            onClick={() => requestRef.current?.("configure")}
+          >
+            {action === "configure" ? "Saving..." : "Save and test connection"}
+          </Button>
+          {modelsError ? (
+            <Button type="button" variant="secondary" disabled={busy} onClick={() => void loadModelsRef.current?.()}>
+              Retry model list
+            </Button>
+          ) : null}
+        </div>
+      </div>
+
       <div className="flex items-center justify-between gap-4">
         <div>
-          <span id={`${id}-label`} className="text-sm text-text-secondary">Enable local search</span>
+          <span id={`${id}-label`} className="text-sm text-text-secondary">Enable semantic search</span>
           <p id={`${id}-description`} className="mt-0.5 text-xs text-text-tertiary">
-            Private, on-device search of your Velo mail. The local server and model run as part of Velo.
+            Indexes and searches your mail through the NPU retrieval gateway. Mail stays on your device.
           </p>
         </div>
         <button
@@ -190,13 +330,12 @@ export function SemanticSearchSettings() {
         </button>
       </div>
       <p id={`${id}-enable-help`} className="text-xs text-text-tertiary">
-        Download the model before enabling. Turning this off stops the server and indexer, retaining the model and index.
-        Quitting Velo stops them; hiding or closing the window keeps them running.
+        The gateway must be running (start-local-infra.ps1) and reachable before the index can update.
       </p>
 
       <div className="space-y-3 rounded-lg border border-border-primary bg-bg-secondary p-4">
         <div role="status" aria-live="polite" className={`flex items-center gap-2 text-sm font-medium ${failed ? "text-danger" : "text-text-primary"}`}>
-          {busy || downloading || indexing || starting || (!status && !statusError)
+          {busy || indexing || connecting || (!status && !statusError)
             ? <Spinner size={14} label={statusLabel} />
             : null}
           <span>{statusLabel}</span>
@@ -216,49 +355,13 @@ export function SemanticSearchSettings() {
 
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <p className="text-sm text-text-secondary">Search model</p>
+            <p className="text-sm text-text-secondary">Gateway</p>
             <p className="text-xs text-text-tertiary">
               {status ? MODEL_LABELS[status.modelState] ?? `Unknown model status: ${status.modelState}` : "Waiting for status"}
+              {status ? ` at ${status.dataPath}` : ""}
             </p>
           </div>
-          {downloading ? (
-            <Button
-              type="button"
-              disabled={busy}
-              onClick={() => requestRef.current?.("cancel-download")}
-            >
-              {action === "cancel-download" ? "Cancelling..." : "Cancel download"}
-            </Button>
-          ) : !modelReady ? (
-            <Button
-              type="button"
-              icon={<Download size={14} aria-hidden="true" />}
-              disabled={!status?.supported || busy || downloading || statusError !== null}
-              onClick={() => requestRef.current?.("download")}
-            >
-              {downloading ? "Downloading..." : status?.modelState === "error" || actionError
-                ? "Retry model download" : "Download model"}
-            </Button>
-          ) : null}
         </div>
-        {downloading || (!modelReady && downloaded > 0) ? (
-          <div className="space-y-1.5">
-            <div
-              role="progressbar"
-              aria-label="Model download"
-              aria-valuemin={0}
-              aria-valuemax={100}
-              aria-valuenow={progress === null ? undefined : Math.round(progress)}
-              aria-valuetext={`${formatBytes(downloaded)} downloaded${total != null && total > 0 ? ` of ${formatBytes(total)}` : "; total size not yet reported"}`}
-              className="h-1.5 overflow-hidden rounded-full bg-bg-tertiary"
-            >
-              {progress !== null ? <div className="h-full bg-accent" style={{ width: `${progress}%` }} /> : null}
-            </div>
-            <p className="text-xs text-text-tertiary">
-              {formatBytes(downloaded)}{total != null && total > 0 ? ` / ${formatBytes(total)} (${Math.floor(progress ?? 0)}%)` : " downloaded; waiting for total size"}
-            </p>
-          </div>
-        ) : null}
 
         <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border-primary pt-3">
           <div>
@@ -281,24 +384,18 @@ export function SemanticSearchSettings() {
           </Button>
         </div>
         <p id={`${id}-reindex-help`} className="text-xs text-text-tertiary">
-          Update scans for new or changed mail and reuses existing embeddings without rebuilding the index.
-          Available when local search is enabled and ready.
+          Update scans for new, changed and deleted mail and reuses existing embeddings without rebuilding the index.
+          Available when the gateway is ready.
         </p>
       </div>
 
-      <p className="text-xs text-text-tertiary">
-        Initial model download: about 453 MiB. For a full mail index, plan for roughly 1-2 GB of disk space and RAM;
-        actual use depends on your mailbox and may be higher. Mail stays on your device; internet access is needed to download the model.
-      </p>
-      <p className="text-xs text-text-tertiary">
-        This runtime powers Raycast for now. Search inside Velo continues to use its existing full-text search.
-      </p>
       {status ? (
         <details className="text-xs text-text-tertiary">
-          <summary className="cursor-pointer rounded focus-visible:outline-2 focus-visible:outline-accent">Local search details</summary>
+          <summary className="cursor-pointer rounded focus-visible:outline-2 focus-visible:outline-accent">Semantic search details</summary>
           <dl className="mt-2 space-y-1 break-all">
             <div><dt className="inline font-medium">Model: </dt><dd className="inline">{status.modelId || "Not reported"}</dd></div>
-            <div><dt className="inline font-medium">Data folder: </dt><dd className="inline">{status.dataPath || "Not reported"}</dd></div>
+            <div><dt className="inline font-medium">Gateway: </dt><dd className="inline">{status.dataPath || "Not reported"}</dd></div>
+            <div><dt className="inline font-medium">Datasets: </dt><dd className="inline">{(status.datasets ?? []).join(", ") || "None"}</dd></div>
             <div><dt className="inline font-medium">Runtime state: </dt><dd className="inline">{status.state}</dd></div>
             <div><dt className="inline font-medium">Model state: </dt><dd className="inline">{status.modelState}</dd></div>
           </dl>

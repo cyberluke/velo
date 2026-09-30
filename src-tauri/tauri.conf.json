@@ -63,8 +63,7 @@
     },
     "resources": {
       "../LICENSE": "LICENSE",
-      "../NOTICE": "NOTICE",
-      "semantic-runtime/": "semantic-runtime/"
+      "../NOTICE": "NOTICE"
     }
   },
   "plugins": {

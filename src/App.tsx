@@ -177,6 +177,26 @@ export default function App() {
   // Observe native autoresume and background failures even with Settings closed.
   useEffect(() => startSemanticSearchStatusObserver(), []);
 
+  // Index mail through the NPU retrieval gateway once at startup when the
+  // feature is enabled and the gateway is ready. Retries briefly so a gateway
+  // that is still starting is caught; the Settings panel covers later runs.
+  useEffect(() => {
+    let attempts = 0;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const tryIndex = () => {
+      if (attempts >= 5) return;
+      attempts += 1;
+      void import("@/services/search/semanticSearchIndexer").then(({ runSemanticSearchIndexer }) =>
+        runSemanticSearchIndexer().catch(() => {}),
+      );
+      timer = setTimeout(tryIndex, 15000);
+    };
+    timer = setTimeout(tryIndex, 4000);
+    return () => {
+      if (timer !== undefined) clearTimeout(timer);
+    };
+  }, []);
+
   // Suppress default browser context menu globally (Tauri app should feel native)
   // Elements with data-native-context-menu opt out so the browser menu is available
   useEffect(() => {
