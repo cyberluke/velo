@@ -18,6 +18,12 @@ const TIMEOUT_SECS: u64 = 15;
 ///
 /// Only `http`/`https` URLs are accepted. Returns `true` when the server
 /// answered with a success status. The response body is discarded.
+///
+/// Redirects are deliberately not followed: a safe-looking public URL could
+/// redirect to a loopback or cloud-metadata address, turning this into an SSRF
+/// relay. The frontend additionally validates the initial host via `isSafeUrl`
+/// before invoking; a redirecting endpoint simply reports non-success and the
+/// caller falls back to opening the URL in the user's browser.
 #[tauri::command]
 pub async fn unsubscribe_one_click(url: String) -> Result<bool, String> {
     let parsed = reqwest::Url::parse(&url).map_err(|e| format!("Invalid unsubscribe URL: {e}"))?;
@@ -28,7 +34,7 @@ pub async fn unsubscribe_one_click(url: String) -> Result<bool, String> {
 
     let client = reqwest::Client::builder()
         .timeout(Duration::from_secs(TIMEOUT_SECS))
-        .redirect(reqwest::redirect::Policy::limited(5))
+        .redirect(reqwest::redirect::Policy::none())
         .build()
         .map_err(|e| format!("Failed to build HTTP client: {e}"))?;
 

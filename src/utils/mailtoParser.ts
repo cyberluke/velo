@@ -1,3 +1,5 @@
+import { stripHeaderBreaks } from "./headerSafety";
+
 export interface MailtoFields {
   to: string[];
   cc: string[];
@@ -31,7 +33,7 @@ export function parseMailtoUrl(url: string): MailtoFields {
   if (addressPart) {
     result.to = decodeURIComponent(addressPart)
       .split(",")
-      .map((a) => a.trim())
+      .map(stripHeaderBreaks)
       .filter(Boolean);
   }
 
@@ -43,7 +45,7 @@ export function parseMailtoUrl(url: string): MailtoFields {
     if (toParam) {
       const extraTo = toParam
         .split(",")
-        .map((a) => a.trim())
+        .map(stripHeaderBreaks)
         .filter(Boolean);
       result.to = [...result.to, ...extraTo];
     }
@@ -52,7 +54,7 @@ export function parseMailtoUrl(url: string): MailtoFields {
     if (cc) {
       result.cc = cc
         .split(",")
-        .map((a) => a.trim())
+        .map(stripHeaderBreaks)
         .filter(Boolean);
     }
 
@@ -60,13 +62,15 @@ export function parseMailtoUrl(url: string): MailtoFields {
     if (bcc) {
       result.bcc = bcc
         .split(",")
-        .map((a) => a.trim())
+        .map(stripHeaderBreaks)
         .filter(Boolean);
     }
 
     const subject = params.get("subject");
     if (subject) {
-      result.subject = subject;
+      // The body is free text and keeps its line breaks; the subject becomes a
+      // header, so it must not carry any.
+      result.subject = stripHeaderBreaks(subject);
     }
 
     const body = params.get("body");
