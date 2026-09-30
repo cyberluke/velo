@@ -63,8 +63,33 @@
 
   /* Typography */
   --font-app: "Segoe UI Variable", "Segoe UI", "Noto Sans", sans-serif;
+  /* Standard Tailwind font-size namespace (`text-*` utilities) — themes may
+     restyle the whole type scale through `typography.sizes` */
+  --text-xs: 0.75rem;
+  --text-xs--line-height: 1rem;
+  --text-sm: 0.875rem;
+  --text-sm--line-height: 1.25rem;
+  --text-base: 1rem;
+  --text-base--line-height: 1.5rem;
+  --text-lg: 1.125rem;
+  --text-lg--line-height: 1.75rem;
+  --text-xl: 1.25rem;
+  --text-xl--line-height: 1.75rem;
+  --text-2xl: 1.5rem;
+  --text-2xl--line-height: 2rem;
+  --text-3xl: 1.875rem;
+  --text-3xl--line-height: 2.25rem;
 
-  /* Layout */
+  /* Layout — density & scale */
+  --spacing: 0.25rem;
+  --radius-xs: 0.125rem;
+  --radius-sm: 0.25rem;
+  --radius-md: 0.375rem;
+  --radius-lg: 0.5rem;
+  --radius-xl: 0.75rem;
+  --radius-2xl: 1rem;
+  --radius-3xl: 1.5rem;
+  --radius-4xl: 2rem;
   --radius-panel: 0.5rem;
   --radius-control: 0.7rem;
   --radius-rail: 1.25rem;

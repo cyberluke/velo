@@ -9,50 +9,22 @@ import {
   resolveMode,
   tokensToCssVars,
 } from "./index";
-import type { ThemeTokens } from "./types";
+import { baseLight } from "./base";
 
-const TOKEN_GROUP_KEYS: Record<keyof ThemeTokens, (keyof ThemeTokens[keyof ThemeTokens])[]> = {
-  colors: [
-    "bgPrimary",
-    "bgSecondary",
-    "bgTertiary",
-    "bgHover",
-    "bgSelected",
-    "appBg",
-    "textPrimary",
-    "textSecondary",
-    "textTertiary",
-    "borderPrimary",
-    "borderSecondary",
-    "accent",
-    "accentHover",
-    "accentLight",
-    "danger",
-    "warning",
-    "success",
-    "sidebarBg",
-    "sidebarText",
-    "sidebarHover",
-    "sidebarActive",
-    "shellMix",
-    "workspaceMix",
-    "canvasText",
-    "canvasHover",
-    "canvasActive",
-  ],
-  typography: ["fontFamily"],
-  layout: ["radiusPanel", "radiusControl", "radiusRail", "radiusButton"],
-  effects: [
-    "glassBlur",
-    "glassBlurHeavy",
-    "glassBorder",
-    "glassShadow",
-    "glassShadowElevated",
-    "glassHighlight",
-    "backdropBlurOverlay",
-  ],
-  motion: ["fast", "normal", "slow"],
-};
+/** Collects [dot-path, value] for every leaf in the token tree. */
+function leafEntries(obj: unknown, prefix = ""): [string, string][] {
+  if (obj === null || typeof obj !== "object") {
+    return typeof obj === "string" ? [[prefix, obj]] : [];
+  }
+  return Object.entries(obj as Record<string, unknown>).flatMap(([k, v]) =>
+    leafEntries(v, prefix ? `${prefix}.${k}` : k),
+  );
+}
+
+/** The exact token surface a ThemeTemplate must expose (from the shell). */
+const CONTRACT_LEAVES = leafEntries(baseLight)
+  .map(([path]) => path)
+  .sort();
 
 describe("theme templates (Liskov: every theme satisfies the full contract)", () => {
   it("registers all 8 accent themes with unique ids", () => {
@@ -66,15 +38,14 @@ describe("theme templates (Liskov: every theme satisfies the full contract)", ()
     }
   });
 
-  it("every template defines every token, non-empty, for both modes", () => {
+  it("every template exposes exactly the contract token surface, all non-empty, for both modes", () => {
     for (const theme of listThemes()) {
       for (const mode of ["light", "dark"] as const) {
-        const tokens = theme[mode];
-        for (const [group, keys] of Object.entries(TOKEN_GROUP_KEYS)) {
-          for (const key of keys) {
-            const value = (tokens as Record<string, Record<string, string>>)[group][key];
-            expect(value, `${theme.id} ${mode} ${group}.${key}`).toBeTruthy();
-          }
+        const entries = leafEntries(theme[mode]);
+        const paths = entries.map(([p]) => p).sort();
+        expect(paths, `${theme.id} ${mode} token surface`).toEqual(CONTRACT_LEAVES);
+        for (const [, value] of entries) {
+          expect(value, `${theme.id} ${mode}`).toBeTruthy();
         }
       }
     }
@@ -98,6 +69,8 @@ describe("theme templates (Liskov: every theme satisfies the full contract)", ()
       expect(light.colors.bgPrimary).toBe(indigoLight.colors.bgPrimary);
       expect(light.effects.glassBlur).toBe(indigoLight.effects.glassBlur);
       expect(light.typography.fontFamily).toBe(indigoLight.typography.fontFamily);
+      expect(light.layout.spacing).toBe(indigoLight.layout.spacing);
+      expect(light.typography.sizes.sm.size).toBe(indigoLight.typography.sizes.sm.size);
     }
   });
 });
@@ -120,9 +93,18 @@ describe("tokensToCssVars", () => {
     expect(vars["--color-bg-primary"]).toBe("#12141c");
     expect(vars["--color-canvas-active"]).toBeTruthy();
     expect(vars["--font-app"]).toContain("Segoe UI");
-    expect(vars["--radius-panel"]).toBeTruthy();
     expect(vars["--glass-blur"]).toBeTruthy();
     expect(vars["--anim-fast"]).toBeTruthy();
+  });
+
+  it("maps the scale tokens (density, radii, type scale)", () => {
+    const vars = tokensToCssVars(getTheme("indigo").light);
+    expect(vars["--spacing"]).toBe("0.25rem");
+    expect(vars["--radius-md"]).toBe("0.375rem");
+    expect(vars["--radius-2xl"]).toBe("1rem");
+    expect(vars["--text-sm"]).toBe("0.875rem");
+    expect(vars["--text-sm--line-height"]).toBe("1.25rem");
+    expect(vars["--text-3xl"]).toBe("1.875rem");
   });
 });
 
@@ -132,6 +114,7 @@ describe("applyThemeTokens", () => {
     applyThemeTokens(el, getTheme("rose"), "dark");
     expect(el.style.getPropertyValue("--color-accent")).toBe("#fb7185");
     expect(el.style.getPropertyValue("--color-text-primary")).toBeTruthy();
+    expect(el.style.getPropertyValue("--spacing")).toBe("0.25rem");
     expect(el.dataset.theme).toBe("rose");
   });
 
@@ -142,6 +125,19 @@ describe("applyThemeTokens", () => {
     expect(el.style.getPropertyValue("--color-accent")).toBe("#0284c7");
     expect(el.style.getPropertyValue("--color-bg-selected")).toBe("rgba(224, 242, 254, 0.65)");
     expect(el.dataset.theme).toBe("sky");
+  });
+
+  it("a custom template can restyle density and radii (Open/Closed)", () => {
+    const el = document.createElement("html");
+    const dense = { ...getTheme("indigo") };
+    dense.light = {
+      ...dense.light,
+      layout: { ...dense.light.layout, spacing: "0.2rem", radii: { ...dense.light.layout.radii, md: "0.25rem" } },
+    };
+    applyThemeTokens(el, dense, "light");
+    expect(el.style.getPropertyValue("--spacing")).toBe("0.2rem");
+    expect(el.style.getPropertyValue("--radius-md")).toBe("0.25rem");
+    expect(el.style.getPropertyValue("--radius-panel")).toBe("0.5rem");
   });
 });
 

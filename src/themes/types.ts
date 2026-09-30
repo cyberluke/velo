@@ -57,13 +57,48 @@ export interface ColorTokens {
 export interface TypographyTokens {
   /** Application font family stack */
   fontFamily: string;
+  /**
+   * Standard Tailwind font-size namespace (`text-*` utilities), each with
+   * its line-height companion. A theme can restyle the whole UI type scale
+   * from here.
+   */
+  sizes: {
+    xs: { size: string; lineHeight: string };
+    sm: { size: string; lineHeight: string };
+    base: { size: string; lineHeight: string };
+    lg: { size: string; lineHeight: string };
+    xl: { size: string; lineHeight: string };
+    "2xl": { size: string; lineHeight: string };
+    "3xl": { size: string; lineHeight: string };
+  };
 }
 
 export interface LayoutTokens {
+  /**
+   * Base spacing unit. Tailwind v4 derives every spacing utility
+   * (p-2, gap-3, m-4, w-7, h-10, ...) from `--spacing`, so a single value
+   * controls the density of the entire component layer.
+   */
+  spacing: string;
+  /** App chrome radii used by globals.css component classes. */
   radiusPanel: string;
   radiusControl: string;
   radiusRail: string;
   radiusButton: string;
+  /**
+   * Standard Tailwind radii namespace (`rounded-*` utilities). A theme can
+   * restyle every corner in the app from here.
+   */
+  radii: {
+    xs: string;
+    sm: string;
+    md: string;
+    lg: string;
+    xl: string;
+    "2xl": string;
+    "3xl": string;
+    "4xl": string;
+  };
 }
 
 export interface EffectTokens {

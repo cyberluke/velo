@@ -43,12 +43,37 @@ export const baseLight: ThemeTokens = {
   },
   typography: {
     fontFamily: '"Segoe UI Variable", "Segoe UI", "Noto Sans", sans-serif',
+    // Tailwind 4.1 default font-size scale — the built-in themes keep it,
+    // so a template only overrides what it wants to restyle.
+    sizes: {
+      xs: { size: "0.75rem", lineHeight: "1rem" },
+      sm: { size: "0.875rem", lineHeight: "1.25rem" },
+      base: { size: "1rem", lineHeight: "1.5rem" },
+      lg: { size: "1.125rem", lineHeight: "1.75rem" },
+      xl: { size: "1.25rem", lineHeight: "1.75rem" },
+      "2xl": { size: "1.5rem", lineHeight: "2rem" },
+      "3xl": { size: "1.875rem", lineHeight: "2.25rem" },
+    },
   },
   layout: {
+    // Tailwind's base spacing unit — 0.25rem keeps every p-*/gap-*/w-* at its
+    // current size. A denser or airier theme changes this one value.
+    spacing: "0.25rem",
     radiusPanel: "0.5rem",
     radiusControl: "0.7rem",
     radiusRail: "1.25rem",
     radiusButton: "0.85rem",
+    // Tailwind 4.1 default radii scale (rounded-* utilities).
+    radii: {
+      xs: "0.125rem",
+      sm: "0.25rem",
+      md: "0.375rem",
+      lg: "0.5rem",
+      xl: "0.75rem",
+      "2xl": "1rem",
+      "3xl": "1.5rem",
+      "4xl": "2rem",
+    },
   },
   effects: {
     glassBlur: "20px",

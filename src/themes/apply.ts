@@ -51,15 +51,40 @@ function colorVars(colors: ColorTokens): Record<string, string> {
 }
 
 function typographyVars(t: TypographyTokens): Record<string, string> {
-  return { "--font-app": t.fontFamily };
+  return {
+    "--font-app": t.fontFamily,
+    "--text-xs": t.sizes.xs.size,
+    "--text-xs--line-height": t.sizes.xs.lineHeight,
+    "--text-sm": t.sizes.sm.size,
+    "--text-sm--line-height": t.sizes.sm.lineHeight,
+    "--text-base": t.sizes.base.size,
+    "--text-base--line-height": t.sizes.base.lineHeight,
+    "--text-lg": t.sizes.lg.size,
+    "--text-lg--line-height": t.sizes.lg.lineHeight,
+    "--text-xl": t.sizes.xl.size,
+    "--text-xl--line-height": t.sizes.xl.lineHeight,
+    "--text-2xl": t.sizes["2xl"].size,
+    "--text-2xl--line-height": t.sizes["2xl"].lineHeight,
+    "--text-3xl": t.sizes["3xl"].size,
+    "--text-3xl--line-height": t.sizes["3xl"].lineHeight,
+  };
 }
 
 function layoutVars(l: LayoutTokens): Record<string, string> {
   return {
+    "--spacing": l.spacing,
     "--radius-panel": l.radiusPanel,
     "--radius-control": l.radiusControl,
     "--radius-rail": l.radiusRail,
     "--radius-button": l.radiusButton,
+    "--radius-xs": l.radii.xs,
+    "--radius-sm": l.radii.sm,
+    "--radius-md": l.radii.md,
+    "--radius-lg": l.radii.lg,
+    "--radius-xl": l.radii.xl,
+    "--radius-2xl": l.radii["2xl"],
+    "--radius-3xl": l.radii["3xl"],
+    "--radius-4xl": l.radii["4xl"],
   };
 }
 
