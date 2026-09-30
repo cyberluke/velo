@@ -1,0 +1,7 @@
+# Shell scripts must stay LF: bash on the Linux CI runner (and macOS) chokes
+# on CRLF ("syntax error near unexpected token $'\r'"). Git for Windows with
+# core.autocrlf=true otherwise checks them out as CRLF, which only breaks the
+# release workflow (release.yml runs `bash scripts/patch-appimage.sh`) and
+# local `bash -n` verification on Windows.
+*.sh text eol=lf
+*.ps1 text eol=lf
