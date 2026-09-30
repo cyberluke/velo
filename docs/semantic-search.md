@@ -1,54 +1,45 @@
-# Local semantic search runtime
+# Semantic search over the NPU retrieval gateway
 
-Velo can own the local Typesense service used for semantic mail search. Its
-Settings controls manage the service and download the multilingual E5 Small
-embedding model. Mail and embeddings stay on the computer; downloading model
-files does not upload mail.
+Velo's semantic search is a thin client of the shared retrieval gateway
+(OpenVINO on an Intel NPU + Qdrant, see the Zoo-Code `infra/openvino-npu`
+stack). Velo no longer bundles a Typesense server, a Node worker, or an
+embedding model; there is no platform gate — the gateway path runs identically
+on Windows, macOS and Linux.
 
-## Lifecycle
+## Architecture
 
-- The feature is opt-in. An enabled runtime starts with Velo.
-- Disabling it stops Velo's search server and indexing worker, retaining their
-  stored model and index for later use.
-- Quitting Velo stops the owned processes. Closing a window hides Velo in the
-  tray and is not the same as quitting.
-- An unrelated server occupying the search port is a conflict, not permission
-  to kill or adopt that process. An existing Homebrew installation is not
-  automatically removed.
-- Model download, readiness, indexing progress, and errors are shown in Settings.
-- This runtime indexes mail, not arbitrary folders. Existing SQLite FTS search
-  remains separate; enabling the runtime does not replace Velo's search adapter.
+- The gateway is canonical for every desktop AI app: per-app instruction
+  profiles, per-app Qdrant collections, stable point IDs, payload filters,
+  int8 quantization, server-side reranking, and per-app telemetry.
+- Velo registers as the `velo` app (mail instruction profile) and never talks
+  to Qdrant directly.
+- Indexing is frontend-driven: Settings (or the startup timer) runs
+  `runSemanticSearchIndexer()`, which pages messages, extracted attachment
+  text and calendar events out of SQLite and streams 64-item batches to
+  `semantic_search_upsert_batch`. The gateway derives stable point IDs, so
+  re-indexing is idempotent; `semantic_search_gc` prunes points deleted from
+  the local database after each dataset pass.
+- The Rust side (`src-tauri/src/semantic_search.rs`) is a gateway client:
+  private `config.json` (enabled, URL, optional API key, model, datasets),
+  a status state machine, and HTTP calls. No child processes, no ports, no
+  lock files.
+- `semantic_search_status` auto-rechecks the gateway when it was unreachable,
+  so the settings panel recovers without user action.
 
-## Resources
+## Bounds
 
-The model download is approximately 453 MiB. Planning estimates for the current
-mailbox of roughly 7,500 messages are 1-2 GB of total search data including the
-model and 1-2 GB of server RAM, plus the indexing worker. These are estimates,
-not limits, and exclude any older standalone search installation left on disk.
+Index chunks are truncated to ~1500 chars (~512 tokens at the gateway's
+512-token embedding profile), keeping index throughput high on the 13 TOPS
+NPU. Batches of 64 keep interactive query latency responsive during a
+reindex. Reranking happens server-side on the top candidates.
 
-Embedding imports run sequentially with background pacing and reuse unchanged
-embeddings. Initial indexing may take several hours. Low process priority and
-import pacing reduce sustained load; they do not impose a hard instantaneous
-CPU limit on Typesense's embedding threads.
+## Settings
 
-## Packaging
+Settings > General shows the connection form (gateway URL, optional API key —
+an empty field keeps the saved key — model picker from `/v1/models`, dataset
+checkboxes) plus the enable toggle, status, indexed count and Update index.
 
-`npm run semantic:prepare` prepares the worker and native runtimes in
-`src-tauri/semantic-runtime/`; the Tauri production build invokes this step.
-On macOS it provisions the pinned official Typesense release and its license,
-uses a compatible Node runtime from the build environment, and bundles the
-indexer's declared dependencies. Missing required resources fail preparation
-rather than silently producing a macOS app without semantic search.
-
-These are build resources, not dependencies users should install with Homebrew.
-The embedding model is deliberately not baked into the app bundle and is managed
-from Settings instead. Offline preparation requires previously provisioned local
-resources and must not make network requests.
-
-The initial native integration targets macOS. Other platforms report the feature
-as unsupported. Consult the preparation script's runtime instructions before
-producing a distributable build.
-
-Binary redistribution requires the corresponding Typesense, Node, model, and
-bundled dependency licenses and notices. A successful local compilation alone
-does not establish signing, notarization, or cross-machine portability.
+Mail and embeddings stay on the computer; the gateway binds 127.0.0.1 only.
+Search inside Velo continues to use its existing full-text search; the
+semantic runtime serves the search model and its index to the gateway
+ecosystem.

@@ -30,7 +30,11 @@ describe("withTransaction", () => {
       callOrder.push("callback");
     });
 
-    expect(callOrder).toEqual(["BEGIN TRANSACTION", "callback", "COMMIT"]);
+    // Connection setup (PRAGMA busy_timeout/journal_mode) runs through the
+    // same mock before the first transaction; only transaction statements
+    // are under test here.
+    const transactionCalls = callOrder.filter((sql) => !sql.startsWith("PRAGMA"));
+    expect(transactionCalls).toEqual(["BEGIN TRANSACTION", "callback", "COMMIT"]);
   });
 
   it("rolls back on callback error", async () => {

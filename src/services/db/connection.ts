@@ -4,7 +4,29 @@ let db: Database | null = null;
 
 export async function getDb(): Promise<Database> {
   if (!db) {
-    db = await Database.load("sqlite:velo.db");
+    // Dev uses its own database file so a running installed build (same
+    // bundle identifier, same data directory) can never lock it — two
+    // processes on one SQLite file race on every write. Copy the release
+    // velo.db* files to velo-dev.db* once (apps closed) to develop against
+    // real data: stored tokens still decrypt because the keychain service
+    // name is hardcoded, not derived from the database path.
+    const dbName = import.meta.env.DEV ? "sqlite:velo-dev.db" : "sqlite:velo.db";
+    db = await Database.load(dbName);
+    // WAL + busy timeout: even the isolated dev file can be touched by a
+    // second dev instance, and SQLite aborts with "database is locked" the
+    // moment a writer collides. WAL keeps readers concurrent with the
+    // single writer; busy_timeout makes a writer wait out a brief lock
+    // instead of failing instantly. Both are non-fatal if unavailable.
+    try {
+      await db.execute("PRAGMA busy_timeout = 10000");
+    } catch {
+      // pragma unsupported — nothing to do
+    }
+    try {
+      await db.select("PRAGMA journal_mode = WAL");
+    } catch {
+      // pragma unsupported — nothing to do
+    }
   }
   return db;
 }
