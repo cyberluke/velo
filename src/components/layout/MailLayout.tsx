@@ -17,7 +17,7 @@ function ResizableEmailLayout() {
 
     const handleMouseMove = (ev: MouseEvent) => {
       const delta = ev.clientX - startX;
-      const newWidth = Math.min(800, Math.max(240, startWidth + delta));
+      const newWidth = Math.min(1200, Math.max(240, startWidth + delta));
       if (listRef.current) listRef.current.style.width = `${newWidth}px`;
     };
 
@@ -27,7 +27,7 @@ function ResizableEmailLayout() {
       document.body.style.cursor = "";
       document.body.style.userSelect = "";
       const delta = ev.clientX - startX;
-      const finalWidth = Math.min(800, Math.max(240, startWidth + delta));
+      const finalWidth = Math.min(1200, Math.max(240, startWidth + delta));
       setEmailListWidth(finalWidth);
     };
 
@@ -38,7 +38,7 @@ function ResizableEmailLayout() {
   }, [emailListWidth, setEmailListWidth]);
 
   return (
-    <div ref={containerRef} className="workspace-canvas flex flex-1 min-w-0 flex-row gap-2 p-2 pt-0">
+    <div ref={containerRef} className="workspace-canvas flex flex-1 min-w-0 flex-row gap-2 pb-2 pl-0 pr-2 pt-0">
       <EmailList width={emailListWidth} listRef={listRef} />
       <div
         onMouseDown={handleMouseDown}

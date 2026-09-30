@@ -45,6 +45,13 @@ export function isSettingsTab(value: string | undefined): value is SettingsTab {
   return !!value && (SETTINGS_TABS as string[]).includes(value);
 }
 
+/** Golden ratio φ ≈ 1.618 — the split the mail tri-pane defaults to. */
+export const GOLDEN_RATIO = (1 + Math.sqrt(5)) / 2;
+/** Minor share of the window (1/(1+φ)) ≈ 38.2% — the left zone (nav + list). */
+export const GOLDEN_MINOR = 1 / (1 + GOLDEN_RATIO);
+/** Major share (φ/(1+φ)) ≈ 61.8% — the reading pane. */
+export const GOLDEN_MAJOR = GOLDEN_RATIO / (1 + GOLDEN_RATIO);
+
 export interface SidebarNavItem {
   id: string;
   visible: boolean;

@@ -8,7 +8,7 @@ import { CommandPalette } from "./components/search/CommandPalette";
 import { ShortcutsHelp } from "./components/search/ShortcutsHelp";
 import { AskInbox } from "./components/search/AskInbox";
 import { AgentPanel } from "@/components/ai/AgentPanel";
-import { useUIStore } from "./stores/uiStore";
+import { GOLDEN_MINOR, useUIStore } from "./stores/uiStore";
 import { useAccountStore } from "./stores/accountStore";
 import { useKeyboardShortcuts } from "./hooks/useKeyboardShortcuts";
 import { runMigrations } from "./services/db/migrations";
@@ -339,7 +339,17 @@ export default function App() {
         const savedListWidth = await getSetting("email_list_width");
         if (savedListWidth) {
           const w = parseInt(savedListWidth, 10);
-          if (w >= 240 && w <= 800) ui.setEmailListWidth(w);
+          if (w >= 240 && w <= 1200) ui.setEmailListWidth(w);
+        } else {
+          // No saved width: default to the golden-ratio split. The left zone
+          // (nav rail + email list) takes the minor share (≈38.2%) of the
+          // window, the reading pane the major share (≈61.8%). The nav rail
+          // is measured so the list lands exactly where the ratio says,
+          // whatever the font scale / collapsed state.
+          const navWidth =
+            document.querySelector<HTMLElement>("aside.reference-sidebar")?.offsetWidth ?? 0;
+          const goldenWidth = Math.round(window.innerWidth * GOLDEN_MINOR - navWidth);
+          ui.setEmailListWidth(Math.min(1200, Math.max(240, goldenWidth)));
         }
 
         // Restore email density

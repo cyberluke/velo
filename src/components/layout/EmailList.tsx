@@ -806,7 +806,7 @@ export function EmailList({ width, listRef }: { width?: number; listRef?: React.
       ref={listRef}
       className={`workspace-panel flex flex-col bg-bg-primary glass-panel ${
         readingPanePosition === "right"
-          ? "min-w-[240px] shrink-0"
+          ? "min-w-[240px] shrink-0 panel-flush-left"
           : readingPanePosition === "bottom"
             ? "w-full border-b border-border-primary h-[40%] min-h-[200px]"
             : "w-full flex-1"
