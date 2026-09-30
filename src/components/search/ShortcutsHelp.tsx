@@ -1,6 +1,7 @@
 import { SHORTCUTS } from "@/constants/shortcuts";
 import { useShortcutStore } from "@/stores/shortcutStore";
 import { Modal } from "@/components/ui/Modal";
+import { useI18n } from "@/i18n";
 
 interface ShortcutsHelpProps {
   isOpen: boolean;
@@ -9,6 +10,7 @@ interface ShortcutsHelpProps {
 
 export function ShortcutsHelp({ isOpen, onClose }: ShortcutsHelpProps) {
   const keyMap = useShortcutStore((s) => s.keyMap);
+  const { t } = useI18n();
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Keyboard Shortcuts" width="w-full max-w-lg" zIndex="z-[60]">
@@ -25,7 +27,7 @@ export function ShortcutsHelp({ isOpen, onClose }: ShortcutsHelpProps) {
                   className="flex items-center justify-between py-1"
                 >
                   <span className="text-sm text-text-secondary">
-                    {item.desc}
+                    {t(item.desc)}
                   </span>
                   <kbd className="text-xs text-text-tertiary bg-bg-tertiary px-2 py-0.5 rounded font-mono">
                     {keyMap[item.id] ?? item.keys}

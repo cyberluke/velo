@@ -23,7 +23,10 @@ export function shortcutFromKeyboardEvent(
     );
   }
   if (event.altKey) parts.push("Alt");
-  if (event.shiftKey) parts.push("Shift");
+  // Shift-only single-character bindings are stored as the produced character
+  // (e.g. "U", "#", "!") because dispatch matches on e.key — a "Shift+" prefix
+  // would never fire. Keep Shift in the prefix only alongside Ctrl/Alt.
+  if (event.shiftKey && (parts.length > 0 || event.key.length > 1)) parts.push("Shift");
 
   parts.push(parts.length > 0 && event.key.length === 1 ? event.key.toUpperCase() : event.key);
   return parts.join("+");

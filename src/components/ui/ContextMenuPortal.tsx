@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { ContextMenu, type ContextMenuItem } from "./ContextMenu";
 import { menuSurface, menuRow, menuHover, menuFont } from "./menuStyles";
+import { useI18n } from "@/i18n";
 import { useContextMenuStore } from "@/stores/contextMenuStore";
 import { useThreadStore } from "@/stores/threadStore";
 import { useTaskStore } from "@/stores/taskStore";
@@ -259,6 +260,7 @@ function ThreadMenu({
   const labels = useLabelStore((s) => s.labels);
   const openComposer = useComposerStore((s) => s.openComposer);
   const [quickSteps, setQuickSteps] = useState<DbQuickStep[]>([]);
+  const { t } = useI18n();
 
   useEffect(() => {
     if (!activeAccountId) return;
@@ -387,10 +389,16 @@ function ThreadMenu({
   };
 
   const handleToggleRead = async () => {
-    for (const id of targetIds) {
-      const t = threads.find((th) => th.id === id);
-      if (!t) continue;
-      await markThreadRead(accountFor(id), id, [], !t.isRead);
+    const targets = targetIds
+      .map((id) => threads.find((th) => th.id === id))
+      .filter((t): t is NonNullable<typeof t> => Boolean(t));
+    if (targets.length === 0) return;
+    // Uniform toggle across the selection: any unread -> mark all read, else all unread.
+    const nextRead = targets.some((t) => !t.isRead);
+    for (const t of targets) {
+      if (t.isRead !== nextRead) {
+        await markThreadRead(accountFor(t.id), t.id, [], nextRead);
+      }
     }
   };
 
@@ -543,8 +551,9 @@ function ThreadMenu({
     },
     {
       id: "toggle-read",
-      label: isRead ? "Mark as Unread" : "Mark as Read",
+      label: t(isRead ? "thread.markUnread" : "thread.markRead"),
       icon: isRead ? Mail : MailOpen,
+      shortcut: "n",
       action: handleToggleRead,
     },
     {

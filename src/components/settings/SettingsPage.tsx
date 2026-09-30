@@ -2778,6 +2778,7 @@ function ShortcutsTab() {
   const resetKey = useShortcutStore((s) => s.resetKey);
   const resetAll = useShortcutStore((s) => s.resetAll);
   const defaults = getDefaultKeyMap();
+  const { t } = useI18n();
   const [recordingId, setRecordingId] = useState<string | null>(null);
   const [composeShortcut, setComposeShortcut] = useState(DEFAULT_SHORTCUT);
   const [recordingGlobal, setRecordingGlobal] = useState(false);
@@ -2865,7 +2866,7 @@ function ShortcutsTab() {
                   className="flex items-center justify-between py-2 px-1"
                 >
                   <span className="text-sm text-text-secondary">
-                    {item.desc}
+                    {t(item.desc)}
                   </span>
                   <div className="flex items-center gap-2 ml-4 shrink-0">
                     <button

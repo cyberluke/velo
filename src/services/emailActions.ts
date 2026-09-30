@@ -88,6 +88,14 @@ function getNextThreadId(currentId: string): string | null {
   return null;
 }
 
+/**
+ * Thread IDs the user explicitly marked unread this session.
+ * ThreadView's auto-mark-read effect checks this so a manual "mark unread"
+ * on the open thread isn't immediately undone. Session-scoped by design:
+ * a restart re-syncs read state from the provider.
+ */
+export const manuallyUnreadThreadIds = new Set<string>();
+
 function applyOptimisticUpdate(action: EmailAction): void {
   const store = useThreadStore.getState();
   switch (action.type) {
@@ -127,6 +135,11 @@ function applyOptimisticUpdate(action: EmailAction): void {
       break;
     }
     case "markRead":
+      if (action.read) {
+        manuallyUnreadThreadIds.delete(action.threadId);
+      } else {
+        manuallyUnreadThreadIds.add(action.threadId);
+      }
       store.updateThread(action.threadId, { isRead: action.read });
       break;
     case "star":
@@ -147,6 +160,11 @@ function revertOptimisticUpdate(action: EmailAction): void {
   const store = useThreadStore.getState();
   switch (action.type) {
     case "markRead":
+      if (action.read) {
+        manuallyUnreadThreadIds.add(action.threadId);
+      } else {
+        manuallyUnreadThreadIds.delete(action.threadId);
+      }
       store.updateThread(action.threadId, { isRead: !action.read });
       break;
     case "star":

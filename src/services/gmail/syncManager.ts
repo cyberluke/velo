@@ -13,6 +13,7 @@ import { ensureFreshToken } from "../oauth/oauthTokenManager";
 import { batchScoreUrgency } from "../ai/aiService";
 import { extractTask } from "../ai/taskExtraction";
 import { insertTask, getTasksForThread } from "../db/tasks";
+import { mineContactsForAllAccounts } from "../contacts/contactMining";
 
 /** Map IMAP sync phases to the SyncProgress phases the UI understands. */
 function mapImapPhase(phase: string): "labels" | "threads" | "messages" | "done" {
@@ -35,6 +36,11 @@ export type SyncStatusCallback = (
 
 let statusCallback: SyncStatusCallback | null = null;
 let batchCompleteCallback: SyncBatchCompleteCallback | null = null;
+
+/** True while a sync pass is running (used by background tasks to yield). */
+export function isSyncInProgress(): boolean {
+  return syncPromise !== null;
+}
 
 export interface SyncBatchResult {
   accountIds: string[];
@@ -339,6 +345,13 @@ async function runSync(accountIds: string[]): Promise<void> {
       const queued = pendingAccountIds;
       pendingAccountIds = null;
       await runSync(queued);
+    } else {
+      // Mine newly synced messages into contacts for recipient autocomplete.
+      // Runs only once no sync is in flight and yields if another one starts,
+      // so mining never competes with sync for the write lock.
+      mineContactsForAllAccounts({ shouldYield: () => syncPromise !== null }).catch((err) => {
+        console.warn("[syncManager] Contact mining error:", err);
+      });
     }
   })();
 

@@ -13,6 +13,38 @@ describe("shortcutFromKeyboardEvent", () => {
     })).toBe("Cmd+Shift+E");
   });
 
+  it("stores a Shift-only single-character binding as the produced character", () => {
+    // Dispatch matches on e.key (the produced character), so a "Shift+" prefix
+    // would never fire — the recorder must store "U", not "Shift+U".
+    expect(shortcutFromKeyboardEvent({
+      key: "U",
+      ctrlKey: false,
+      metaKey: false,
+      altKey: false,
+      shiftKey: true,
+    })).toBe("U");
+  });
+
+  it("keeps Shift in the prefix alongside Ctrl/Alt", () => {
+    expect(shortcutFromKeyboardEvent({
+      key: "e",
+      ctrlKey: true,
+      metaKey: false,
+      altKey: false,
+      shiftKey: true,
+    })).toBe("Ctrl+Shift+E");
+  });
+
+  it("keeps Shift in the prefix for multi-character keys", () => {
+    expect(shortcutFromKeyboardEvent({
+      key: "ArrowUp",
+      ctrlKey: false,
+      metaKey: false,
+      altKey: false,
+      shiftKey: true,
+    })).toBe("Shift+ArrowUp");
+  });
+
   it("waits for a non-modifier key", () => {
     expect(shortcutFromKeyboardEvent({
       key: "Meta",

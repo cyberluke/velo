@@ -276,6 +276,10 @@ export const translations: Record<Locale, Dict> = {
     "ai.features.contactSummaryDesc": "AI summary of your history with each contact",
     "ai.features.filterSuggestions": "Filter suggestions",
     "ai.features.filterSuggestionsDesc": "Suggest smart filter rules based on email patterns",
+    "shortcuts.toggleRead": "Mark as read / unread",
+    "thread.markRead": "Mark as Read",
+    "thread.markUnread": "Mark as Unread",
+    "command.toggleRead": "Mark as Read / Unread",
   },
   cs: {
     "app.name": "Velo",
@@ -536,6 +540,10 @@ export const translations: Record<Locale, Dict> = {
     "ai.features.contactSummaryDesc": "AI souhrn vaší historie s každým kontaktem",
     "ai.features.filterSuggestions": "Návrhy filtrů",
     "ai.features.filterSuggestionsDesc": "Navrhuje pravidla filtrů podle vzorů v e-mailech",
+    "shortcuts.toggleRead": "Označit jako přečtené / nepřečtené",
+    "thread.markRead": "Označit jako přečtené",
+    "thread.markUnread": "Označit jako nepřečtené",
+    "command.toggleRead": "Označit jako přečtené / nepřečtené",
   },
   sk: {
     "app.name": "Velo",
@@ -796,6 +804,10 @@ export const translations: Record<Locale, Dict> = {
     "ai.features.contactSummaryDesc": "AI súhrn vašej histórie s každým kontaktom",
     "ai.features.filterSuggestions": "Návrhy filtrov",
     "ai.features.filterSuggestionsDesc": "Navrhuje pravidlá filtrov podľa vzorov v e-mailoch",
+    "shortcuts.toggleRead": "Označiť ako prečítané / neprečítané",
+    "thread.markRead": "Označiť ako prečítané",
+    "thread.markUnread": "Označiť ako neprečítané",
+    "command.toggleRead": "Označiť ako prečítané / neprečítané",
   },
   vi: {
     "app.name": "Velo",
@@ -1056,5 +1068,9 @@ export const translations: Record<Locale, Dict> = {
     "ai.features.contactSummaryDesc": "Tóm tắt AI về lịch sử trao đổi với từng liên hệ",
     "ai.features.filterSuggestions": "Gợi ý bộ lọc",
     "ai.features.filterSuggestionsDesc": "Đề xuất quy tắc lọc thông minh dựa trên các mẫu email",
+    "shortcuts.toggleRead": "Đánh dấu là đã đọc / chưa đọc",
+    "thread.markRead": "Đánh dấu là đã đọc",
+    "thread.markUnread": "Đánh dấu là chưa đọc",
+    "command.toggleRead": "Đánh dấu là đã đọc / chưa đọc",
   },
 };
