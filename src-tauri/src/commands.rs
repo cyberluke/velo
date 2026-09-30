@@ -65,7 +65,9 @@ pub async fn imap_fetch_messages(
     config: ImapConfig,
     folder: String,
     uids: Vec<u32>,
+    headers_only: Option<bool>,
 ) -> Result<ImapFetchResult, String> {
+    let headers_only = headers_only.unwrap_or(false);
     if uids.is_empty() {
         return Err("No UIDs provided".to_string());
     }
@@ -78,7 +80,7 @@ pub async fn imap_fetch_messages(
         .join(",");
 
     let mut session = imap_client::connect(&config).await?;
-    let result = imap_client::fetch_messages(&mut session, &folder, &uid_set).await;
+    let result = imap_client::fetch_messages(&mut session, &folder, &uid_set, headers_only).await;
     let _ = session.logout().await;
 
     match result {
@@ -86,7 +88,7 @@ pub async fn imap_fetch_messages(
         Err(e) if e.starts_with("ASYNC_IMAP_EMPTY:") => {
             // async-imap can't parse this server's responses — use raw TCP fallback
             log::info!("Falling back to raw TCP fetch for folder {folder}");
-            imap_client::raw_fetch_messages(&config, &folder, &uid_set).await
+            imap_client::raw_fetch_messages(&config, &folder, &uid_set, headers_only).await
         }
         Err(e) => Err(e),
     }

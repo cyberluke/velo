@@ -140,13 +140,16 @@ export async function imapListFolders(config: ImapConfig): Promise<ImapFolder[]>
 /**
  * Fetch messages from a folder by UID list.
  * Returns parsed messages along with folder status metadata.
+ * When `headersOnly` is true, fetches `BODY.PEEK[HEADER]` instead of full bodies
+ * (metadata-first sync — bodies load lazily when a thread is opened).
  */
 export async function imapFetchMessages(
   config: ImapConfig,
   folder: string,
-  uids: number[]
+  uids: number[],
+  headersOnly = false,
 ): Promise<ImapFetchResult> {
-  return invoke<ImapFetchResult>('imap_fetch_messages', { config, folder, uids });
+  return invoke<ImapFetchResult>('imap_fetch_messages', { config, folder, uids, headersOnly });
 }
 
 /**

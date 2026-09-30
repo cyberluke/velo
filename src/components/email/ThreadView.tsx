@@ -3,6 +3,7 @@ import { MessageItem } from "./MessageItem";
 import type { EmailSelectionRequest } from "./EmailRenderer";
 import { ActionBar } from "./ActionBar";
 import { getMessagesForThreads, type DbMessage } from "@/services/db/messages";
+import { ensureMessageBodies } from "@/services/email/messageBodies";
 import { useAccountStore } from "@/stores/accountStore";
 import { useUIStore } from "@/stores/uiStore";
 import { useThreadStore, type Thread } from "@/stores/threadStore";
@@ -156,7 +157,9 @@ export function ThreadView({ thread }: ThreadViewProps) {
     const merged = await getMergedThreadIds(threadAccountId, thread.id);
     setMergedIds(merged);
     const all = await getMessagesForThreads(threadAccountId, [thread.id, ...merged]);
-    setMessages(all);
+    // Sync stored metadata-only rows — bodies come from the provider on open
+    const withBodies = await ensureMessageBodies(threadAccountId, all);
+    setMessages(withBodies);
   }, [threadAccountId, thread.id]);
 
   useEffect(() => {
@@ -171,7 +174,9 @@ export function ThreadView({ thread }: ThreadViewProps) {
       try {
         const merged = await getMergedThreadIds(threadAccountId, thread.id);
         const all = await getMessagesForThreads(threadAccountId, [thread.id, ...merged]);
-        if (!cancelled) { setMergedIds(merged); setMessages(all); }
+        // Sync stored metadata-only rows — bodies come from the provider on open
+        const withBodies = await ensureMessageBodies(threadAccountId, all);
+        if (!cancelled) { setMergedIds(merged); setMessages(withBodies); }
       } catch (err) {
         if (!cancelled) setLoadError(err instanceof Error ? err.message : String(err));
       } finally {
