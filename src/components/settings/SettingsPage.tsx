@@ -76,7 +76,7 @@ import { SmartLabelEditor } from "./SmartLabelEditor";
 import { SHORTCUTS, getDefaultKeyMap } from "@/constants/shortcuts";
 import { useShortcutStore } from "@/stores/shortcutStore";
 import { useShortcutRecorder } from "@/hooks/useShortcutRecorder";
-import { COLOR_THEMES } from "@/constants/themes";
+import { COLOR_THEMES } from "@/themes";
 import {
   getAliasesForAccount,
   setDefaultAlias,

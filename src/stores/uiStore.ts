@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { setSetting } from "@/services/db/settings";
-import type { ColorThemeId } from "@/constants/themes";
+import type { ColorThemeId } from "@/themes";
 import { setTimeFormatPreference, type TimeFormat } from "@/utils/date";
 
 type Theme = "light" | "dark" | "system";

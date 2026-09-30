@@ -84,8 +84,8 @@ import { reportError } from "./stores/toastStore";
 import { UpdateToast } from "./components/ui/UpdateToast";
 import { ErrorBoundary } from "./components/ui/ErrorBoundary";
 import { formatSyncError } from "./utils/networkErrors";
-import { getThemeById, COLOR_THEMES } from "./constants/themes";
-import type { ColorThemeId } from "./constants/themes";
+import { isThemeId, useDocumentTheme } from "@/themes";
+import type { ColorThemeId } from "@/themes";
 import { router } from "./router";
 import { getSelectedThreadId } from "./router/navigate";
 
@@ -108,10 +108,6 @@ function useRouterSyncBridge() {
 import { useThreadStore } from "./stores/threadStore";
 
 export default function App() {
-  const theme = useUIStore((s) => s.theme);
-  const fontScale = useUIStore((s) => s.fontScale);
-  const colorTheme = useUIStore((s) => s.colorTheme);
-  const reduceMotion = useUIStore((s) => s.reduceMotion);
   const sidebarCollapsed = useUIStore((s) => s.sidebarCollapsed);
   const [showAddAccount, setShowAddAccount] = useState(false);
   // Throttles the "show what has synced so far" refresh during a long initial sync
@@ -377,7 +373,7 @@ export default function App() {
 
         // Restore color theme
         const savedColorTheme = await getSetting("color_theme");
-        if (savedColorTheme && COLOR_THEMES.some((t) => t.id === savedColorTheme)) {
+        if (savedColorTheme && isThemeId(savedColorTheme)) {
           ui.setColorTheme(savedColorTheme as ColorThemeId);
         }
 
@@ -619,72 +615,9 @@ export default function App() {
     };
   }, []);
 
-  // Sync theme class to <html> element
-  useEffect(() => {
-    const root = document.documentElement;
-    if (theme === "dark") {
-      root.classList.add("dark");
-    } else if (theme === "light") {
-      root.classList.remove("dark");
-    } else {
-      const mq = window.matchMedia("(prefers-color-scheme: dark)");
-      const apply = () => {
-        if (mq.matches) {
-          root.classList.add("dark");
-        } else {
-          root.classList.remove("dark");
-        }
-      };
-      apply();
-      mq.addEventListener("change", apply);
-      return () => mq.removeEventListener("change", apply);
-    }
-  }, [theme]);
-
-  // Sync font-scale class to <html> element
-  useEffect(() => {
-    const root = document.documentElement;
-    root.classList.remove("font-scale-small", "font-scale-default", "font-scale-large", "font-scale-xlarge");
-    root.classList.add(`font-scale-${fontScale}`);
-  }, [fontScale]);
-
-  // Sync reduce-motion class to <html> element
-  useEffect(() => {
-    const root = document.documentElement;
-    root.classList.toggle("reduce-motion", reduceMotion);
-  }, [reduceMotion]);
-
-  // Apply color theme CSS custom properties to <html>
-  useEffect(() => {
-    const root = document.documentElement;
-    const props = ["--color-accent", "--color-accent-hover", "--color-accent-light", "--color-bg-selected", "--color-sidebar-active"];
-
-    const apply = () => {
-      if (colorTheme === "indigo") {
-        // Default theme — remove inline overrides, let CSS handle it
-        for (const p of props) root.style.removeProperty(p);
-        return;
-      }
-      const themeData = getThemeById(colorTheme);
-      const isDark =
-        theme === "dark" ||
-        (theme === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches);
-      const colors = isDark ? themeData.dark : themeData.light;
-      root.style.setProperty("--color-accent", colors.accent);
-      root.style.setProperty("--color-accent-hover", colors.accentHover);
-      root.style.setProperty("--color-accent-light", colors.accentLight);
-      root.style.setProperty("--color-bg-selected", colors.bgSelected);
-      root.style.setProperty("--color-sidebar-active", colors.sidebarActive);
-    };
-
-    apply();
-
-    if (theme === "system") {
-      const mq = window.matchMedia("(prefers-color-scheme: dark)");
-      mq.addEventListener("change", apply);
-      return () => mq.removeEventListener("change", apply);
-    }
-  }, [colorTheme, theme]);
+  // Theme mode class, font scale, reduce-motion and design tokens are all
+  // owned by the theme layer now (see src/themes/useDocumentTheme.ts).
+  useDocumentTheme();
 
   const handleAddAccountSuccess = useCallback(async () => {
     setShowAddAccount(false);

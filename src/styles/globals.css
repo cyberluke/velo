@@ -1,32 +1,76 @@
 @import "tailwindcss";
 
+/*
+ * Design-token contract.
+ *
+ * The values here are the DEFAULT template (indigo / Aurora) and serve two
+ * purposes: they let Tailwind generate the semantic utilities
+ * (`bg-bg-primary`, `text-text-secondary`, ...) and they render the app
+ * correctly before the theme applier runs on <html>.
+ *
+ * The ThemeApplier (src/themes/apply.ts) overrides every one of these inline
+ * from the ACTIVE ThemeTemplate — its light or dark variant — so concrete
+ * theme values live in src/themes/templates.ts, never in this file. `.dark`
+ * remains a plain class for Tailwind's `dark:` variant; it no longer carries
+ * token values.
+ *
+ * Adding a token here means adding it to the ThemeTokens contract in
+ * src/themes/types.ts (and the applier's var map) as well — this block and
+ * that file are the two halves of the same interface.
+ */
 @theme {
+  /* Surfaces */
   --color-bg-primary: #12141c;
   --color-bg-secondary: #181b26;
   --color-bg-tertiary: #222633;
   --color-bg-hover: rgba(167, 139, 250, 0.12);
   --color-bg-selected: rgba(45, 212, 191, 0.16);
+  /* Flat window surface the translucent panel tokens sit on */
+  --color-app-bg: #07080d;
 
+  /* Text */
   --color-text-primary: #f4f1ff;
   --color-text-secondary: #c4bdd8;
   --color-text-tertiary: #8b83a3;
 
+  /* Borders */
   --color-border-primary: rgba(167, 139, 250, 0.18);
   --color-border-secondary: rgba(45, 212, 191, 0.12);
 
+  /* Accent */
   --color-accent: #a78bfa;
   --color-accent-hover: #2dd4bf;
   --color-accent-light: rgba(167, 139, 250, 0.16);
 
+  /* Feedback */
   --color-danger: #dc2626;
   --color-warning: #d97706;
   --color-success: #059669;
 
+  /* Sidebar */
   --color-sidebar-bg: #0c0e16;
   --color-sidebar-text: #ece7ff;
   --color-sidebar-hover: rgba(167, 139, 250, 0.14);
   --color-sidebar-active: #2dd4bf;
 
+  /* Workspace chrome — shell/workspace color-mix bases and the canvas
+     nav-rail palette (title bar + nav rail over the shell) */
+  --color-shell-mix: #0d1018;
+  --color-workspace-mix: #10131c;
+  --color-canvas-text: #eef0f7;
+  --color-canvas-hover: rgba(255, 255, 255, 0.09);
+  --color-canvas-active: #a5b4fc;
+
+  /* Typography */
+  --font-app: "Segoe UI Variable", "Segoe UI", "Noto Sans", sans-serif;
+
+  /* Layout */
+  --radius-panel: 0.5rem;
+  --radius-control: 0.7rem;
+  --radius-rail: 1.25rem;
+  --radius-button: 0.85rem;
+
+  /* Effects */
   --glass-blur: 20px;
   --glass-blur-heavy: 24px;
   --glass-border: rgba(255, 255, 255, 0.2);
@@ -35,44 +79,13 @@
   --glass-highlight: inset 0 1px 0 0 rgba(255, 255, 255, 0.4);
   --backdrop-blur-overlay: 16px;
 
-  /* Flat window surface the translucent panel tokens sit on */
-  --color-app-bg: #07080d;
+  /* Motion */
+  --anim-fast: 150ms;
+  --anim-normal: 200ms;
+  --anim-slow: 300ms;
 }
 
 @custom-variant dark (&:where(.dark, .dark *));
-
-/*
- * Dark mode overrides — applied when <html class="dark">
- */
-.dark {
-  --color-bg-primary: #12141c;
-  --color-bg-secondary: #181b26;
-  --color-bg-tertiary: #222633;
-  --color-bg-hover: rgba(167, 139, 250, 0.14);
-  --color-bg-selected: rgba(45, 212, 191, 0.18);
-
-  --color-text-primary: #f4f1ff;
-  --color-text-secondary: #c4bdd8;
-  --color-text-tertiary: #8b83a3;
-
-  --color-border-primary: rgba(167, 139, 250, 0.2);
-  --color-border-secondary: rgba(45, 212, 191, 0.14);
-
-  --color-accent: #c4b5fd;
-  --color-accent-hover: #5eead4;
-  --color-accent-light: rgba(167, 139, 250, 0.22);
-
-  --color-sidebar-bg: #0c0e16;
-  --color-sidebar-text: #ece7ff;
-  --color-sidebar-hover: rgba(167, 139, 250, 0.16);
-
-  --glass-border: rgba(196, 181, 253, 0.16);
-  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
-  --glass-shadow-elevated: 0 16px 48px rgba(0, 0, 0, 0.55);
-  --glass-highlight: inset 0 1px 0 0 rgba(255, 255, 255, 0.04);
-
-  --color-app-bg: #07080d;
-}
 
 /* Font scale — set on <html> like .dark */
 html.font-scale-small { font-size: 82%; }
@@ -90,8 +103,7 @@ body,
 }
 
 body {
-  font-family:
-    "Segoe UI Variable", "Segoe UI", "Noto Sans", sans-serif;
+  font-family: var(--font-app);
   background: transparent;
   color: var(--color-text-primary);
   -webkit-font-smoothing: antialiased;
@@ -107,28 +119,28 @@ body {
 
 .workspace-panel {
   border: 0;
-  border-radius: 0.5rem;
-  box-shadow: inset 0 0 0 1px rgba(167, 139, 250, 0.12);
+  border-radius: var(--radius-panel);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-accent) 12%, transparent);
 }
 
 .reference-sidebar {
   position: relative;
   z-index: 1;
-  --color-sidebar-text: #eef0f7;
-  --color-sidebar-hover: rgba(255, 255, 255, 0.09);
-  --color-sidebar-active: #a5b4fc;
+  --color-sidebar-text: var(--color-canvas-text);
+  --color-sidebar-hover: var(--color-canvas-hover);
+  --color-sidebar-active: var(--color-canvas-active);
   box-shadow: none;
 }
 
 .canvas-shell {
-  background: color-mix(in srgb, #0d1018 86%, var(--color-accent));
+  background: color-mix(in srgb, var(--color-shell-mix) 86%, var(--color-accent));
   box-shadow: none;
 }
 
 .canvas-nav {
-  --color-sidebar-text: #eef0f7;
-  --color-sidebar-hover: rgba(255, 255, 255, 0.09);
-  --color-sidebar-active: #a5b4fc;
+  --color-sidebar-text: var(--color-canvas-text);
+  --color-sidebar-hover: var(--color-canvas-hover);
+  --color-sidebar-active: var(--color-canvas-active);
 }
 
 .canvas-nav > div > div {
@@ -136,20 +148,18 @@ body {
 }
 
 .canvas-nav > div > div > button {
-  color: #eef0f7;
+  color: var(--color-canvas-text);
 }
 
 .app-workspace {
-  background: color-mix(in srgb, #10131c 88%, var(--color-accent));
+  background: color-mix(in srgb, var(--color-workspace-mix) 88%, var(--color-accent));
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
-  border: 1px solid rgba(167, 139, 250, 0.16);
+  border: 1px solid color-mix(in srgb, var(--color-accent) 16%, transparent);
 }
 
 .workspace-toolbar {
-  --color-sidebar-text: #ece7ff;
-  --color-sidebar-hover: rgba(167, 139, 250, 0.14);
-  background: color-mix(in srgb, #0d1018 82%, var(--color-accent));
-  box-shadow: inset 0 -1px 0 rgba(167, 139, 250, 0.12);
+  background: color-mix(in srgb, var(--color-shell-mix) 82%, var(--color-accent));
+  box-shadow: inset 0 -1px 0 color-mix(in srgb, var(--color-accent) 12%, transparent);
 }
 
 .win-caption-btn {
@@ -157,14 +167,14 @@ body {
   width: 2.875rem;
   align-items: center;
   justify-content: center;
-  color: #ece7ff;
+  color: var(--color-sidebar-text);
   background: transparent;
   border: 0;
   transition: background 120ms ease, color 120ms ease;
 }
 
 .win-caption-btn:hover {
-  background: rgba(196, 181, 253, 0.16);
+  background: color-mix(in srgb, var(--color-accent) 16%, transparent);
 }
 
 .win-caption-close:hover {
@@ -190,7 +200,7 @@ body {
   width: 2rem;
   align-items: center;
   justify-content: center;
-  border-radius: 0.7rem;
+  border-radius: var(--radius-control);
   color: rgba(238, 240, 247, 0.72);
   transition: background 150ms ease, color 150ms ease;
 }
@@ -216,7 +226,7 @@ body {
   width: 2.5rem;
   flex-direction: column;
   overflow-y: auto;
-  border-radius: 1.25rem;
+  border-radius: var(--radius-rail);
   padding: 0.45rem 0.25rem;
   scrollbar-width: none;
 }
@@ -246,7 +256,7 @@ body {
 }
 
 .reference-sidebar button {
-  border-radius: 0.85rem;
+  border-radius: var(--radius-button);
 }
 
 .reference-sidebar nav {
@@ -415,12 +425,9 @@ body {
  * Animation System
  * ============================================ */
 
-/* Timing custom properties */
-:root {
-  --anim-fast: 150ms;
-  --anim-normal: 200ms;
-  --anim-slow: 300ms;
-}
+/* Timing custom properties come from the active theme template via the
+ * theme applier (--anim-fast / --anim-normal / --anim-slow, defaulting to
+ * the @theme values above). Keyframes are theme-independent mechanics. */
 
 /* Keyframes */
 @keyframes fadeIn {
