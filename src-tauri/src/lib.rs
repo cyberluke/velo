@@ -43,27 +43,37 @@ mod linux {
 }
 
 /// Windows 11 rounds every top-level window and, when "show accent color on
-/// title bars and window borders" is on, draws an accent outline around it.
+/// title bars and window borders" is on, draws an accent border around it.
 /// The main and splash windows are frameless and transparent — the app shell
-/// draws its own square frame — so opt out of DWM's corner rounding
-/// (DWMWCP_DONOTROUND) and let the square shell own the corners. Applied in
-/// setup, before either window is shown, so there is no rounded flash.
+/// draws its own frame — so strip DWM's frame entirely: square the corners
+/// (DWMWCP_DONOTROUND) and disable non-client rendering (DWMNCRP_DISABLED),
+/// which drops the accent border too while keeping native resize hit-testing
+/// from the window style. Applied in setup, before either window is shown, so
+/// there is no rounded/bordered flash.
 #[cfg(windows)]
-fn disable_dwm_corner_rounding(window: &tauri::WebviewWindow) {
+fn strip_dwm_frame(window: &tauri::WebviewWindow) {
     use std::mem::size_of;
     use windows::Win32::Graphics::Dwm::{
-        DwmSetWindowAttribute, DWMWA_WINDOW_CORNER_PREFERENCE, DWMWCP_DONOTROUND,
+        DwmSetWindowAttribute, DWMNCRP_DISABLED, DWMWA_NCRENDERING_POLICY,
+        DWMWA_WINDOW_CORNER_PREFERENCE, DWMWCP_DONOTROUND,
     };
     let Ok(hwnd) = window.hwnd() else {
-        log::warn!("Could not get HWND to disable DWM corner rounding");
+        log::warn!("Could not get HWND to strip the DWM window frame");
         return;
     };
-    let preference = DWMWCP_DONOTROUND.0 as u32;
+    let corner_preference = DWMWCP_DONOTROUND.0 as u32;
+    let nc_rendering = DWMNCRP_DISABLED.0 as u32;
     unsafe {
         let _ = DwmSetWindowAttribute(
             hwnd,
             DWMWA_WINDOW_CORNER_PREFERENCE,
-            &preference as *const u32 as *const core::ffi::c_void,
+            &corner_preference as *const u32 as *const core::ffi::c_void,
+            size_of::<u32>() as u32,
+        );
+        let _ = DwmSetWindowAttribute(
+            hwnd,
+            DWMWA_NCRENDERING_POLICY,
+            &nc_rendering as *const u32 as *const core::ffi::c_void,
             size_of::<u32>() as u32,
         );
     }
@@ -414,13 +424,14 @@ pub fn run() {
                 }
             }
 
-            // Frameless windows get square corners on Windows 11 (the app
-            // shell draws the frame); pop-out windows keep their system frame.
+            // Frameless windows get square corners and no DWM border on
+            // Windows 11 (the app shell draws the frame); pop-out windows
+            // keep their system frame.
             #[cfg(windows)]
             {
                 for label in ["main", "splashscreen"] {
                     if let Some(window) = app.get_webview_window(label) {
-                        disable_dwm_corner_rounding(&window);
+                        strip_dwm_frame(&window);
                     }
                 }
             }
