@@ -1,7 +1,7 @@
 # Upstream Velo PR Shortlist — Top 100
 
 Source: https://github.com/avihaymenahem/velo/pulls (228 PRs total; 47 open, 181 closed).
-Compiled 2026-09-29 for the NAI E-Mail fork. Dependabot/CI-release noise excluded.
+Compiled 2026-09-29 for the Velo Pro fork. Dependabot/CI-release noise excluded.
 
 Legend:
 - **NEW** — not in this fork yet; prime port candidate.
