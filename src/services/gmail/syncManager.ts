@@ -5,6 +5,9 @@ import { getSetting } from "../db/settings";
 import { getThreadCountForAccount, deleteAllThreadsForAccount } from "../db/threads";
 import { deleteAllMessagesForAccount } from "../db/messages";
 import { imapInitialSync, imapDeltaSync } from "../imap/imapSync";
+import { jmapInitialSync, jmapDeltaSync } from "../jmap/jmapSync";
+import { createJmapClientForAccount } from "../jmap/clientFactory";
+import { getJmapSyncState } from "../db/jmapSyncState";
 import { clearAllFolderSyncStates } from "../db/folderSyncState";
 import { ensureFreshToken } from "../oauth/oauthTokenManager";
 
@@ -142,8 +145,67 @@ async function syncImapAccount(accountId: string): Promise<void> {
 }
 
 /**
+ * Run a sync for a single JMAP account (initial or delta).
+ */
+async function syncJmapAccount(accountId: string): Promise<void> {
+  const account = await getAccount(accountId);
+
+  if (!account) {
+    throw new Error("Account not found");
+  }
+
+  const client = await createJmapClientForAccount(account);
+
+  const syncPeriodStr = await getSetting("sync_period_days");
+  const syncDays = parseInt(syncPeriodStr ?? "365", 10) || 365;
+
+  const emailSyncState = await getJmapSyncState(accountId, "Email");
+
+  if (account.history_id && emailSyncState) {
+    // Delta sync
+    try {
+      await jmapDeltaSync(client, accountId);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err ?? "");
+      if (message === "JMAP_STATE_EXPIRED" || message === "JMAP_NO_STATE") {
+        // State too old — fall back to a full resync
+        await clearAccountHistoryId(accountId);
+        await jmapInitialSync(client, accountId, syncDays, (progress) => {
+          statusCallback?.(accountId, "syncing", {
+            phase: mapJmapPhase(progress.phase),
+            current: progress.current,
+            total: progress.total,
+          });
+        });
+      } else {
+        throw err;
+      }
+    }
+  } else {
+    // First time — full initial sync
+    await jmapInitialSync(client, accountId, syncDays, (progress) => {
+      statusCallback?.(accountId, "syncing", {
+        phase: mapJmapPhase(progress.phase),
+        current: progress.current,
+        total: progress.total,
+      });
+    });
+  }
+}
+
+/**
+ * Map JMAP sync phases to the SyncProgress phases the UI understands.
+ */
+function mapJmapPhase(phase: string): "labels" | "threads" | "messages" | "done" {
+  if (phase === "mailboxes") return "labels";
+  if (phase === "messages") return "messages";
+  if (phase === "done") return "done";
+  return phase as "labels" | "threads" | "messages" | "done";
+}
+
+/**
  * Run a sync for a single account (initial or delta).
- * Routes to Gmail or IMAP sync based on account provider.
+ * Routes to Gmail, IMAP or JMAP sync based on account provider.
  */
 async function syncAccountInternal(accountId: string): Promise<boolean> {
   try {
@@ -164,6 +226,8 @@ async function syncAccountInternal(accountId: string): Promise<boolean> {
 
     if (account.provider === "imap") {
       await syncImapAccount(accountId);
+    } else if (account.provider === "jmap") {
+      await syncJmapAccount(accountId);
     } else {
       await syncGmailAccount(accountId);
     }

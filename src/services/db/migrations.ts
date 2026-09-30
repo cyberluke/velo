@@ -945,6 +945,31 @@ export const MIGRATIONS = [
       ALTER TABLE attachments ADD COLUMN extraction_error TEXT;
     `,
   },
+  {
+    version: 37,
+    description: "Separate SMTP credentials",
+    sql: `
+      -- Some providers use different login names or passwords for outgoing
+      -- mail (e.g. a relay sub-account). Null falls back to the IMAP values.
+      ALTER TABLE accounts ADD COLUMN smtp_username TEXT;
+      ALTER TABLE accounts ADD COLUMN smtp_password TEXT;
+    `,
+  },
+  {
+    version: 38,
+    description: "JMAP provider support",
+    sql: `
+      ALTER TABLE accounts ADD COLUMN jmap_url TEXT;
+
+      CREATE TABLE IF NOT EXISTS jmap_sync_state (
+        account_id TEXT NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
+        object_type TEXT NOT NULL,
+        state TEXT NOT NULL,
+        updated_at INTEGER DEFAULT (unixepoch()),
+        PRIMARY KEY (account_id, object_type)
+      );
+    `,
+  },
 ];
 
 function isAlreadyAppliedSchemaError(message: string): boolean {
