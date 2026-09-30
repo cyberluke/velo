@@ -23,6 +23,7 @@
         "fullscreen": false,
         "decorations": false,
         "transparent": true,
+        "shadow": false,
         "visible": false,
         "dragDropEnabled": false
       },
@@ -35,6 +36,7 @@
         "resizable": false,
         "center": true,
         "alwaysOnTop": true,
+        "shadow": false,
         "skipTaskbar": true,
         "backgroundColor": "#0c1222"
       }
