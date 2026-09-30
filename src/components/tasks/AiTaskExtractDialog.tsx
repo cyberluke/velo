@@ -189,7 +189,7 @@ export function AiTaskExtractDialog({
             <button
               onClick={handleCreate}
               disabled={!title.trim() || creating}
-              className="px-4 py-2 text-sm font-medium text-white bg-accent hover:bg-accent-hover rounded-lg transition-colors disabled:opacity-50"
+              className="px-4 py-2 text-sm font-medium text-on-accent bg-accent hover:bg-accent-hover rounded-lg transition-colors disabled:opacity-50"
             >
               {creating ? "Creating..." : "Create Task"}
             </button>

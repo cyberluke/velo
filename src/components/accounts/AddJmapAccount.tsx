@@ -190,7 +190,7 @@ export function AddJmapAccount({ onClose, onSuccess, onBack, zIndex }: AddJmapAc
           <button
             onClick={handleDiscover}
             disabled={!email || !authToken || discovering}
-            className="px-4 py-2 text-sm bg-accent text-white rounded-lg hover:bg-accent-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            className="px-4 py-2 text-sm bg-accent text-on-accent rounded-lg hover:bg-accent-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
           >
             {discovering && <Loader2 className="w-4 h-4 animate-spin" />}
             {discovering ? t("addJmap.discovering") : t("addJmap.continue")}
@@ -235,7 +235,7 @@ export function AddJmapAccount({ onClose, onSuccess, onBack, zIndex }: AddJmapAc
         <button
           onClick={() => setStep("test")}
           disabled={!jmapUrl}
-          className="px-4 py-2 text-sm bg-accent text-white rounded-lg hover:bg-accent-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="px-4 py-2 text-sm bg-accent text-on-accent rounded-lg hover:bg-accent-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {t("addJmap.testConnection")}
         </button>
@@ -299,7 +299,7 @@ export function AddJmapAccount({ onClose, onSuccess, onBack, zIndex }: AddJmapAc
           <button
             onClick={handleSave}
             disabled={!testResult?.success || saving}
-            className="px-4 py-2 text-sm bg-accent text-white rounded-lg hover:bg-accent-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            className="px-4 py-2 text-sm bg-accent text-on-accent rounded-lg hover:bg-accent-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
           >
             {saving && <Loader2 className="w-4 h-4 animate-spin" />}
             {saving ? t("addJmap.saving") : t("addJmap.addAccount")}
@@ -320,7 +320,7 @@ export function AddJmapAccount({ onClose, onSuccess, onBack, zIndex }: AddJmapAc
               <div
                 className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium ${
                   step === s
-                    ? "bg-accent text-white"
+                    ? "bg-accent text-on-accent"
                     : (["basic", "discover", "test"].indexOf(step) > i)
                       ? "bg-accent/20 text-accent"
                       : "bg-bg-tertiary text-text-tertiary"

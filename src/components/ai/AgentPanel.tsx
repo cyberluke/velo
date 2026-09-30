@@ -176,7 +176,7 @@ export function AgentPanel({ isOpen, onClose }: AgentPanelProps) {
             messages.map((msg) => {
               if (msg.role === "user") {
                 return (
-                  <div key={msg.id} className="ml-auto bg-accent text-white rounded-2xl rounded-tr-sm px-3 py-2 text-sm max-w-[80%]">
+                  <div key={msg.id} className="ml-auto bg-accent text-on-accent rounded-2xl rounded-tr-sm px-3 py-2 text-sm max-w-[80%]">
                     {msg.content}
                   </div>
                 );
@@ -232,7 +232,7 @@ export function AgentPanel({ isOpen, onClose }: AgentPanelProps) {
           <button
             onClick={() => void handleSend()}
             disabled={!input.trim() || isLoading}
-            className="bg-accent hover:bg-accent-hover disabled:opacity-40 disabled:cursor-not-allowed text-white rounded-lg p-2 transition-colors shrink-0"
+            className="bg-accent hover:bg-accent-hover disabled:opacity-40 disabled:cursor-not-allowed text-on-accent rounded-lg p-2 transition-colors shrink-0"
           >
             <ArrowUp size={16} />
           </button>

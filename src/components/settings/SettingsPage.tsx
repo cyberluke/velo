@@ -76,7 +76,8 @@ import { SmartLabelEditor } from "./SmartLabelEditor";
 import { SHORTCUTS, getDefaultKeyMap } from "@/constants/shortcuts";
 import { useShortcutStore } from "@/stores/shortcutStore";
 import { useShortcutRecorder } from "@/hooks/useShortcutRecorder";
-import { COLOR_THEMES } from "@/themes";
+import { COLOR_THEMES, applyThemeTokens, getTheme, resolveMode } from "@/themes";
+import type { ColorThemeId } from "@/themes";
 import {
   getAliasesForAccount,
   setDefaultAlias,
@@ -123,6 +124,22 @@ export function SettingsPage() {
   const setFontScale = useUIStore((s) => s.setFontScale);
   const colorTheme = useUIStore((s) => s.colorTheme);
   const setColorTheme = useUIStore((s) => s.setColorTheme);
+
+  // Live preview: hovering/focusing an accent swatch applies that theme to
+  // the whole window; leaving restores the saved one. No store writes — the
+  // theme layer applies tokens imperatively, so previewing is free.
+  const previewAccent = (id: ColorThemeId) => {
+    const root = document.documentElement;
+    const state = useUIStore.getState();
+    const mode = resolveMode(state.theme, window.matchMedia("(prefers-color-scheme: dark)").matches);
+    applyThemeTokens(root, getTheme(id), mode);
+  };
+  const restoreAccent = () => {
+    const root = document.documentElement;
+    const state = useUIStore.getState();
+    const mode = resolveMode(state.theme, window.matchMedia("(prefers-color-scheme: dark)").matches);
+    applyThemeTokens(root, getTheme(state.colorTheme), mode);
+  };
   const defaultReplyMode = useUIStore((s) => s.defaultReplyMode);
   const setDefaultReplyMode = useUIStore((s) => s.setDefaultReplyMode);
   const markAsReadBehavior = useUIStore((s) => s.markAsReadBehavior);
@@ -686,6 +703,10 @@ export function SettingsPage() {
                             <button
                               key={t.id}
                               onClick={() => setColorTheme(t.id)}
+                              onMouseEnter={() => previewAccent(t.id)}
+                              onMouseLeave={restoreAccent}
+                              onFocus={() => previewAccent(t.id)}
+                              onBlur={restoreAccent}
                               title={t.name}
                               className={`relative w-7 h-7 rounded-full transition-all ${
                                 isSelected
@@ -700,7 +721,7 @@ export function SettingsPage() {
                               }}
                             >
                               {isSelected && (
-                                <Check size={14} className="absolute inset-0 m-auto text-white drop-shadow-sm" />
+                                <Check size={14} className="absolute inset-0 m-auto text-on-accent drop-shadow-sm" />
                               )}
                             </button>
                           );
@@ -2833,7 +2854,7 @@ function ShortcutsTab() {
               onBlur={() => setRecordingGlobal(false)}
               className={`text-xs px-2.5 py-1 rounded-md transition-colors ${
                 recordingGlobal
-                  ? "bg-accent text-white"
+                  ? "bg-accent text-on-accent"
                   : "bg-bg-tertiary text-text-secondary hover:text-text-primary border border-border-primary"
               }`}
             >
@@ -2881,7 +2902,7 @@ function ShortcutsTab() {
                       onBlur={() => { if (isRecording) setRecordingId(null); }}
                       className={`text-xs px-2.5 py-1 rounded-md font-mono transition-colors ${
                         isRecording
-                          ? "bg-accent text-white"
+                          ? "bg-accent text-on-accent"
                           : "bg-bg-tertiary text-text-tertiary hover:text-text-primary border border-border-primary"
                       }`}
                     >
@@ -3233,7 +3254,7 @@ function BundleSettings() {
                       }}
                       className={`w-8 h-7 text-[0.625rem] rounded transition-colors ${
                         rule.days.includes(idx)
-                          ? "bg-accent text-white"
+                          ? "bg-accent text-on-accent"
                           : "bg-bg-tertiary text-text-tertiary border border-border-primary"
                       }`}
                     >

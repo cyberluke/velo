@@ -93,7 +93,7 @@ export function ProofreadPanel({ result, onConfirmSend, onCancel, isLoading }: P
             </button>
             <button
               onClick={onConfirmSend}
-              className="px-4 py-1.5 text-xs font-medium text-white bg-accent hover:bg-accent-hover rounded-md transition-colors"
+              className="px-4 py-1.5 text-xs font-medium text-on-accent bg-accent hover:bg-accent-hover rounded-md transition-colors"
             >
               {t("ai.proofread.sendAnyway")}
             </button>

@@ -273,7 +273,7 @@ export function AccountSwitcher({
               >
                 <div
                   className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 ${
-                    unifiedInbox ? "bg-accent text-white" : "bg-bg-tertiary text-text-secondary"
+                    unifiedInbox ? "bg-accent text-on-accent" : "bg-bg-tertiary text-text-secondary"
                   }`}
                 >
                   <Layers size={14} />
@@ -466,7 +466,7 @@ function AccountAvatarSmall({
     <div
       className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 text-xs font-semibold overflow-hidden ${
         isActive
-          ? "bg-accent text-white"
+          ? "bg-accent text-on-accent"
           : "bg-accent/12 text-accent"
       }`}
     >

@@ -673,7 +673,7 @@ export function ThreadView({ thread }: ThreadViewProps) {
                     console.error("Failed to create calendar event:", err);
                   }
                 }}
-                className="shrink-0 text-xs px-2.5 py-1 rounded-md bg-accent text-white hover:bg-accent-hover transition-colors"
+                className="shrink-0 text-xs px-2.5 py-1 rounded-md bg-accent text-on-accent hover:bg-accent-hover transition-colors"
               >
                 {t("ai.meeting.createEvent")}
               </button>

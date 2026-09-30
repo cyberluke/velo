@@ -305,7 +305,7 @@ export function AttachmentPreview({
           onClick={handleDownload}
           disabled={saving}
           title="Save to Downloads — ⌘-click to choose a folder"
-          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-accent hover:bg-accent-hover rounded-md transition-colors disabled:opacity-50"
+          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-on-accent bg-accent hover:bg-accent-hover rounded-md transition-colors disabled:opacity-50"
         >
           <Download size={13} />
           {saving ? "Saving..." : "Download"}

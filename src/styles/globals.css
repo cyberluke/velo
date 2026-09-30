@@ -3,10 +3,11 @@
 /*
  * Design-token contract.
  *
- * The values here are the DEFAULT template (indigo / Aurora) and serve two
- * purposes: they let Tailwind generate the semantic utilities
- * (`bg-bg-primary`, `text-text-secondary`, ...) and they render the app
- * correctly before the theme applier runs on <html>.
+ * The values here are the DEFAULT template's DARK set (indigo / Aurora dark
+ * shell) — the app defaults to dark, so first paint is exactly what a fresh
+ * install shows. They serve two purposes: they let Tailwind generate the
+ * semantic utilities (`bg-bg-primary`, `text-text-secondary`, ...) and they
+ * render the app correctly before the theme applier runs on <html>.
  *
  * The ThemeApplier (src/themes/apply.ts) overrides every one of these inline
  * from the ACTIVE ThemeTemplate — its light or dark variant — so concrete
@@ -23,8 +24,8 @@
   --color-bg-primary: #12141c;
   --color-bg-secondary: #181b26;
   --color-bg-tertiary: #222633;
-  --color-bg-hover: rgba(167, 139, 250, 0.12);
-  --color-bg-selected: rgba(45, 212, 191, 0.16);
+  --color-bg-hover: rgba(167, 139, 250, 0.14);
+  --color-bg-selected: rgba(45, 212, 191, 0.18);
   /* Flat window surface the translucent panel tokens sit on */
   --color-app-bg: #07080d;
 
@@ -34,13 +35,15 @@
   --color-text-tertiary: #8b83a3;
 
   /* Borders */
-  --color-border-primary: rgba(167, 139, 250, 0.18);
-  --color-border-secondary: rgba(45, 212, 191, 0.12);
+  --color-border-primary: rgba(167, 139, 250, 0.2);
+  --color-border-secondary: rgba(45, 212, 191, 0.14);
 
   /* Accent */
-  --color-accent: #a78bfa;
-  --color-accent-hover: #2dd4bf;
-  --color-accent-light: rgba(167, 139, 250, 0.16);
+  --color-accent: #c4b5fd;
+  --color-accent-hover: #5eead4;
+  --color-accent-light: rgba(167, 139, 250, 0.22);
+  /* Foreground on accent-filled controls — per-accent per-mode, WCAG AA */
+  --color-on-accent: #07110f;
 
   /* Feedback */
   --color-danger: #dc2626;
@@ -50,7 +53,7 @@
   /* Sidebar */
   --color-sidebar-bg: #0c0e16;
   --color-sidebar-text: #ece7ff;
-  --color-sidebar-hover: rgba(167, 139, 250, 0.14);
+  --color-sidebar-hover: rgba(167, 139, 250, 0.16);
   --color-sidebar-active: #2dd4bf;
 
   /* Workspace chrome — shell/workspace color-mix bases and the canvas
@@ -98,10 +101,10 @@
   /* Effects */
   --glass-blur: 20px;
   --glass-blur-heavy: 24px;
-  --glass-border: rgba(255, 255, 255, 0.2);
-  --glass-shadow: 0 10px 32px rgba(80, 66, 50, 0.08);
-  --glass-shadow-elevated: 0 18px 54px rgba(80, 66, 50, 0.15);
-  --glass-highlight: inset 0 1px 0 0 rgba(255, 255, 255, 0.4);
+  --glass-border: rgba(196, 181, 253, 0.16);
+  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
+  --glass-shadow-elevated: 0 16px 48px rgba(0, 0, 0, 0.55);
+  --glass-highlight: inset 0 1px 0 0 rgba(255, 255, 255, 0.04);
   --backdrop-blur-overlay: 16px;
 
   /* Motion */
@@ -208,16 +211,12 @@ body {
 }
 
 .toolbar-compose {
-  color: #fff;
+  color: var(--color-on-accent);
   background: var(--color-accent);
   box-shadow: 0 8px 18px color-mix(in srgb, var(--color-accent) 28%, transparent);
 }
 
 .toolbar-compose:hover { background: var(--color-accent-hover); }
-
-/* Dark themes use deliberately bright accents. Dark ink keeps every selected
-   primary color readable when it is used as a control on the dark shell. */
-.dark .toolbar-compose { color: #07110f; }
 
 .toolbar-icon-button {
   display: inline-flex;
@@ -605,6 +604,19 @@ body {
 /* Utility: stagger-in for list items */
 .stagger-in {
   animation: fadeIn var(--anim-normal) ease-out both;
+}
+
+/* Theme-change crossfade — `useDocumentTheme` puts this class on <html> for
+   one frame while the active theme swaps, so surfaces ease between palettes
+   instead of snapping. The reduce-motion rules below appear later and
+   override the duration, so a reduced-motion user still gets an instant cut. */
+.theme-switching,
+.theme-switching *,
+.theme-switching *::before,
+.theme-switching *::after {
+  transition-property: background-color, color, border-color, box-shadow, fill, stroke !important;
+  transition-duration: var(--anim-normal) !important;
+  transition-timing-function: ease !important;
 }
 
 /* Accessibility: respect reduced motion, from the OS or the in-app setting */

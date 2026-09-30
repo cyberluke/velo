@@ -36,6 +36,12 @@ export interface ColorTokens {
   accent: string;
   accentHover: string;
   accentLight: string;
+  /**
+   * Foreground used on accent-filled controls (primary buttons, selected
+   * pills). Chosen per accent per mode so text stays WCAG AA (>= 4.5:1);
+   * bright accents carry dark ink, dark accents carry white.
+   */
+  onAccent: string;
   /** Feedback */
   danger: string;
   warning: string;

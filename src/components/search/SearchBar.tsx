@@ -286,7 +286,7 @@ export function SearchBar() {
                   type="button"
                   aria-pressed={scope === id}
                   onClick={() => setScope(id!)}
-                  className={`rounded-full px-2 py-0.5 text-xs ${scope === id ? "bg-accent text-white" : "bg-bg-tertiary text-text-secondary hover:bg-bg-hover"}`}
+                  className={`rounded-full px-2 py-0.5 text-xs ${scope === id ? "bg-accent text-on-accent" : "bg-bg-tertiary text-text-secondary hover:bg-bg-hover"}`}
                 >
                   {name}
                 </button>

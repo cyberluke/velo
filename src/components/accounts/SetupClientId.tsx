@@ -77,7 +77,7 @@ export function SetupClientId({ onComplete, onCancel, zIndex }: SetupClientIdPro
           </p>
           <button
             onClick={() => openUrl(GMAIL_API_URL)}
-            className="inline-flex items-center gap-2 px-3 py-1.5 text-sm bg-accent text-white rounded-lg hover:bg-accent-hover transition-colors"
+            className="inline-flex items-center gap-2 px-3 py-1.5 text-sm bg-accent text-on-accent rounded-lg hover:bg-accent-hover transition-colors"
           >
             <ExternalLink size={14} />
             {t("setupClientId.step1Button")}
@@ -94,7 +94,7 @@ export function SetupClientId({ onComplete, onCancel, zIndex }: SetupClientIdPro
           </p>
           <button
             onClick={() => openUrl(OAUTH_CREDENTIALS_URL)}
-            className="inline-flex items-center gap-2 px-3 py-1.5 text-sm bg-accent text-white rounded-lg hover:bg-accent-hover transition-colors"
+            className="inline-flex items-center gap-2 px-3 py-1.5 text-sm bg-accent text-on-accent rounded-lg hover:bg-accent-hover transition-colors"
           >
             <ExternalLink size={14} />
             {t("setupClientId.step2Button")}
@@ -160,7 +160,7 @@ export function SetupClientId({ onComplete, onCancel, zIndex }: SetupClientIdPro
           <button
             onClick={handleSave}
             disabled={!canSave || saving}
-            className="px-4 py-2 text-sm bg-accent text-white rounded-lg hover:bg-accent-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-4 py-2 text-sm bg-accent text-on-accent rounded-lg hover:bg-accent-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {saving ? t("common.saving") : t("setupClientId.saveAndContinue")}
           </button>

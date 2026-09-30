@@ -25,9 +25,13 @@ export const baseLight: ThemeTokens = {
     textTertiary: "#8b83a3",
     borderPrimary: "rgba(167, 139, 250, 0.18)",
     borderSecondary: "rgba(45, 212, 191, 0.12)",
-    accent: "#a78bfa",
+    accent: "#818cf8",
     accentHover: "#2dd4bf",
     accentLight: "rgba(167, 139, 250, 0.16)",
+    // Indigo's accents are bright enough for dark ink. Dark ink on the
+    // bright dark-mode accents is what the old `.dark .toolbar-compose`
+    // rule hardcoded — it now lives here, per theme.
+    onAccent: "#07110f",
     danger: "#dc2626",
     warning: "#d97706",
     success: "#059669",

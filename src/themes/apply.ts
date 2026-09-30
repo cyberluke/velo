@@ -35,6 +35,7 @@ function colorVars(colors: ColorTokens): Record<string, string> {
     "--color-accent": colors.accent,
     "--color-accent-hover": colors.accentHover,
     "--color-accent-light": colors.accentLight,
+    "--color-on-accent": colors.onAccent,
     "--color-danger": colors.danger,
     "--color-warning": colors.warning,
     "--color-success": colors.success,

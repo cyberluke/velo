@@ -23,7 +23,7 @@ export function Button({
   const base = "inline-flex items-center justify-center font-medium rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed";
 
   const variants = {
-    primary: "text-white bg-accent hover:bg-accent-hover",
+    primary: "text-on-accent bg-accent hover:bg-accent-hover",
     secondary: "text-text-secondary hover:text-text-primary hover:bg-bg-hover",
     ghost: "text-text-tertiary hover:text-text-primary hover:bg-bg-hover",
     danger: "text-white bg-danger hover:bg-red-700",

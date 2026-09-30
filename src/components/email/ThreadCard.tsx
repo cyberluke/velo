@@ -153,7 +153,7 @@ export const ThreadCard = memo(function ThreadCard({ thread, isSelected, onClick
         <div className="flex flex-col items-center self-stretch shrink-0">
           {isMultiSelected ? (
             <div
-              className={`rounded-full flex items-center justify-center font-medium text-white bg-accent ${
+              className={`rounded-full flex items-center justify-center font-medium text-on-accent bg-accent ${
                 emailDensity === "compact" ? "w-7 h-7 text-xs" : emailDensity === "spacious" ? "w-10 h-10 text-sm" : "w-9 h-9 text-sm"
               }`}
             >

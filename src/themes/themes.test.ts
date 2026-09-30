@@ -122,7 +122,7 @@ describe("applyThemeTokens", () => {
     const el = document.createElement("html");
     applyThemeTokens(el, getTheme("rose"), "dark");
     applyThemeTokens(el, getTheme("sky"), "light");
-    expect(el.style.getPropertyValue("--color-accent")).toBe("#0284c7");
+    expect(el.style.getPropertyValue("--color-accent")).toBe("#0ea5e9");
     expect(el.style.getPropertyValue("--color-bg-selected")).toBe("rgba(224, 242, 254, 0.65)");
     expect(el.dataset.theme).toBe("sky");
   });
@@ -147,5 +147,56 @@ describe("resolveMode", () => {
     expect(resolveMode("light", true)).toBe("light");
     expect(resolveMode("system", true)).toBe("dark");
     expect(resolveMode("system", false)).toBe("light");
+  });
+});
+
+describe("accent contrast (WCAG AA)", () => {
+  function parseHex(hex: string): [number, number, number] {
+    const m = /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(hex);
+    if (!m) throw new Error(`expected a hex color, got "${hex}"`);
+    return [parseInt(m[1]!, 16), parseInt(m[2]!, 16), parseInt(m[3]!, 16)];
+  }
+
+  function luminance(hex: string): number {
+    const [r, g, b] = parseHex(hex).map((c) => {
+      const s = c / 255;
+      return s <= 0.04045 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
+    }) as [number, number, number];
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+  }
+
+  function contrastRatio(a: string, b: string): number {
+    const [l1, l2] = [luminance(a), luminance(b)].sort((x, y) => y - x);
+    return (l1 + 0.05) / (l2 + 0.05);
+  }
+
+  it("every theme's accent vs onAccent is >= 4.5:1 in both modes", () => {
+    for (const theme of listThemes()) {
+      for (const mode of ["light", "dark"] as const) {
+        const { accent, onAccent } = theme[mode].colors;
+        const ratio = contrastRatio(accent, onAccent);
+        expect(ratio, `${theme.id} ${mode} accent ${accent} vs onAccent ${onAccent}`).toBeGreaterThanOrEqual(4.5);
+      }
+    }
+  });
+
+  it("accent stays readable as text on the shell surfaces (bg-secondary is the lightest common one)", () => {
+    for (const theme of listThemes()) {
+      for (const mode of ["light", "dark"] as const) {
+        const { accent, bgSecondary } = theme[mode].colors;
+        const ratio = contrastRatio(accent, bgSecondary);
+        expect(ratio, `${theme.id} ${mode} accent vs bg-secondary`).toBeGreaterThanOrEqual(4.5);
+      }
+    }
+  });
+
+  it("sidebar-active stays readable as text on the sidebar surface", () => {
+    for (const theme of listThemes()) {
+      for (const mode of ["light", "dark"] as const) {
+        const { sidebarActive, sidebarBg } = theme[mode].colors;
+        const ratio = contrastRatio(sidebarActive, sidebarBg);
+        expect(ratio, `${theme.id} ${mode} sidebar-active vs sidebar-bg`).toBeGreaterThanOrEqual(4.5);
+      }
+    }
   });
 });

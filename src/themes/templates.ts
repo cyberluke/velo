@@ -18,7 +18,7 @@ import { registerTheme, DEFAULT_THEME_ID } from "./registry";
 export const indigoTheme: ThemeTemplate = {
   id: DEFAULT_THEME_ID,
   name: "Aurora",
-  swatch: "#a78bfa",
+  swatch: "#818cf8",
   light: baseLight,
   dark: baseDark,
 };
@@ -26,16 +26,17 @@ export const indigoTheme: ThemeTemplate = {
 export const roseTheme: ThemeTemplate = {
   id: "rose",
   name: "Rose",
-  swatch: "#e11d48",
+  swatch: "#fb7185",
   light: {
     ...baseLight,
     colors: {
       ...baseLight.colors,
-      accent: "#e11d48",
-      accentHover: "#be123c",
+      accent: "#fb7185",
+      accentHover: "#f43f5e",
       accentLight: "#ffe4e6",
+      onAccent: "#07110f",
       bgSelected: "rgba(255, 228, 230, 0.65)",
-      sidebarActive: "#e11d48",
+      sidebarActive: "#fb7185",
     },
   },
   dark: {
@@ -110,16 +111,17 @@ export const amberTheme: ThemeTemplate = {
 export const skyTheme: ThemeTemplate = {
   id: "sky",
   name: "Sky",
-  swatch: "#0284c7",
+  swatch: "#0ea5e9",
   light: {
     ...baseLight,
     colors: {
       ...baseLight.colors,
-      accent: "#0284c7",
-      accentHover: "#0369a1",
+      accent: "#0ea5e9",
+      accentHover: "#0284c7",
       accentLight: "#e0f2fe",
+      onAccent: "#07110f",
       bgSelected: "rgba(224, 242, 254, 0.65)",
-      sidebarActive: "#0284c7",
+      sidebarActive: "#0ea5e9",
     },
   },
   dark: {
@@ -138,16 +140,17 @@ export const skyTheme: ThemeTemplate = {
 export const violetTheme: ThemeTemplate = {
   id: "violet",
   name: "Violet",
-  swatch: "#7c3aed",
+  swatch: "#a78bfa",
   light: {
     ...baseLight,
     colors: {
       ...baseLight.colors,
-      accent: "#7c3aed",
-      accentHover: "#6d28d9",
+      accent: "#a78bfa",
+      accentHover: "#8b5cf6",
       accentLight: "#ede9fe",
+      onAccent: "#07110f",
       bgSelected: "rgba(237, 233, 254, 0.65)",
-      sidebarActive: "#7c3aed",
+      sidebarActive: "#a78bfa",
     },
   },
   dark: {
@@ -194,16 +197,17 @@ export const orangeTheme: ThemeTemplate = {
 export const slateTheme: ThemeTemplate = {
   id: "slate",
   name: "Slate",
-  swatch: "#475569",
+  swatch: "#94a3b8",
   light: {
     ...baseLight,
     colors: {
       ...baseLight.colors,
-      accent: "#475569",
-      accentHover: "#334155",
+      accent: "#94a3b8",
+      accentHover: "#cbd5e1",
       accentLight: "#e2e8f0",
+      onAccent: "#07110f",
       bgSelected: "rgba(226, 232, 240, 0.65)",
-      sidebarActive: "#475569",
+      sidebarActive: "#94a3b8",
     },
   },
   dark: {
@@ -211,7 +215,7 @@ export const slateTheme: ThemeTemplate = {
     colors: {
       ...baseDark.colors,
       accent: "#94a3b8",
-      accentHover: "#64748b",
+      accentHover: "#cbd5e1",
       accentLight: "#1e293b",
       bgSelected: "rgba(30, 41, 59, 0.55)",
       sidebarActive: "#94a3b8",

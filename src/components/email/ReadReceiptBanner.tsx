@@ -141,7 +141,7 @@ export function ReadReceiptBanner({ message }: ReadReceiptBannerProps) {
         <div className="flex items-center gap-2 mt-2">
           <button
             onClick={handleSend}
-            className="text-xs px-2.5 py-1 rounded-md bg-accent text-white hover:bg-accent-hover transition-colors"
+            className="text-xs px-2.5 py-1 rounded-md bg-accent text-on-accent hover:bg-accent-hover transition-colors"
           >
             {state === "failed" ? "Retry" : "Send receipt"}
           </button>
