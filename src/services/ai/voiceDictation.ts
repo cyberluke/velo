@@ -1,4 +1,5 @@
 import { getSecureSetting } from "@/services/db/settings";
+import { getLocale } from "@/i18n";
 
 /**
  * Voice dictation into the composer.
@@ -45,6 +46,9 @@ async function transcribe(blob: Blob): Promise<string> {
   const response = await client.audio.transcriptions.create({
     file,
     model: "whisper-1",
+    // Hint the spoken language from the active UI locale — whisper transcribes
+    // far more accurately when it knows the language up front.
+    language: getLocale(),
   });
   return response.text ?? "";
 }
