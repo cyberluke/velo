@@ -1,6 +1,7 @@
 import { Download, Eye, ExternalLink } from "lucide-react";
 import { formatFileSize, getFileIcon, canPreview } from "@/utils/fileTypeHelpers";
 import type { AttachmentWithContext } from "@/services/db/attachments";
+import { useI18n } from "@/i18n";
 
 interface AttachmentListItemProps {
   attachment: AttachmentWithContext;
@@ -19,8 +20,9 @@ function formatShortDate(timestamp: number | null): string {
 }
 
 export function AttachmentListItem({ attachment, onPreview, onDownload, onJumpToEmail }: AttachmentListItemProps) {
+  const { t } = useI18n();
   const previewable = canPreview(attachment.mime_type, attachment.filename);
-  const senderName = attachment.from_name || attachment.from_address || "Unknown";
+  const senderName = attachment.from_name || attachment.from_address || t("email.unknown");
 
   return (
     <div className="group flex items-center gap-3 px-3 py-2 hover:bg-bg-hover rounded-md transition-colors">
@@ -53,7 +55,7 @@ export function AttachmentListItem({ attachment, onPreview, onDownload, onJumpTo
           <button
             onClick={onPreview}
             className="p-1.5 rounded-md text-text-secondary hover:text-text-primary hover:bg-bg-secondary transition-colors"
-            title="Preview"
+            title={t("attachments.preview")}
           >
             <Eye size={14} />
           </button>
@@ -61,14 +63,14 @@ export function AttachmentListItem({ attachment, onPreview, onDownload, onJumpTo
         <button
           onClick={onDownload}
           className="p-1.5 rounded-md text-text-secondary hover:text-text-primary hover:bg-bg-secondary transition-colors"
-          title="Download"
+          title={t("attachments.download")}
         >
           <Download size={14} />
         </button>
         <button
           onClick={onJumpToEmail}
           className="p-1.5 rounded-md text-text-secondary hover:text-text-primary hover:bg-bg-secondary transition-colors"
-          title="Jump to email"
+          title={t("attachments.jumpToEmail")}
         >
           <ExternalLink size={14} />
         </button>

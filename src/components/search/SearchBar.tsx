@@ -27,11 +27,11 @@ const folderIds: Record<string, string[]> = {
 };
 
 const searchPresets = [
-  { label: "From", token: "from:", needsValue: true },
-  { label: "To", token: "to:", needsValue: true },
-  { label: "Subject", token: "subject:", needsValue: true },
-  { label: "Has attachments", token: "has:attachment", needsValue: false },
-  { label: "Unread", token: "is:unread", needsValue: false },
+  { labelKey: "searchBar.from", token: "from:", needsValue: true },
+  { labelKey: "searchBar.to", token: "to:", needsValue: true },
+  { labelKey: "searchBar.subject", token: "subject:", needsValue: true },
+  { labelKey: "searchBar.hasAttachments", token: "has:attachment", needsValue: false },
+  { labelKey: "searchBar.unread", token: "is:unread", needsValue: false },
 ] as const;
 
 function hasIncompleteOperator(query: string): boolean {
@@ -244,7 +244,7 @@ export function SearchBar() {
             )}
             <button
               onClick={handleClear}
-              aria-label="Clear search"
+              aria-label={t("searchBar.clear")}
               className="text-text-tertiary hover:text-text-primary transition-colors"
             >
               <X size={14} />
@@ -255,29 +255,29 @@ export function SearchBar() {
       {searchQuery.trim() && (
         <div className="mt-1.5 space-y-1.5">
           <label className="flex items-center gap-2 text-xs text-text-secondary">
-            Sort
+            {t("searchBar.sort")}
             <select
-              aria-label="Sort search results"
+              aria-label={t("searchBar.sortResults")}
               value={sort}
               onChange={(event) => setSort(event.target.value as typeof sort)}
               className="rounded border border-border-primary bg-bg-primary px-2 py-1 text-text-primary"
             >
-              <option value="newest">Newest first</option>
-              <option value="oldest">Oldest first</option>
-              <option value="relevance">Relevance</option>
+              <option value="newest">{t("searchBar.newestFirst")}</option>
+              <option value="oldest">{t("searchBar.oldestFirst")}</option>
+              <option value="relevance">{t("searchBar.relevance")}</option>
             </select>
           </label>
           <div
             className="flex flex-wrap gap-1"
             role="group"
-            aria-label="Search folders"
+            aria-label={t("searchBar.searchFolders")}
           >
             {[
               ["current", currentName],
-              ["all", "All mail"],
-              ["spam", "Spam"],
-              ["trash", "Trash"],
-              ["everywhere", "All folders"],
+              ["all", t("nav.all")],
+              ["spam", t("nav.spam")],
+              ["trash", t("nav.trash")],
+              ["everywhere", t("searchBar.allFolders")],
             ]
               .filter(([id]) => id !== "all" || activeLabel !== "all")
               .map(([id, name]) => (
@@ -292,18 +292,18 @@ export function SearchBar() {
                 </button>
               ))}
           </div>
-          <div className="flex flex-wrap gap-1" role="group" aria-label="Search filters">
-            {searchPresets.map(({ label, token, needsValue }) => {
-              const active = presetIsActive(searchQuery, token);
+          <div className="flex flex-wrap gap-1" role="group" aria-label={t("searchBar.searchFilters")}>
+            {searchPresets.map((p) => {
+              const active = presetIsActive(searchQuery, p.token);
               return (
                 <button
-                  key={token}
+                  key={p.token}
                   type="button"
                   aria-pressed={active}
-                  onClick={() => handlePreset(token, needsValue)}
+                  onClick={() => handlePreset(p.token, p.needsValue)}
                   className={`rounded-full border px-2 py-0.5 text-xs transition-colors ${active ? "border-accent/40 bg-accent-light text-accent" : "border-border-primary text-text-secondary hover:bg-bg-hover"}`}
                 >
-                  {label}
+                  {t(p.labelKey)}
                 </button>
               );
             })}

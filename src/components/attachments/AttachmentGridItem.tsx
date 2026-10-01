@@ -1,6 +1,7 @@
 import { Download, Eye, ExternalLink } from "lucide-react";
 import { formatFileSize, getFileIcon, canPreview } from "@/utils/fileTypeHelpers";
 import type { AttachmentWithContext } from "@/services/db/attachments";
+import { useI18n } from "@/i18n";
 
 interface AttachmentGridItemProps {
   attachment: AttachmentWithContext;
@@ -24,6 +25,7 @@ function formatRelativeDate(timestamp: number | null): string {
 }
 
 export function AttachmentGridItem({ attachment, onPreview, onDownload, onJumpToEmail }: AttachmentGridItemProps) {
+  const { t } = useI18n();
   const previewable = canPreview(attachment.mime_type, attachment.filename);
   const senderName = attachment.from_name || attachment.from_address || "Unknown";
 
@@ -57,7 +59,7 @@ export function AttachmentGridItem({ attachment, onPreview, onDownload, onJumpTo
           <button
             onClick={onPreview}
             className="p-1.5 rounded-md bg-bg-primary/90 border border-border-primary text-text-secondary hover:text-text-primary transition-colors"
-            title="Preview"
+            title={t("attachments.preview")}
           >
             <Eye size={13} />
           </button>
@@ -65,14 +67,14 @@ export function AttachmentGridItem({ attachment, onPreview, onDownload, onJumpTo
         <button
           onClick={onDownload}
           className="p-1.5 rounded-md bg-bg-primary/90 border border-border-primary text-text-secondary hover:text-text-primary transition-colors"
-          title="Download"
+          title={t("attachments.download")}
         >
           <Download size={13} />
         </button>
         <button
           onClick={onJumpToEmail}
           className="p-1.5 rounded-md bg-bg-primary/90 border border-border-primary text-text-secondary hover:text-text-primary transition-colors"
-          title="Jump to email"
+          title={t("attachments.jumpToEmail")}
         >
           <ExternalLink size={13} />
         </button>

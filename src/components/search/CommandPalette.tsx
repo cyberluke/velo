@@ -13,10 +13,16 @@ import { useI18n } from "@/i18n";
 
 interface Command {
   id: string;
-  label: string;
+  labelKey: string;
   shortcut?: string;
-  category: string;
+  categoryKey: string;
+  templateName?: string;
   action: () => void;
+}
+
+function commandLabel(cmd: Command, t: (key: string) => string): string {
+  if (cmd.templateName) return t(cmd.labelKey).replace("{name}", cmd.templateName);
+  return t(cmd.labelKey);
 }
 
 interface CommandPaletteProps {
@@ -44,18 +50,18 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
 
   const commands: Command[] = useMemo(() => [
     // Navigation
-    { id: "go-inbox", label: "Go to Inbox", shortcut: "g i", category: "Navigation", action: () => { navigateToLabel("inbox"); onClose(); } },
-    { id: "go-starred", label: "Go to Starred", shortcut: "g s", category: "Navigation", action: () => { navigateToLabel("starred"); onClose(); } },
-    { id: "go-sent", label: "Go to Sent", shortcut: "g t", category: "Navigation", action: () => { navigateToLabel("sent"); onClose(); } },
-    { id: "go-drafts", label: "Go to Drafts", shortcut: "g d", category: "Navigation", action: () => { navigateToLabel("drafts"); onClose(); } },
-    { id: "go-snoozed", label: "Go to Snoozed", category: "Navigation", action: () => { navigateToLabel("snoozed"); onClose(); } },
-    { id: "go-trash", label: "Go to Trash", category: "Navigation", action: () => { navigateToLabel("trash"); onClose(); } },
-    { id: "go-all", label: "Go to All Mail", category: "Navigation", action: () => { navigateToLabel("all"); onClose(); } },
+    { id: "go-inbox", labelKey: "command.goInbox", shortcut: "g i", categoryKey: "command.cat.navigation", action: () => { navigateToLabel("inbox"); onClose(); } },
+    { id: "go-starred", labelKey: "command.goStarred", shortcut: "g s", categoryKey: "command.cat.navigation", action: () => { navigateToLabel("starred"); onClose(); } },
+    { id: "go-sent", labelKey: "command.goSent", shortcut: "g t", categoryKey: "command.cat.navigation", action: () => { navigateToLabel("sent"); onClose(); } },
+    { id: "go-drafts", labelKey: "command.goDrafts", shortcut: "g d", categoryKey: "command.cat.navigation", action: () => { navigateToLabel("drafts"); onClose(); } },
+    { id: "go-snoozed", labelKey: "command.goSnoozed", categoryKey: "command.cat.navigation", action: () => { navigateToLabel("snoozed"); onClose(); } },
+    { id: "go-trash", labelKey: "command.goTrash", categoryKey: "command.cat.navigation", action: () => { navigateToLabel("trash"); onClose(); } },
+    { id: "go-all", labelKey: "command.goAll", categoryKey: "command.cat.navigation", action: () => { navigateToLabel("all"); onClose(); } },
 
     // Actions
-    { id: "compose", label: "Compose New Email", shortcut: "c", category: "Actions", action: () => { openComposer(); onClose(); } },
-    { id: "deselect", label: "Close Thread", shortcut: "Esc", category: "Actions", action: () => { navigateBack(); onClose(); } },
-    { id: "toggle-read", label: t("command.toggleRead"), shortcut: "n", category: "Actions", action: async () => {
+    { id: "compose", labelKey: "command.compose", shortcut: "c", categoryKey: "command.cat.actions", action: () => { openComposer(); onClose(); } },
+    { id: "deselect", labelKey: "command.closeThread", shortcut: "Esc", categoryKey: "command.cat.actions", action: () => { navigateBack(); onClose(); } },
+    { id: "toggle-read", labelKey: "command.toggleRead", shortcut: "n", categoryKey: "command.cat.actions", action: async () => {
       onClose();
       const selectedId = getSelectedThreadId();
       const accountId = useAccountStore.getState().activeAccountId;
@@ -68,7 +74,7 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
         console.error("Toggle read action failed:", err);
       }
     } },
-    { id: "spam", label: activeLabel === "spam" ? "Not Spam" : "Report Spam", shortcut: "!", category: "Actions", action: async () => {
+    { id: "spam", labelKey: activeLabel === "spam" ? "command.notSpam" : "command.reportSpam", shortcut: "!", categoryKey: "command.cat.actions", action: async () => {
       onClose();
       const selectedId = getSelectedThreadId();
       const accountId = useAccountStore.getState().activeAccountId;
@@ -87,37 +93,38 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
     } },
 
     // Tasks
-    { id: "task-create", label: "Create Task", category: "Tasks", action: () => {
+    { id: "task-create", labelKey: "command.createTask", categoryKey: "command.cat.tasks", action: () => {
       onClose();
       useUIStore.getState().setTaskSidebarVisible(true);
     } },
-    { id: "task-extract", label: "Create Task from Email (AI)", shortcut: "t", category: "Tasks", action: () => {
+    { id: "task-extract", labelKey: "command.taskExtract", shortcut: "t", categoryKey: "command.cat.tasks", action: () => {
       onClose();
       const threadId = getSelectedThreadId();
       if (threadId) {
         window.dispatchEvent(new CustomEvent("naiemail-extract-task", { detail: { threadId } }));
       }
     } },
-    { id: "task-view", label: "View Tasks", shortcut: "g k", category: "Tasks", action: () => { navigateToLabel("tasks"); onClose(); } },
-    { id: "task-toggle-panel", label: "Toggle Task Panel", category: "Tasks", action: () => { useUIStore.getState().toggleTaskSidebar(); onClose(); } },
+    { id: "task-view", labelKey: "command.viewTasks", shortcut: "g k", categoryKey: "command.cat.tasks", action: () => { navigateToLabel("tasks"); onClose(); } },
+    { id: "task-toggle-panel", labelKey: "command.toggleTaskPanel", categoryKey: "command.cat.tasks", action: () => { useUIStore.getState().toggleTaskSidebar(); onClose(); } },
 
     // AI
-    { id: "ask-ai", label: "Ask AI about your inbox", category: "AI", action: () => { onClose(); window.dispatchEvent(new Event("naiemail-toggle-ask-inbox")); } },
+    { id: "ask-ai", labelKey: "command.askAi", categoryKey: "command.cat.ai", action: () => { onClose(); window.dispatchEvent(new Event("naiemail-toggle-ask-inbox")); } },
 
     // Settings
-    { id: "open-settings", label: "Open Settings", shortcut: "Ctrl+,", category: "Settings", action: () => { onClose(); navigateToSettings(); } },
-    { id: "open-settings-accounts", label: "Open Settings: Accounts", category: "Settings", action: () => { onClose(); navigateToSettings("accounts"); } },
-    { id: "add-account", label: "Add Email Account", category: "Settings", action: () => { onClose(); useUIStore.getState().requestAddAccount(); } },
-    { id: "toggle-sidebar", label: "Toggle Sidebar", shortcut: "Ctrl+Shift+E", category: "Settings", action: () => { toggleSidebar(); onClose(); } },
-    { id: "theme-light", label: "Switch to Light Theme", category: "Settings", action: () => { setTheme("light"); onClose(); } },
-    { id: "theme-dark", label: "Switch to Dark Theme", category: "Settings", action: () => { setTheme("dark"); onClose(); } },
-    { id: "theme-system", label: "Use System Theme", category: "Settings", action: () => { setTheme("system"); onClose(); } },
+    { id: "open-settings", labelKey: "command.openSettings", shortcut: "Ctrl+,", categoryKey: "command.cat.settings", action: () => { onClose(); navigateToSettings(); } },
+    { id: "open-settings-accounts", labelKey: "command.openSettingsAccounts", categoryKey: "command.cat.settings", action: () => { onClose(); navigateToSettings("accounts"); } },
+    { id: "add-account", labelKey: "command.addAccount", categoryKey: "command.cat.settings", action: () => { onClose(); useUIStore.getState().requestAddAccount(); } },
+    { id: "toggle-sidebar", labelKey: "command.toggleSidebar", shortcut: "Ctrl+Shift+E", categoryKey: "command.cat.settings", action: () => { toggleSidebar(); onClose(); } },
+    { id: "theme-light", labelKey: "command.themeLight", categoryKey: "command.cat.settings", action: () => { setTheme("light"); onClose(); } },
+    { id: "theme-dark", labelKey: "command.themeDark", categoryKey: "command.cat.settings", action: () => { setTheme("dark"); onClose(); } },
+    { id: "theme-system", labelKey: "command.themeSystem", categoryKey: "command.cat.settings", action: () => { setTheme("system"); onClose(); } },
 
     // Templates
     ...templates.map((tmpl) => ({
       id: `template-${tmpl.id}`,
-      label: `Insert: ${tmpl.name}`,
-      category: "Templates",
+      labelKey: "command.insertTemplate",
+      categoryKey: "command.cat.templates",
+      templateName: tmpl.name,
       action: () => {
         openComposer({
           mode: "new" as const,
@@ -133,8 +140,8 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
   const filtered = query
     ? commands.filter(
         (c) =>
-          c.label.toLowerCase().includes(query.toLowerCase()) ||
-          c.category.toLowerCase().includes(query.toLowerCase()),
+          commandLabel(c, t).toLowerCase().includes(query.toLowerCase()) ||
+          t(c.categoryKey).toLowerCase().includes(query.toLowerCase()),
       )
     : commands;
 
@@ -161,7 +168,7 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
     filtered.forEach((cmd, idx) => map.set(cmd.id, idx));
     return map;
   }, [filtered]);
-  const categories = useMemo(() => [...new Set(filtered.map((c) => c.category))], [filtered]);
+  const categories = useMemo(() => [...new Set(filtered.map((c) => c.categoryKey))], [filtered]);
 
   return (
     <CSSTransition nodeRef={overlayRef} in={isOpen} timeout={200} classNames="modal" unmountOnExit>
@@ -180,7 +187,7 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
               setSelectedIdx(0);
             }}
             onKeyDown={handleKeyDown}
-            placeholder="Type a command..."
+            placeholder={t("commandPalette.placeholder")}
             className="w-full bg-transparent text-sm text-text-primary outline-none placeholder:text-text-tertiary"
           />
         </div>
@@ -189,16 +196,16 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
         <div className="max-h-80 overflow-y-auto py-1">
           {filtered.length === 0 ? (
             <div className="px-4 py-6 text-center text-sm text-text-tertiary">
-              No commands found
+              {t("commandPalette.noCommands")}
             </div>
           ) : (
-            categories.map((cat) => (
-              <div key={cat}>
+            categories.map((catKey) => (
+              <div key={catKey}>
                 <div className="px-4 py-1 text-[0.625rem] font-semibold uppercase tracking-wider text-text-tertiary">
-                  {cat}
+                  {t(catKey)}
                 </div>
                 {filtered
-                  .filter((c) => c.category === cat)
+                  .filter((c) => c.categoryKey === catKey)
                   .map((cmd) => {
                     const globalIdx = filteredIndexMap.get(cmd.id) ?? -1;
                     return (
@@ -209,7 +216,7 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
                           globalIdx === selectedIdx ? "bg-bg-hover" : ""
                         }`}
                       >
-                        <span className="text-text-primary">{cmd.label}</span>
+                        <span className="text-text-primary">{commandLabel(cmd, t)}</span>
                         {cmd.shortcut && (
                           <kbd className="text-[0.625rem] text-text-tertiary bg-bg-tertiary px-1.5 py-0.5 rounded">
                             {cmd.shortcut}

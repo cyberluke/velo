@@ -16,10 +16,12 @@ export const INVOICE_SEARCH_TERMS: Record<Locale, string[]> = {
 
 import { composerKeys } from "./patches/composer";
 import { emailKeys } from "./patches/email";
+import { miscKeys } from "./patches/misc";
+import { commandKeys } from "./patches/command";
 
 type Dict = Record<string, string>;
 
-const ALL_PATCHES: Record<Locale, Dict>[] = [composerKeys, emailKeys];
+const ALL_PATCHES: Record<Locale, Dict>[] = [composerKeys, emailKeys, miscKeys, commandKeys];
 
 function withPatches(locale: Locale, base: Dict): Dict {
   let out: Dict = { ...base };

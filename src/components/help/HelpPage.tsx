@@ -6,8 +6,10 @@ import { HELP_CATEGORIES, getAllCards, getCategoryById } from "@/constants/helpC
 import { HelpSidebar } from "./HelpSidebar";
 import { HelpSearchBar } from "./HelpSearchBar";
 import { HelpCardGrid } from "./HelpCardGrid";
+import { useI18n } from "@/i18n";
 
 export function HelpPage() {
+  const { t } = useI18n();
   const { topic } = useParams({ strict: false }) as { topic?: string };
   const activeTopic =
     topic && HELP_CATEGORIES.some((c) => c.id === topic) ? topic : "getting-started";
@@ -56,11 +58,11 @@ export function HelpPage() {
         <button
           onClick={() => navigateToLabel("inbox")}
           className="p-1.5 -ml-1 rounded-md text-text-secondary hover:text-text-primary hover:bg-bg-hover transition-colors"
-          title="Back to Inbox"
+          title={t("help.backToInbox")}
         >
           <ArrowLeft size={18} />
         </button>
-        <h1 className="text-base font-semibold text-text-primary">Help</h1>
+        <h1 className="text-base font-semibold text-text-primary">{t("help.title")}</h1>
       </div>
 
       {/* Body: sidebar nav + content */}
@@ -96,7 +98,7 @@ export function HelpPage() {
                 // Empty search state
                 <div className="flex flex-col items-center justify-center py-16 text-text-tertiary">
                   <Search size={32} className="mb-3 opacity-40" />
-                  <p className="text-sm">No results for &ldquo;{searchQuery}&rdquo;</p>
+                  <p className="text-sm">{t("help.noResults").replace("{query}", searchQuery)}</p>
                 </div>
               )
             ) : (

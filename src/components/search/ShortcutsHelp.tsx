@@ -13,7 +13,7 @@ export function ShortcutsHelp({ isOpen, onClose }: ShortcutsHelpProps) {
   const { t } = useI18n();
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Keyboard Shortcuts" width="w-full max-w-lg" zIndex="z-[60]">
+    <Modal isOpen={isOpen} onClose={onClose} title={t("shortcutsHelp.title")} width="w-full max-w-lg" zIndex="z-[60]">
       <div className="p-4 max-h-[60vh] overflow-y-auto space-y-4">
         {SHORTCUTS.map((section) => (
           <div key={section.category}>
