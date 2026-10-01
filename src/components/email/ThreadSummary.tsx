@@ -3,6 +3,7 @@ import { Sparkles, ChevronDown, ChevronUp, RefreshCw } from "lucide-react";
 import { isAiAvailable } from "@/services/ai/providerManager";
 import { summarizeThread } from "@/services/ai/aiService";
 import { deleteAiCache } from "@/services/db/aiCache";
+import { notifyAiEvent } from "@/services/notifications/notificationManager";
 import type { DbMessage } from "@/services/db/messages";
 import { useI18n } from "@/i18n";
 
@@ -57,6 +58,12 @@ export function ThreadSummary({ threadId, accountId, messages }: ThreadSummaryPr
     try {
       const result = await summarizeThread(threadId, accountId, messages);
       setSummary(result);
+      // The auto-load on thread open is silent (the summary appears in front
+      // of the reader); a manual regenerate is a real AI processing event
+      notifyAiEvent("Thread summary ready", "A fresh summary was generated for this thread", {
+        threadId,
+        accountId,
+      });
     } catch (err) {
       console.error("Failed to refresh summary:", err);
     } finally {

@@ -18,6 +18,7 @@ import {
   type NativeCategory,
   type NativeNotificationResponse,
 } from "./nativeNotifications";
+import { playSound, type SoundEvent } from "../sounds/soundManager";
 
 /**
  * Desktop notifications, with buttons where the platform can draw them.
@@ -265,6 +266,8 @@ interface ShowOptions {
   /** One of `NOTIFICATION_CATEGORIES`; omit for a plain notification. */
   category?: string;
   context?: NotificationContext;
+  /** Office sound to play together with the notification. */
+  sound?: SoundEvent;
 }
 
 async function show(opts: ShowOptions): Promise<void> {
@@ -279,13 +282,19 @@ async function show(opts: ShowOptions): Promise<void> {
         context: opts.context,
         group: opts.context?.threadId,
       });
-      return;
     } catch (err) {
       console.error("Native notification failed, showing a plain one:", err);
+      sendNotification({ title: opts.title, body: opts.body });
     }
+  } else {
+    sendNotification({ title: opts.title, body: opts.body });
   }
 
-  sendNotification({ title: opts.title, body: opts.body });
+  // The classic Office sound rides along with the notification itself — the
+  // incoming-mail chime fires exactly when the OS notification appears.
+  if (opts.sound) {
+    void playSound(opts.sound);
+  }
 }
 
 /** Do notifications carry buttons on this backend? Wording depends on it. */
@@ -333,10 +342,15 @@ export function queueNewEmailNotification(
           body: mail.context.subject || "(No subject)",
           category: "email",
           context: mail.context,
+          sound: "newMail",
         });
       }
     } else {
-      void show({ title: "NAI E-Mail", body: `${batch.length} new emails` });
+      void show({
+        title: "NAI E-Mail",
+        body: `${batch.length} new emails`,
+        sound: "newMail",
+      });
     }
   }, 2000);
 }
@@ -389,6 +403,7 @@ export function notifyFollowUpDue(
     title: "Follow up needed",
     body: subject || "(No subject)",
     context: { threadId, accountId, subject },
+    sound: "reminder",
   });
 }
 
@@ -396,7 +411,11 @@ export function notifyFollowUpDue(
  * Show a notification for a snoozed email returning.
  */
 export function notifySnoozeReturn(subject: string): void {
-  void show({ title: "Snoozed email returned", body: subject || "(No subject)" });
+  void show({
+    title: "Snoozed email returned",
+    body: subject || "(No subject)",
+    sound: "reminder",
+  });
 }
 
 /**
@@ -420,6 +439,26 @@ export function notifyCalendarReminder(
     title: "Calendar reminder",
     body: `${summary || "(No title)"} ${when}`,
     context: { accountId, subject: summary || undefined, eventId },
+    sound: "reminder",
+  });
+}
+
+/**
+ * Announce an AI processing event — a thread summary or smart replies that
+ * finished, a draft the composer generated, tasks pulled out of an email, or
+ * a background categorization pass. The body names the result; the context,
+ * when given, lets a press open the thread it belongs to.
+ */
+export function notifyAiEvent(
+  title: string,
+  body: string,
+  context?: { threadId?: string; accountId?: string },
+): void {
+  void show({
+    title,
+    body,
+    context: context?.threadId ? context : undefined,
+    sound: "aiComplete",
   });
 }
 
@@ -454,6 +493,7 @@ export function notifyOneTimeCode(opts: {
         : `From ${opts.sender} — ${opts.copied ? "ready to paste. " : ""}Sign-in link waiting in NAI`,
       category: "otp-both",
       context,
+      sound: "newMail",
     });
     return;
   }
@@ -464,6 +504,7 @@ export function notifyOneTimeCode(opts: {
       body: opts.copied ? `From ${opts.sender} — ready to paste` : `From ${opts.sender}`,
       category: "otp-code",
       context,
+      sound: "newMail",
     });
     return;
   }
@@ -473,6 +514,7 @@ export function notifyOneTimeCode(opts: {
     body: buttons ? `From ${opts.sender}` : `From ${opts.sender} — open it from NAI`,
     category: "otp-link",
     context,
+    sound: "newMail",
   });
 }
 
@@ -490,6 +532,7 @@ export async function sendTestNotification(): Promise<NotificationBackend> {
       : "This platform draws no buttons; the in-app toast carries them",
     category: "otp-code",
     context: { code: "123456" },
+    sound: "alert",
   });
   return backend;
 }

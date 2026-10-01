@@ -1,6 +1,7 @@
 import { isAiAvailable } from "./providerManager";
 import { categorizeThreads } from "./aiService";
 import { getSetting } from "@/services/db/settings";
+import { notifyAiEvent } from "@/services/notifications/notificationManager";
 import {
   getRecentRuleCategorizedThreadIds,
   setThreadCategoriesBatch,
@@ -33,6 +34,14 @@ export async function categorizeNewThreads(accountId: string): Promise<void> {
 
     // Store results (setThreadCategoriesBatch respects manual overrides)
     await setThreadCategoriesBatch(accountId, categories);
+
+    // One announcement for the whole pass — an AI processing event the user
+    // would otherwise never see, batched so a busy inbox stays a single ping
+    const count = categories.size;
+    notifyAiEvent(
+      "AI categorization",
+      `Sorted ${count} email thread${count === 1 ? "" : "s"} into inbox categories`,
+    );
   } catch (err) {
     // Non-blocking — log and continue
     console.error("Auto-categorization failed:", err);

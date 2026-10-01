@@ -13,6 +13,11 @@ import {
   sendTestNotification,
   type NotificationBackend,
 } from "@/services/notifications/notificationManager";
+import {
+  playSound,
+  setSoundsEnabled as setSoundsEnabledSetting,
+  type SoundEvent,
+} from "@/services/sounds/soundManager";
 import { PROVIDER_MODELS, resolveModelId } from "@/services/ai/types";
 import { listLocalModels, type LocalModel } from "@/services/ai/localOpenAi";
 import { LOCALES, isLocale, setLocale, useI18n } from "@/i18n";
@@ -170,6 +175,7 @@ export function SettingsPage() {
   }, [addAccountPending, clearAddAccountRequest]);
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [notificationBackend, setNotificationBackend] = useState<NotificationBackend>("off");
+  const [soundEnabled, setSoundEnabled] = useState(true);
   const [undoSendDelay, setUndoSendDelay] = useState("5");
   const [clientId, setClientId] = useState("");
   const [clientSecret, setClientSecret] = useState("");
@@ -253,6 +259,7 @@ export function SettingsPage() {
       const notif = await getSetting("notifications_enabled");
       setNotificationsEnabled(notif !== "false");
       setNotificationBackend(getNotificationBackend());
+      setSoundEnabled((await getSetting("sounds_enabled")) !== "false");
       const delay = await getSetting("undo_send_delay_seconds");
       setUndoSendDelay(delay ?? "5");
       const id = await getSetting("google_client_id");
@@ -394,6 +401,14 @@ export function SettingsPage() {
     await applyNotificationsEnabled(newVal);
     setNotificationBackend(getNotificationBackend());
   }, [notificationsEnabled]);
+
+  const handleSoundsToggle = useCallback(async () => {
+    const newVal = !soundEnabled;
+    setSoundEnabled(newVal);
+    // Applies to the very next notification; no restart needed
+    setSoundsEnabledSetting(newVal);
+    await setSetting("sounds_enabled", newVal ? "true" : "false");
+  }, [soundEnabled]);
 
   const handleUndoDelayChange = useCallback(async (value: string) => {
     setUndoSendDelay(value);
@@ -917,6 +932,35 @@ export function SettingsPage() {
                     {notificationsEnabled && (
                       <NotificationButtonsRow backend={notificationBackend} />
                     )}
+                  </Section>
+
+                  <Section title={t("settings.sounds")}>
+                    <ToggleRow
+                      label={t("settings.soundsEnabled")}
+                      description={t("settings.soundsDesc")}
+                      checked={soundEnabled}
+                      onToggle={handleSoundsToggle}
+                    />
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      {(
+                        [
+                          { event: "newMail", labelKey: "settings.soundNewMail" },
+                          { event: "reminder", labelKey: "settings.soundReminder" },
+                          { event: "aiComplete", labelKey: "settings.soundComplete" },
+                          { event: "alert", labelKey: "settings.soundAlert" },
+                          { event: "sendMail", labelKey: "settings.soundSend" },
+                        ] as { event: SoundEvent; labelKey: string }[]
+                      ).map((s) => (
+                        <button
+                          key={s.event}
+                          onClick={() => void playSound(s.event)}
+                          className="px-2.5 py-1 text-xs rounded-full border border-border-primary bg-bg-tertiary text-text-secondary hover:text-text-primary hover:border-accent transition-colors"
+                          title={t("settings.soundPreview")}
+                        >
+                          {t(s.labelKey)}
+                        </button>
+                      ))}
+                    </div>
                   </Section>
 
                   <Section title={t("settings.otpSection")}>

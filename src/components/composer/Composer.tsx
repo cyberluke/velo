@@ -22,6 +22,7 @@ import { useComposerStore } from "@/stores/composerStore";
 import { useAccountStore } from "@/stores/accountStore";
 import { useUIStore, GOLDEN_MAJOR, GOLDEN_MINOR } from "@/stores/uiStore";
 import { sendEmail, archiveThread, deleteDraft as deleteDraftAction } from "@/services/emailActions";
+import { playSound } from "@/services/sounds/soundManager";
 import { buildRawEmail } from "@/utils/emailBuilder";
 import { upsertContact } from "@/services/db/contacts";
 import { getSetting } from "@/services/db/settings";
@@ -345,6 +346,9 @@ export function Composer() {
       useComposerStore.getState().clearUndoSend();
       try {
         await sendEmail(sendAccountId, raw, state.threadId ?? undefined);
+
+        // The classic Office "send" blip — the mail is on its way (or queued)
+        void playSound("sendMail");
 
         // Delete draft if it was saved
         if (currentDraftId) {

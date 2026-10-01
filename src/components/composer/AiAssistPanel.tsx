@@ -9,6 +9,7 @@ import {
   type TransformType,
 } from "@/services/ai/aiService";
 import { useComposerStore } from "@/stores/composerStore";
+import { notifyAiEvent } from "@/services/notifications/notificationManager";
 import { useI18n } from "@/i18n";
 
 interface AiAssistPanelProps {
@@ -47,6 +48,7 @@ export function AiAssistPanel({ editor, isReplyMode, threadMessages }: AiAssistP
       const result = await composeFromPrompt(prompt.trim());
       applyToEditor(result);
       setPrompt("");
+      notifyAiEvent("AI draft ready", "A draft was generated from your prompt");
     } catch (err) {
       setError(err instanceof Error ? err.message : t("composer.aiGenerationFailed"));
     } finally {
@@ -62,6 +64,7 @@ export function AiAssistPanel({ editor, isReplyMode, threadMessages }: AiAssistP
       const result = await generateReply(threadMessages, prompt.trim() || undefined);
       applyToEditor(result);
       setPrompt("");
+      notifyAiEvent("AI reply ready", "A reply draft was generated from the conversation");
     } catch (err) {
       setError(err instanceof Error ? err.message : t("composer.aiGenerationFailed"));
     } finally {

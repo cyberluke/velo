@@ -5,6 +5,7 @@ import { generateSmartReplies } from "@/services/ai/aiService";
 import { deleteAiCache } from "@/services/db/aiCache";
 import { useComposerStore } from "@/stores/composerStore";
 import { recipientHeadersFromMessages } from "@/utils/resolveFromAddress";
+import { notifyAiEvent } from "@/services/notifications/notificationManager";
 import type { DbMessage } from "@/services/db/messages";
 import { useI18n } from "@/i18n";
 
@@ -58,6 +59,12 @@ export function SmartReplySuggestions({ threadId, accountId, messages, noReply }
     try {
       const result = await generateSmartReplies(threadId, accountId, messages);
       setReplies(result);
+      // Auto-generated replies on thread open are silent (they appear under
+      // the message); a manual regenerate is a real AI processing event
+      notifyAiEvent("Smart replies ready", "New reply suggestions were generated for this thread", {
+        threadId,
+        accountId,
+      });
     } catch (err) {
       console.error("Failed to refresh smart replies:", err);
     } finally {

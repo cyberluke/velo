@@ -3,6 +3,7 @@ import { X, Loader2, Sparkles, Calendar, Flag } from "lucide-react";
 import { extractTask } from "@/services/ai/taskExtraction";
 import { insertTask, getIncompleteTaskCount } from "@/services/db/tasks";
 import type { TaskPriority } from "@/services/db/tasks";
+import { notifyAiEvent } from "@/services/notifications/notificationManager";
 import type { DbMessage } from "@/services/db/messages";
 import { useTaskStore } from "@/stores/taskStore";
 import { useI18n } from "@/i18n";
@@ -52,6 +53,10 @@ export function AiTaskExtractDialog({
           const d = new Date(result.dueDate * 1000);
           setDueDate(d.toISOString().split("T")[0] ?? "");
         }
+        notifyAiEvent("Task extracted", result.title || "A task was pulled out of this email", {
+          threadId,
+          accountId,
+        });
       } catch (err) {
         if (cancelled) return;
         setError(err instanceof Error ? err.message : "Failed to extract task");

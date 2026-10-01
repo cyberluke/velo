@@ -10,6 +10,7 @@ let actionHandler: ((r: NativeNotificationResponse) => void | Promise<void>) | n
 const mockRegisterCategories = vi.fn(() => Promise.resolve());
 const mockShowNative = vi.fn(() => Promise.resolve("naiemail-1-0"));
 const mockSendPlugin = vi.fn();
+const mockPlaySound = vi.fn(() => Promise.resolve());
 const mockPluginGranted = vi.fn(() => Promise.resolve(true));
 const mockShowWindow = vi.fn(() => Promise.resolve());
 const mockFocusWindow = vi.fn(() => Promise.resolve());
@@ -58,6 +59,9 @@ vi.mock("@/stores/toastStore", () => ({
   reportError: (...args: unknown[]) => mockReportError(...args),
   notify: vi.fn(),
 }));
+vi.mock("../sounds/soundManager", () => ({
+  playSound: (...args: unknown[]) => mockPlaySound(...args),
+}));
 
 import {
   initNotifications,
@@ -66,6 +70,7 @@ import {
   queueNewEmailNotification,
   notifyOneTimeCode,
   notifyFollowUpDue,
+  notifyAiEvent,
   sendTestNotification,
   resetNotificationsForTests,
   NOTIFICATION_CATEGORIES,
@@ -281,5 +286,50 @@ describe("what gets sent", () => {
     expect(mockShowNative).toHaveBeenCalledWith(
       expect.objectContaining({ categoryId: "otp-code", context: { code: "123456" } }),
     );
+  });
+});
+
+describe("office sounds ride along with notifications", () => {
+  it("plays the new-mail chime when a mail notification fires", async () => {
+    vi.useFakeTimers();
+    await initNotifications();
+
+    queueNewEmailNotification("Ann", "One", "t1", "a1", "ann@example.com");
+    vi.advanceTimersByTime(2000);
+    // The chime fires after show()'s awaited native call settles
+    await vi.advanceTimersByTimeAsync(0);
+    expect(mockPlaySound).toHaveBeenCalledWith("newMail");
+  });
+
+  it("plays the reminder chime for follow-ups", async () => {
+    await initNotifications();
+    notifyFollowUpDue("Waiting");
+    await settle();
+    expect(mockPlaySound).toHaveBeenCalledWith("reminder");
+  });
+
+  it("plays no sound when notifications are off", async () => {
+    settings.set("notifications_enabled", "false");
+    await initNotifications();
+    notifyFollowUpDue("Waiting");
+    await settle();
+    expect(mockPlaySound).not.toHaveBeenCalled();
+  });
+
+  it("announces an AI processing event with the complete chime", async () => {
+    await initNotifications();
+    notifyAiEvent("Thread summary ready", "A fresh summary was generated", {
+      threadId: "t1",
+      accountId: "a1",
+    });
+    await settle();
+    expect(mockShowNative).toHaveBeenCalledWith(
+      expect.objectContaining({
+        title: "Thread summary ready",
+        context: { threadId: "t1", accountId: "a1" },
+        group: "t1",
+      }),
+    );
+    expect(mockPlaySound).toHaveBeenCalledWith("aiComplete");
   });
 });
