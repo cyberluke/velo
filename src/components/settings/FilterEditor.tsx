@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { Trash2, Pencil } from "lucide-react";
+import { Trash2, Pencil, Sparkles, RefreshCw } from "lucide-react";
 import { TextField } from "@/components/ui/TextField";
 import { useAccountStore } from "@/stores/accountStore";
 import { getLabelsForAccount, type DbLabel } from "@/services/db/labels";
+import { getThreadsForAccount } from "@/services/db/threads";
 import {
   getFiltersForAccount,
   insertFilter,
@@ -12,6 +13,7 @@ import {
   type FilterCriteria,
   type FilterActions,
 } from "@/services/db/filters";
+import type { FilterSuggestion } from "@/services/ai/types";
 import { useI18n } from "@/i18n";
 
 export function FilterEditor() {
@@ -35,6 +37,11 @@ export function FilterEditor() {
   const [actionMarkRead, setActionMarkRead] = useState(false);
   const [actionNotify, setActionNotify] = useState(false);
   const [actionTrash, setActionTrash] = useState(false);
+
+  // AI suggestions: analyze recent mail and propose ready-made filter rules.
+  const [suggestions, setSuggestions] = useState<FilterSuggestion[]>([]);
+  const [suggesting, setSuggesting] = useState(false);
+  const [suggestError, setSuggestError] = useState<string | null>(null);
 
   const loadFilters = useCallback(async () => {
     if (!activeAccountId) return;
@@ -142,6 +149,59 @@ export function FilterEditor() {
     await loadFilters();
   }, [loadFilters]);
 
+  const handleSuggest = useCallback(async () => {
+    if (!activeAccountId || suggesting) return;
+    setSuggesting(true);
+    setSuggestError(null);
+    try {
+      const threads = await getThreadsForAccount(activeAccountId, "INBOX", 100);
+      const samples = threads
+        .filter((t) => t.from_address)
+        .map((t) => ({
+          fromAddress: t.from_address ?? "",
+          subject: t.subject ?? "",
+          snippet: t.snippet ?? "",
+        }));
+      const { suggestFilterRules } = await import("@/services/ai/aiService");
+      const result = await suggestFilterRules(activeAccountId, samples);
+      setSuggestions(result);
+    } catch (err) {
+      setSuggestError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setSuggesting(false);
+    }
+  }, [activeAccountId, suggesting]);
+
+  const applySuggestion = useCallback(
+    async (suggestion: FilterSuggestion) => {
+      if (!activeAccountId) return;
+      const criteria: FilterCriteria = {};
+      if (suggestion.fromPattern) criteria.from = suggestion.fromPattern;
+      if (suggestion.subjectPattern) criteria.subject = suggestion.subjectPattern;
+
+      const actions: FilterActions = {};
+      if (suggestion.suggestedAction === "archive") actions.archive = true;
+      if (suggestion.suggestedAction === "trash") actions.trash = true;
+      if (suggestion.suggestedAction === "label") {
+        const firstLabel = labels[0];
+        if (firstLabel) actions.applyLabel = firstLabel.id;
+      }
+
+      const name = suggestion.subjectPattern
+        ? `${suggestion.subjectPattern} (AI)`
+        : (suggestion.fromPattern ?? "AI rule");
+      await insertFilter({
+        accountId: activeAccountId,
+        name: name.slice(0, 80),
+        criteria,
+        actions,
+      });
+      setSuggestions((prev) => prev.filter((s) => s !== suggestion));
+      await loadFilters();
+    },
+    [activeAccountId, labels, loadFilters],
+  );
+
   const filterDescriptions = useMemo(() => {
     const map = new Map<string, string>();
     for (const filter of filters) {
@@ -211,6 +271,36 @@ export function FilterEditor() {
           </div>
         </div>
       ))}
+
+      {suggestions.length > 0 && (
+        <div className="border border-accent/25 bg-accent/5 rounded-md p-3 space-y-2">
+          <div className="text-xs font-medium text-accent flex items-center gap-1.5">
+            <Sparkles size={12} />
+            {t("filter.aiSuggestions")}
+          </div>
+          {suggestions.map((suggestion) => (
+            <div key={`${suggestion.fromPattern}-${suggestion.subjectPattern}`} className="flex items-center justify-between gap-2 text-xs">
+              <div className="flex-1 min-w-0">
+                <div className="text-text-primary truncate">
+                  {suggestion.fromPattern || suggestion.subjectPattern}
+                  <span className="text-text-tertiary"> ({suggestion.exampleCount}×)</span>
+                </div>
+                <div className="text-text-tertiary truncate">{suggestion.reason}</div>
+              </div>
+              <button
+                onClick={() => void applySuggestion(suggestion)}
+                className="shrink-0 px-2 py-1 text-xs font-medium text-on-accent bg-accent hover:bg-accent-hover rounded-md transition-colors"
+              >
+                {t("filter.addFilter")}
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {suggestError && (
+        <p className="text-xs text-danger">{t("filter.suggestFailed").replace("{error}", suggestError)}</p>
+      )}
 
       {showForm ? (
         <div className="border border-border-primary rounded-md p-3 space-y-3">
@@ -323,12 +413,26 @@ export function FilterEditor() {
           </div>
         </div>
       ) : (
-        <button
-          onClick={() => setShowForm(true)}
-          className="text-xs text-accent hover:text-accent-hover"
-        >
-          {t("filter.addFilter")}
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setShowForm(true)}
+            className="text-xs text-accent hover:text-accent-hover"
+          >
+            {t("filter.addFilter")}
+          </button>
+          <button
+            onClick={() => void handleSuggest()}
+            disabled={suggesting}
+            className="text-xs text-accent hover:text-accent-hover flex items-center gap-1 disabled:opacity-50"
+          >
+            {suggesting ? (
+              <RefreshCw size={11} className="animate-spin" />
+            ) : (
+              <Sparkles size={11} />
+            )}
+            {t("filter.suggestWithAi")}
+          </button>
+        </div>
       )}
     </div>
   );

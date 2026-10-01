@@ -3,6 +3,9 @@ import { getSetting } from "@/services/db/settings";
 import { searchMessages } from "@/services/db/search";
 import { getDb } from "@/services/db/connection";
 import { getCalendarEventsInRange, type DbCalendarEvent } from "@/services/db/calendarEvents";
+import { getLabelsForAccount } from "@/services/db/labels";
+import { getThreadById } from "@/services/db/threads";
+import { createDraft } from "@/services/emailActions";
 import { looksLikeInvoiceQuery } from "@/i18n";
 import { searchInvoices } from "@/services/search/invoiceSearch";
 
@@ -178,6 +181,98 @@ async function listCalendarInRange(start: number, end: number, query?: string) {
   };
 }
 
+export async function listFoldersTool(params: { accountId?: string }) {
+  const ids = accountIds();
+  const accountId = params.accountId ?? ids[0];
+  if (!accountId) return { count: 0, folders: [] };
+  const labels = await getLabelsForAccount(accountId);
+  return {
+    count: labels.length,
+    folders: labels
+      .filter((label) => label.type === "system" || label.type === "user")
+      .map((label) => ({
+        id: label.id,
+        name: label.name,
+        type: label.type,
+      })),
+  };
+}
+
+export async function getThreadTool(params: {
+  accountId?: string;
+  threadId?: string;
+  limit?: number;
+}) {
+  if (!params.threadId) throw new Error("threadId is required");
+  const ids = accountIds();
+  const accountId = params.accountId ?? ids[0];
+  if (!accountId) throw new Error("No account available");
+  const db = await getDb();
+  const thread = await getThreadById(accountId, params.threadId);
+  if (!thread) throw new Error("Thread not found");
+  const messages = await db.select<
+    Array<{
+      id: string;
+      from_address: string | null;
+      from_name: string | null;
+      to_addresses: string | null;
+      subject: string | null;
+      date: number;
+      snippet: string | null;
+      body_text: string | null;
+    }>
+  >(
+    `SELECT id, from_address, from_name, to_addresses, subject, date, snippet, body_text
+     FROM messages WHERE account_id = $1 AND thread_id = $2 AND is_read_receipt = 0
+     ORDER BY date ASC LIMIT $3`,
+    [accountId, params.threadId, params.limit ?? 50],
+  );
+  return {
+    threadId: thread.id,
+    subject: thread.subject,
+    messageCount: messages.length,
+    messages: messages.map((message) => ({
+      messageId: message.id,
+      from: message.from_name
+        ? `${message.from_name} <${message.from_address}>`
+        : message.from_address,
+      to: message.to_addresses,
+      subject: message.subject,
+      date: message.date,
+      preview: (message.body_text ?? message.snippet ?? "").slice(0, 400),
+    })),
+  };
+}
+
+export async function createDraftTool(params: {
+  accountId?: string;
+  to?: string[];
+  subject?: string;
+  body?: string;
+}) {
+  if (!params.to || params.to.length === 0) throw new Error("to is required");
+  if (!params.body && !params.subject) throw new Error("body or subject is required");
+  const ids = accountIds();
+  const accountId = params.accountId ?? ids[0];
+  if (!accountId) throw new Error("No account available");
+  const { buildRawEmail } = await import("@/utils/emailBuilder");
+  const { getAccount } = await import("@/services/db/accounts");
+  const account = await getAccount(accountId);
+  if (!account) throw new Error("Account not found");
+  const raw = buildRawEmail({
+    from: account.email,
+    to: params.to,
+    subject: params.subject ?? "",
+    htmlBody: params.body ?? "",
+  });
+  const result = await createDraft(accountId, raw);
+  return {
+    success: result.success,
+    queued: result.queued ?? false,
+    error: result.error ?? undefined,
+  };
+}
+
 export async function dispatchMcpTool(name: string, rawParams: unknown): Promise<unknown> {
   const params = (rawParams ?? {}) as Record<string, unknown>;
   switch (name) {
@@ -208,6 +303,23 @@ export async function dispatchMcpTool(name: string, rawParams: unknown): Promise
       return listCalendarTool({
         start: typeof params.start === "string" ? params.start : undefined,
         end: typeof params.end === "string" ? params.end : undefined,
+      });
+    case "list_folders":
+      return listFoldersTool({
+        accountId: typeof params.accountId === "string" ? params.accountId : undefined,
+      });
+    case "get_thread":
+      return getThreadTool({
+        accountId: typeof params.accountId === "string" ? params.accountId : undefined,
+        threadId: typeof params.threadId === "string" ? params.threadId : undefined,
+        limit: typeof params.limit === "number" ? params.limit : undefined,
+      });
+    case "create_draft":
+      return createDraftTool({
+        accountId: typeof params.accountId === "string" ? params.accountId : undefined,
+        to: Array.isArray(params.to) ? params.to.map(String) : undefined,
+        subject: typeof params.subject === "string" ? params.subject : undefined,
+        body: typeof params.body === "string" ? params.body : undefined,
       });
     default:
       throw new Error(`Unknown tool: ${name}`);

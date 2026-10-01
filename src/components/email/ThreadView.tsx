@@ -13,7 +13,7 @@ import { useContextMenuStore } from "@/stores/contextMenuStore";
 import { markThreadRead, manuallyUnreadThreadIds, spamThread } from "@/services/emailActions";
 import { getSetting } from "@/services/db/settings";
 import { getAllowlistedSenders } from "@/services/db/imageAllowlist";
-import { VolumeX, Merge, CalendarDays, Calendar, X } from "lucide-react";
+import { VolumeX, Merge, CalendarDays, Calendar, X, Languages, Lock, Unlock } from "lucide-react";
 import type { MeetingDetectionResult } from "@/services/ai/types";
 import { useI18n, t as translate } from "@/i18n";
 import { escapeHtml, sanitizeHtml } from "@/utils/sanitize";
@@ -77,12 +77,10 @@ async function handlePopOut(thread: Thread) {
 export function ThreadView({ thread }: ThreadViewProps) {
   const { t } = useI18n();
   const fallbackAccountId = useAccountStore((s) => s.activeAccountId);
-  const accounts = useAccountStore((s) => s.accounts);
   // The unified list can open a thread from any mailbox, so every read and
   // action here has to follow the thread's own account rather than the one
   // selected in the sidebar.
   const threadAccountId = thread.accountId || fallbackAccountId;
-  const threadAccount = accounts.find((a) => a.id === threadAccountId);
   const contactSidebarVisible = useUIStore((s) => s.contactSidebarVisible);
   const threadViewMode = useUIStore((s) => s.threadViewMode);
   const setThreadViewMode = useUIStore((s) => s.setThreadViewMode);
@@ -111,6 +109,10 @@ export function ThreadView({ thread }: ThreadViewProps) {
   const [meetingResult, setMeetingResult] = useState<MeetingDetectionResult | null>(null);
   // null = not yet loaded; defer iframe rendering until setting is known
   const [blockImages, setBlockImages] = useState<boolean | null>(null);
+  const [translatedHtml, setTranslatedHtml] = useState<string | null>(null);
+  const [translating, setTranslating] = useState(false);
+  const [decryptedHtml, setDecryptedHtml] = useState<string | null>(null);
+  const [decrypting, setDecrypting] = useState(false);
   const [allowlistedSenders, setAllowlistedSenders] = useState<Set<string>>(new Set());
   const [restoringFromSpam, setRestoringFromSpam] = useState(false);
   const isSpam = thread.labelIds.includes("SPAM");
@@ -357,9 +359,73 @@ export function ThreadView({ thread }: ThreadViewProps) {
   const messageRefs = useRef<(HTMLDivElement | null)[]>([]);
   const mailLinkTarget = useMailLinkStore((state) => state.target);
 
+  const handleTranslate = useCallback(async () => {
+    if (!threadAccountId || translating) return;
+    const lastBody = lastMessage?.body_html ?? lastMessage?.body_text;
+    if (!lastBody) return;
+    setTranslating(true);
+    try {
+      const { translateEmail } = await import("@/services/ai/aiService");
+      const isHtml = !!lastMessage?.body_html;
+      const translated = await translateEmail(
+        isHtml ? lastBody : `<p>${escapeHtml(lastBody)}</p>`,
+        "English",
+      );
+      setTranslatedHtml(translated);
+    } catch (err) {
+      console.error("Translation failed:", err);
+      reportError(t("translate.failed"), err);
+    } finally {
+      setTranslating(false);
+    }
+  }, [threadAccountId, translating, lastMessage, t]);
+
+  const handleShowOriginal = useCallback(() => {
+    setTranslatedHtml(null);
+  }, []);
+
+  // Detect an armored OpenPGP block in the latest message body.
+  const lastBodyText = lastMessage
+    ? (lastMessage.body_text ?? stripHtml(lastMessage.body_html ?? ""))
+    : "";
+  const isPgpEncrypted = /-----BEGIN PGP MESSAGE-----/.test(lastBodyText);
+
+  const handleDecrypt = useCallback(async () => {
+    if (!threadAccountId || decrypting) return;
+    setDecrypting(true);
+    try {
+      const { decryptPgp } = await import("@/services/pgp/pgpService");
+      const result = await decryptPgp(threadAccountId, lastBodyText);
+      if (!result.success) {
+        reportError(t("pgp.decryptFailed"), result.error);
+        return;
+      }
+      const escaped = escapeHtml(result.plaintext)
+        .replace(/\n/g, "<br>");
+      setDecryptedHtml(
+        `<div style="font-family:inherit">${escaped}</div>` +
+        (result.signedBy ? `<p style="color:#888;font-size:11px">✓ Verified signature: ${escapeHtml(result.signedBy)}</p>` : ""),
+      );
+    } catch (err) {
+      reportError(t("pgp.decryptFailed"), err);
+    } finally {
+      setDecrypting(false);
+    }
+  }, [threadAccountId, decrypting, lastBodyText, t]);
+
+  const handleHideDecrypted = useCallback(() => {
+    setDecryptedHtml(null);
+  }, []);
+
   // Reset before applying a queued external message selection.
   useEffect(() => {
     setFocusedMsgIdx(-1);
+  }, [thread.id]);
+
+  // Drop a stale translation when the user switches threads.
+  useEffect(() => {
+    setTranslatedHtml(null);
+    setDecryptedHtml(null);
   }, [thread.id]);
 
   useEffect(() => {
@@ -480,32 +546,13 @@ export function ThreadView({ thread }: ThreadViewProps) {
   }, [openMenu]);
 
   const handleExport = useCallback(async () => {
-    if (messages.length === 0) return;
+    if (messages.length === 0 || !threadAccountId) return;
     try {
       const { save } = await import("@tauri-apps/plugin-dialog");
       const { writeTextFile } = await import("@tauri-apps/plugin-fs");
+      const { buildThreadEml } = await import("@/services/export/exportService");
 
-      const emlParts = messages.map((msg) => {
-        const date = new Date(msg.date).toUTCString();
-        const from = msg.from_name
-          ? `${msg.from_name} <${msg.from_address}>`
-          : (msg.from_address ?? "");
-        const lines = [
-          `From: ${from}`,
-          `To: ${msg.to_addresses ?? ""}`,
-          msg.cc_addresses ? `Cc: ${msg.cc_addresses}` : null,
-          `Subject: ${msg.subject ?? ""}`,
-          `Date: ${date}`,
-          `Message-ID: <${msg.id}>`,
-          `MIME-Version: 1.0`,
-          `Content-Type: text/html; charset=UTF-8`,
-          ``,
-          msg.body_html ?? msg.body_text ?? "",
-        ].filter((l): l is string => l !== null);
-        return lines.join("\r\n");
-      });
-
-      const content = emlParts.join("\r\n\r\n");
+      const content = await buildThreadEml(threadAccountId, thread.id);
       const defaultName = `${(thread.subject ?? t("email.emailDefaultName")).replace(/[^a-zA-Z0-9_-]/g, "_")}.eml`;
 
       const filePath = await save({
@@ -518,7 +565,7 @@ export function ThreadView({ thread }: ThreadViewProps) {
     } catch (err) {
       console.error("Failed to export thread:", err);
     }
-  }, [messages, thread.subject, t]);
+  }, [messages.length, threadAccountId, thread.id, thread.subject, t]);
 
   // While a contact is pinned the sidebar stays with them, so clicking through
   // their past conversations does not swap it out from under the user.
@@ -635,6 +682,36 @@ export function ThreadView({ thread }: ThreadViewProps) {
                 {t("email.relatedMeetings")}
               </button>
             )}
+            {lastMessage && (
+              <button
+                onClick={() => void (translatedHtml ? handleShowOriginal() : handleTranslate())}
+                className="flex items-center gap-1 text-accent hover:underline disabled:opacity-50"
+                title={t("translate.title")}
+                disabled={translating}
+              >
+                <Languages size={12} />
+                {translating
+                  ? t("common.loading")
+                  : translatedHtml
+                    ? t("translate.showOriginal")
+                    : t("translate.title")}
+              </button>
+            )}
+            {isPgpEncrypted && (
+              <button
+                onClick={() => void (decryptedHtml ? handleHideDecrypted() : handleDecrypt())}
+                className="flex items-center gap-1 text-accent hover:underline disabled:opacity-50"
+                title={t("pgp.decrypt")}
+                disabled={decrypting}
+              >
+                {decryptedHtml ? <Unlock size={12} /> : <Lock size={12} />}
+                {decrypting
+                  ? t("common.loading")
+                  : decryptedHtml
+                    ? t("pgp.decrypted")
+                    : t("pgp.decrypt")}
+              </button>
+            )}
           </div>
         </div>
 
@@ -652,32 +729,45 @@ export function ThreadView({ thread }: ThreadViewProps) {
                 </span>
               )}
             </div>
-            {threadAccount?.provider === "gmail_api" && (
+            {threadAccountId && (
               <button
                 onClick={async () => {
                   if (!threadAccountId) return;
                   try {
-                    const { getGmailClient } = await import("@/services/gmail/tokenManager");
-                    const { createCalendarEvent } = await import("@/services/google/calendar");
-                    const client = await getGmailClient(threadAccountId);
-                    const startIso = meetingResult.dateTime ?? new Date().toISOString();
-                    const endMs = new Date(startIso).getTime() + (meetingResult.durationMinutes ?? 60) * 60 * 1000;
-                    const endIso = new Date(endMs).toISOString();
-                    await createCalendarEvent(client, {
-                      summary: meetingResult.title,
-                      location: meetingResult.location,
-                      start: { dateTime: startIso },
-                      end: { dateTime: endIso },
-                      attendees: meetingResult.attendees.map((email) => ({ email })),
-                    });
+                    const { scheduleMeeting } = await import("@/services/calendar/schedulingFlow");
+                    const result = await scheduleMeeting(
+                      threadAccountId,
+                      {
+                        title: meetingResult.title,
+                        durationMinutes: meetingResult.durationMinutes ?? 60,
+                        attendees: meetingResult.attendees,
+                        startAfter: meetingResult.dateTime ?? undefined,
+                      },
+                      false,
+                    );
+                    if (result.error) {
+                      reportError(t("schedule.slotsFailed"), result.error);
+                      return;
+                    }
+                    if (result.draftEmail) {
+                      openComposer({
+                        mode: "reply",
+                        to: result.draftEmail.to,
+                        subject: result.draftEmail.subject,
+                        bodyHtml: result.draftEmail.bodyHtml,
+                        threadId: thread.id,
+                        accountId: threadAccountId,
+                      });
+                    }
+                    notify("success", t("schedule.slotsReady"));
                     setMeetingResult(null);
                   } catch (err) {
-                    console.error("Failed to create calendar event:", err);
+                    reportError(t("schedule.slotsFailed"), err);
                   }
                 }}
                 className="shrink-0 text-xs px-2.5 py-1 rounded-md bg-accent text-on-accent hover:bg-accent-hover transition-colors"
               >
-                {t("ai.meeting.createEvent")}
+                {t("schedule.propose")}
               </button>
             )}
             <button
@@ -697,6 +787,50 @@ export function ThreadView({ thread }: ThreadViewProps) {
             accountId={threadAccountId}
             messages={messages}
           />
+        )}
+
+        {/* Translated latest message — replaces the body view while active */}
+        {translatedHtml && (
+          <div className="mx-4 mt-2 rounded-lg border border-accent/30 bg-accent/5 overflow-hidden">
+            <div className="flex items-center justify-between px-3 py-1.5 border-b border-accent/20">
+              <span className="flex items-center gap-1.5 text-xs font-medium text-accent">
+                <Languages size={12} />
+                {t("translate.showTranslated")}
+              </span>
+              <button
+                onClick={handleShowOriginal}
+                className="text-[0.625rem] text-text-tertiary hover:text-text-primary"
+              >
+                {t("translate.showOriginal")}
+              </button>
+            </div>
+            <div
+              className="prose prose-sm dark:prose-invert max-w-none p-4 text-sm text-text-primary [&_a]:text-accent"
+              dangerouslySetInnerHTML={{ __html: sanitizeHtml(translatedHtml) }}
+            />
+          </div>
+        )}
+
+        {/* Decrypted PGP message — replaces the body view while active */}
+        {decryptedHtml && (
+          <div className="mx-4 mt-2 rounded-lg border border-accent/30 bg-accent/5 overflow-hidden">
+            <div className="flex items-center justify-between px-3 py-1.5 border-b border-accent/20">
+              <span className="flex items-center gap-1.5 text-xs font-medium text-accent">
+                <Unlock size={12} />
+                {t("pgp.decrypted")}
+              </span>
+              <button
+                onClick={handleHideDecrypted}
+                className="text-[0.625rem] text-text-tertiary hover:text-text-primary"
+              >
+                {t("translate.showOriginal")}
+              </button>
+            </div>
+            <div
+              className="p-4 text-sm text-text-primary"
+              dangerouslySetInnerHTML={{ __html: sanitizeHtml(decryptedHtml) }}
+            />
+          </div>
         )}
 
         {/* Messages */}
@@ -842,6 +976,18 @@ export function ThreadView({ thread }: ThreadViewProps) {
       )}
     </div>
   );
+}
+
+function stripHtml(html: string): string {
+  return html
+    .replace(/<[^>]*>/g, " ")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 function buildQuote(msg: DbMessage): string {

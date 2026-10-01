@@ -1,10 +1,11 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
-import { Bot, X, ArrowUp } from "lucide-react";
+import { Bot, X, ArrowUp, ShieldAlert, Check, Ban } from "lucide-react";
 import { useAccountStore } from "@/stores/accountStore";
+import { useComposerStore } from "@/stores/composerStore";
 import { useI18n } from "@/i18n";
 import { sendAgentMessage } from "@/services/ai/agentService";
-import type { AgentChatMessage, AgentEvent } from "@/services/ai/agentService";
+import type { AgentChatMessage, AgentEvent, AgentApprovalRequest } from "@/services/ai/agentService";
 import type { ClaudeAgentMessage } from "@/services/ai/providers/claudeProvider";
 
 interface AgentPanelProps {
@@ -19,11 +20,28 @@ export function AgentPanel({ isOpen, onClose }: AgentPanelProps) {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [activeToolDescription, setActiveToolDescription] = useState<string | null>(null);
+  const [pendingApproval, setPendingApproval] = useState<AgentApprovalRequest | null>(null);
+  const approvalResolveRef = useRef<((approved: boolean) => void) | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const accounts = useAccountStore((s) => s.accounts);
   const accountId = accounts[0]?.id ?? null;
+
+  const openComposer = useComposerStore((s) => s.openComposer);
+
+  const onApproval = useCallback((request: AgentApprovalRequest) => {
+    return new Promise<boolean>((resolve) => {
+      approvalResolveRef.current = resolve;
+      setPendingApproval(request);
+    });
+  }, []);
+
+  const resolveApproval = useCallback((approved: boolean) => {
+    approvalResolveRef.current?.(approved);
+    approvalResolveRef.current = null;
+    setPendingApproval(null);
+  }, []);
 
   // Auto-scroll to bottom when messages change
   useEffect(() => {
@@ -73,6 +91,16 @@ export function AgentPanel({ isOpen, onClose }: AgentPanelProps) {
           return updated;
         });
         break;
+      case "draft_ready":
+        openComposer({
+          mode: "reply",
+          to: event.draft.to ? [event.draft.to] : [],
+          subject: event.draft.subject,
+          bodyHtml: event.draft.bodyHtml,
+          threadId: event.draft.threadId,
+          accountId,
+        });
+        break;
       case "error":
         setMessages((prev) => [
           ...prev,
@@ -89,7 +117,7 @@ export function AgentPanel({ isOpen, onClose }: AgentPanelProps) {
         setIsLoading(false);
         break;
     }
-  }, [t]);
+  }, [t, openComposer, accountId]);
 
   const handleSend = useCallback(
     async (text?: string) => {
@@ -122,11 +150,13 @@ export function AgentPanel({ isOpen, onClose }: AgentPanelProps) {
         },
       ]);
 
-      const updatedHistory = await sendAgentMessage(msg, accountId, history, onEvent);
+      const updatedHistory = await sendAgentMessage(msg, accountId, history, onEvent, {
+        onApproval,
+      });
       setHistory(updatedHistory);
       setIsLoading(false);
     },
-    [input, isLoading, accountId, history, onEvent, t],
+    [input, isLoading, accountId, history, onEvent, t, onApproval],
   );
 
   if (!isOpen) return null;
@@ -238,6 +268,40 @@ export function AgentPanel({ isOpen, onClose }: AgentPanelProps) {
           </button>
         </div>
       </div>
+
+      {/* Approval dialog — a mutating tool waits here until the user decides */}
+      {pendingApproval && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/40 glass-backdrop" onClick={() => resolveApproval(false)} />
+          <div className="relative bg-bg-primary border border-border-primary rounded-xl glass-modal shadow-xl w-full max-w-md mx-4 p-4">
+            <div className="flex items-start gap-3">
+              <div className="shrink-0 w-9 h-9 rounded-full bg-warning/15 text-warning flex items-center justify-center">
+                <ShieldAlert size={18} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="text-sm font-semibold text-text-primary">{t("agent.approveTitle")}</h3>
+                <p className="mt-1 text-sm text-text-secondary">{pendingApproval.description}</p>
+              </div>
+            </div>
+            <div className="mt-4 flex justify-end gap-2">
+              <button
+                onClick={() => resolveApproval(false)}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-text-secondary border border-border-primary rounded-md hover:bg-bg-hover transition-colors"
+              >
+                <Ban size={12} />
+                {t("agent.decline")}
+              </button>
+              <button
+                onClick={() => resolveApproval(true)}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-on-accent bg-accent hover:bg-accent-hover rounded-md transition-colors"
+              >
+                <Check size={12} />
+                {t("agent.approve")}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>,
     document.body,
   );

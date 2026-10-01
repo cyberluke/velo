@@ -38,6 +38,13 @@ export interface DbAccount {
   color: string | null;
   calendar_provider: string | null;
   accept_invalid_certs: number;
+  /**
+   * What this mailbox is allowed to do: "owner" (full control), "assistant"
+   * (may draft/send on behalf, no destructive changes), "read_only" (view
+   * only). Delegated accounts are how a CEO lets an assistant work their
+   * mailbox without granting destructive powers.
+   */
+  access_role: "owner" | "assistant" | "read_only" | null;
 }
 
 async function decryptField(value: string, fieldName: string): Promise<string> {
@@ -273,6 +280,20 @@ export async function updateAccountColor(
 ): Promise<void> {
   const db = await getDb();
   await db.execute("UPDATE accounts SET color = $1 WHERE id = $2", [color, accountId]);
+}
+
+export type AccountAccessRole = "owner" | "assistant" | "read_only";
+
+/** Switch what a mailbox is allowed to do (delegation). Audited. */
+export async function updateAccountAccessRole(
+  accountId: string,
+  role: AccountAccessRole,
+): Promise<void> {
+  const db = await getDb();
+  await db.execute(
+    "UPDATE accounts SET access_role = $1, updated_at = unixepoch() WHERE id = $2",
+    [role, accountId],
+  );
 }
 
 /**

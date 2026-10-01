@@ -4,6 +4,7 @@ import {
   Search,
   Trash2,
   CheckCircle2,
+  Clock,
 } from "lucide-react";
 import { useAccountStore, listedAccountIds } from "@/stores/accountStore";
 import { useTaskStore, type TaskGroupBy, type TaskFilterStatus } from "@/stores/taskStore";
@@ -23,6 +24,7 @@ import { handleRecurringTaskCompletion } from "@/services/tasks/taskManager";
 import { TaskItem } from "./TaskItem";
 import { TaskQuickAdd } from "./TaskQuickAdd";
 import { TaskEmailSidebar } from "./TaskEmailSidebar";
+import { FollowThroughPanel } from "./FollowThroughPanel";
 import { useI18n } from "@/i18n";
 
 const PRIORITY_ORDER: Record<TaskPriority, number> = {
@@ -32,6 +34,8 @@ const PRIORITY_ORDER: Record<TaskPriority, number> = {
   low: 3,
   none: 4,
 };
+
+type TasksView = "tasks" | "followThrough";
 
 export function TasksPage() {
   const { t } = useI18n();
@@ -63,6 +67,7 @@ export function TasksPage() {
 
   const [subtaskMap, setSubtaskMap] = useState<Record<string, DbTask[]>>({});
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [view, setView] = useState<TasksView>("tasks");
 
   // Load tasks
   const loadTasks = useCallback(async () => {
@@ -239,11 +244,26 @@ export function TasksPage() {
         <div className="flex items-center gap-2">
           <CheckSquare size={18} className="text-accent" />
           <h1 className="text-base font-semibold text-text-primary">{t("tasks.title")}</h1>
-          {filteredTasks.length > 0 && (
+          {filteredTasks.length > 0 && view === "tasks" && (
             <span className="text-xs text-text-tertiary bg-bg-tertiary px-2 py-0.5 rounded-full">
               {filteredTasks.length}
             </span>
           )}
+          <div className="flex items-center gap-1 ml-3 bg-bg-tertiary/70 rounded-lg p-0.5">
+            <button
+              onClick={() => setView("tasks")}
+              className={`px-2.5 py-1 text-xs rounded-md transition-colors ${view === "tasks" ? "bg-accent/15 text-accent font-medium" : "text-text-secondary hover:text-text-primary"}`}
+            >
+              {t("tasks.title")}
+            </button>
+            <button
+              onClick={() => setView("followThrough")}
+              className={`px-2.5 py-1 text-xs rounded-md transition-colors flex items-center gap-1 ${view === "followThrough" ? "bg-accent/15 text-accent font-medium" : "text-text-secondary hover:text-text-primary"}`}
+            >
+              <Clock size={11} />
+              {t("followThrough.title")}
+            </button>
+          </div>
         </div>
 
         <div className="flex items-center gap-2">
@@ -329,44 +349,48 @@ export function TasksPage() {
         <TaskQuickAdd onAdd={handleAddTask} />
       </div>
 
-      {/* Task list */}
-      <div className="flex-1 overflow-y-auto py-2 px-3">
-        {filteredTasks.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16 text-center">
-            <CheckSquare size={48} className="text-text-tertiary/30 mb-4" />
-            <p className="text-sm text-text-secondary mb-1">{t("tasks.noTasks")}</p>
-            <p className="text-xs text-text-tertiary">
-              {searchQuery ? t("tasks.searchEmptyHint") : t("tasks.emptyHint")}
-            </p>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {groupedTasks.map((group) => (
-              <div key={group.label || "__ungrouped"}>
-                {group.label && (
-                  <h3 className="text-xs font-semibold uppercase tracking-wider text-text-tertiary mb-2 px-3">
-                    {group.label}
-                  </h3>
-                )}
-                <div className="space-y-0.5">
-                  {group.tasks.map((task) => (
-                    <TaskItem
-                      key={task.id}
-                      task={task}
-                      subtasks={subtaskMap[task.id]}
-                      onToggleComplete={handleToggleComplete}
-                      onSelect={setSelectedTaskId}
-                      onDelete={handleDelete}
-                      onSetDueDate={handleSetDueDate}
-                      isSelected={selectedTaskId === task.id}
-                    />
-                  ))}
+      {/* Follow-through dashboard (conversations waiting on the user) */}
+      {view === "followThrough" ? (
+        <FollowThroughPanel />
+      ) : (
+        <div className="flex-1 overflow-y-auto py-2 px-3">
+          {filteredTasks.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-16 text-center">
+              <CheckSquare size={48} className="text-text-tertiary/30 mb-4" />
+              <p className="text-sm text-text-secondary mb-1">{t("tasks.noTasks")}</p>
+              <p className="text-xs text-text-tertiary">
+                {searchQuery ? t("tasks.searchEmptyHint") : t("tasks.emptyHint")}
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {groupedTasks.map((group) => (
+                <div key={group.label || "__ungrouped"}>
+                  {group.label && (
+                    <h3 className="text-xs font-semibold uppercase tracking-wider text-text-tertiary mb-2 px-3">
+                      {group.label}
+                    </h3>
+                  )}
+                  <div className="space-y-0.5">
+                    {group.tasks.map((task) => (
+                      <TaskItem
+                        key={task.id}
+                        task={task}
+                        subtasks={subtaskMap[task.id]}
+                        onToggleComplete={handleToggleComplete}
+                        onSelect={setSelectedTaskId}
+                        onDelete={handleDelete}
+                        onSetDueDate={handleSetDueDate}
+                        isSelected={selectedTaskId === task.id}
+                      />
+                    ))}
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
     </div>
 
     {linkedEmail && (

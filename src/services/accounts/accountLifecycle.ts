@@ -15,6 +15,7 @@ export function mapDbAccountsToStore(dbAccounts: Awaited<ReturnType<typeof getAl
     provider: a.provider,
     calendarProvider: a.calendar_provider,
     color: a.color,
+    accessRole: a.access_role ?? "owner",
   }));
 }
 

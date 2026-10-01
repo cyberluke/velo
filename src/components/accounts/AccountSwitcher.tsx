@@ -321,8 +321,18 @@ export function AccountSwitcher({
                   aria-hidden="true"
                 />
                 <div className="flex-1 min-w-0">
-                  <div className="text-sm font-medium truncate leading-tight">
+                  <div className="text-sm font-medium truncate leading-tight flex items-center gap-1.5">
                     {account.displayName || account.email.split("@")[0]}
+                    {account.accessRole === "assistant" && (
+                      <span className="shrink-0 text-[0.5625rem] font-medium px-1 py-px rounded bg-warning/15 text-warning">
+                        {t("account.roleBadgeAssistant")}
+                      </span>
+                    )}
+                    {account.accessRole === "read_only" && (
+                      <span className="shrink-0 text-[0.5625rem] font-medium px-1 py-px rounded bg-danger/10 text-danger">
+                        {t("account.roleBadgeReadOnly")}
+                      </span>
+                    )}
                   </div>
                   <div className="text-xs text-text-secondary truncate leading-tight">
                     {account.email}

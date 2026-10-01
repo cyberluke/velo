@@ -5,7 +5,7 @@ import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Placeholder from "@tiptap/extension-placeholder";
 import Image from "@tiptap/extension-image";
-import { Clock, Maximize2, Minimize2, ExternalLink, CheckCheck } from "lucide-react";
+import { Clock, Maximize2, Minimize2, ExternalLink, CheckCheck, Lock } from "lucide-react";
 import { ProofreadPanel } from "./ProofreadPanel";
 import type { ProofreadResult } from "@/services/ai/types";
 
@@ -34,7 +34,7 @@ import { startAutoSave, stopAutoSave } from "@/services/composer/draftAutoSave";
 import { getTemplatesForAccount, type DbTemplate } from "@/services/db/templates";
 import { readFileAsBase64 } from "@/utils/fileUtils";
 import { interpolateVariables } from "@/utils/templateVariables";
-import { sanitizeHtml } from "@/utils/sanitize";
+import { sanitizeHtml, escapeHtml } from "@/utils/sanitize";
 import { useI18n } from "@/i18n";
 
 export function Composer() {
@@ -66,6 +66,8 @@ export function Composer() {
   const requestReadReceipt = useComposerStore((s) => s.requestReadReceipt);
   const composeSession = useComposerStore((s) => s.composeSession);
   const setRequestReadReceipt = useComposerStore((s) => s.setRequestReadReceipt);
+  const pgpEncrypt = useComposerStore((s) => s.pgpEncrypt);
+  const setPgpEncrypt = useComposerStore((s) => s.setPgpEncrypt);
 
   const activeAccountId = useAccountStore((s) => s.activeAccountId);
   const accounts = useAccountStore((s) => s.accounts);
@@ -314,13 +316,34 @@ export function Composer() {
 
     const html = getFullHtml();
     const senderEmail = state.fromEmail ?? sendAccount.email;
+
+    // PGP: encrypt the body for the recipients before it is built into MIME.
+    let finalHtml = html;
+    if (state.pgpEncrypt) {
+      try {
+        const { encryptPgp } = await import("@/services/pgp/pgpService");
+        const stripped = html.replace(/<[^>]*>/g, "\n").replace(/\n{3,}/g, "\n\n").trim();
+        const armored = await encryptPgp(
+          sendAccountId,
+          stripped || html,
+          state.to,
+          state.pgpSignFingerprint,
+        );
+        finalHtml = `<pre style="white-space:pre-wrap;word-break:break-all;font-family:monospace;font-size:12px">${escapeHtml(armored)}</pre><p style="color:#888;font-size:11px">🔒 Encrypted with OpenPGP</p>`;
+      } catch (err) {
+        reportError("PGP encryption failed", err);
+        sendingRef.current = false;
+        return;
+      }
+    }
+
     const raw = buildRawEmail({
       from: senderEmail,
       to: state.to,
       cc: state.cc.length > 0 ? state.cc : undefined,
       bcc: state.bcc.length > 0 ? state.bcc : undefined,
       subject: state.subject,
-      htmlBody: html,
+      htmlBody: finalHtml,
       inReplyTo: state.inReplyToMessageId ?? undefined,
       threadId: state.threadId ?? undefined,
       requestReadReceipt: state.requestReadReceipt || undefined,
@@ -614,6 +637,12 @@ export function Composer() {
 
         {/* Address fields */}
         <div className="px-3 py-2 space-y-1.5 border-b border-border-secondary">
+          {sendAccount?.accessRole === "read_only" && (
+            <div className="flex items-center gap-1.5 text-[0.6875rem] text-danger bg-danger/5 rounded px-2 py-1">
+              <Lock size={11} className="shrink-0" />
+              {t("account.readOnlyError")}
+            </div>
+          )}
           <FromSelector
             identities={identities}
             selectedEmail={fromEmail ?? sendAccount?.email ?? ""}
@@ -749,6 +778,17 @@ export function Composer() {
               }
             >
               <CheckCheck size={14} />
+            </button>
+            <button
+              onClick={() => setPgpEncrypt(!pgpEncrypt)}
+              className={`p-1 rounded transition-colors ${
+                pgpEncrypt
+                  ? "text-accent hover:text-accent-hover"
+                  : "text-text-tertiary hover:text-text-primary"
+              }`}
+              title={pgpEncrypt ? t("pgp.encrypt") : t("pgp.encrypt")}
+            >
+              <Lock size={14} />
             </button>
           </div>
           <div className="flex items-center gap-2">

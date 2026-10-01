@@ -110,6 +110,43 @@ fn tools_list() -> Value {
                 },
                 "required": ["start", "end"]
             }
+        },
+        {
+            "name": "list_folders",
+            "description": "List the mailbox folders/labels for an account.",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "accountId": { "type": "string" }
+                }
+            }
+        },
+        {
+            "name": "get_thread",
+            "description": "Fetch a full thread: subject, messages with sender, date and preview.",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "accountId": { "type": "string" },
+                    "threadId": { "type": "string" },
+                    "limit": { "type": "number" }
+                },
+                "required": ["threadId"]
+            }
+        },
+        {
+            "name": "create_draft",
+            "description": "Create a draft email (no send) with the given recipients, subject and body.",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "accountId": { "type": "string" },
+                    "to": { "type": "array", "items": { "type": "string" } },
+                    "subject": { "type": "string" },
+                    "body": { "type": "string" }
+                },
+                "required": ["to"]
+            }
         }
     ])
 }

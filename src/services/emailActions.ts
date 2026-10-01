@@ -1,11 +1,13 @@
 import { useUIStore } from "@/stores/uiStore";
 import { useThreadStore } from "@/stores/threadStore";
+import { useAccountStore } from "@/stores/accountStore";
 import { getEmailProvider } from "@/services/email/providerFactory";
 import { enqueuePendingOperation } from "@/services/db/pendingOperations";
 import { classifyError } from "@/utils/networkErrors";
 import { getDb } from "@/services/db/connection";
 import { navigateToThread, getActiveLabel, getSelectedThreadId } from "@/router/navigate";
 import { playSound } from "@/services/sounds/soundManager";
+import { logAudit } from "@/services/db/auditLog";
 
 // ---------------------------------------------------------------------------
 // Action types
@@ -375,6 +377,24 @@ export async function executeEmailAction(
   accountId: string,
   rawAction: EmailAction,
 ): Promise<ActionResult> {
+  // Delegation guard: a read-only mailbox cannot change anything; an
+  // assistant mailbox may draft/send/star/archive but cannot destroy mail.
+  const role = useAccountStore
+    .getState()
+    .accounts.find((a) => a.id === accountId)?.accessRole ?? "owner";
+  if (role === "read_only") {
+    return {
+      success: false,
+      error: "This mailbox is read-only — changes are disabled for delegated access.",
+    };
+  }
+  if (role === "assistant" && rawAction.type === "permanentDelete") {
+    return {
+      success: false,
+      error: "This mailbox is assistant-managed — permanent deletion is disabled.",
+    };
+  }
+
   const action = await withMessageIds(accountId, rawAction);
 
   // 1. Optimistic UI update
@@ -514,6 +534,7 @@ export function trashThread(
   messageIds: string[],
 ): Promise<ActionResult> {
   void playSound("delete");
+  void logAudit("delete_thread", { threadId, messageIds: messageIds.length }, accountId);
   return executeEmailAction(accountId, {
     type: "trash",
     threadId,
@@ -527,6 +548,7 @@ export function permanentDeleteThread(
   messageIds: string[],
 ): Promise<ActionResult> {
   void playSound("delete");
+  void logAudit("permanent_delete_thread", { threadId, messageIds: messageIds.length }, accountId);
   return executeEmailAction(accountId, {
     type: "permanentDelete",
     threadId,
@@ -620,6 +642,7 @@ export async function sendEmail(
   rawBase64Url: string,
   threadId?: string,
 ): Promise<ActionResult> {
+  void logAudit("send_email", { threadId }, accountId);
   const result = await executeEmailAction(accountId, {
     type: "sendMessage",
     rawBase64Url,

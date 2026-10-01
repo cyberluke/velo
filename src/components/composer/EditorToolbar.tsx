@@ -1,9 +1,10 @@
 import { useRef, useState } from "react";
 import type { Editor } from "@tiptap/react";
 import { InputDialog } from "@/components/ui/InputDialog";
-import { Sparkles } from "lucide-react";
+import { Sparkles, Languages, Mic, Square } from "lucide-react";
 import { useI18n } from "@/i18n";
 import { playSound } from "@/services/sounds/soundManager";
+import { createDictationController, type DictationController } from "@/services/ai/voiceDictation";
 
 interface EditorToolbarProps {
   editor: Editor | null;
@@ -15,6 +16,10 @@ export function EditorToolbar({ editor, onToggleAiAssist, aiAssistOpen }: Editor
   const { t } = useI18n();
   const imageInputRef = useRef<HTMLInputElement | null>(null);
   const [showLinkDialog, setShowLinkDialog] = useState(false);
+  const [showTranslateDialog, setShowTranslateDialog] = useState(false);
+  const [translating, setTranslating] = useState(false);
+  const [dictating, setDictating] = useState(false);
+  const dictationRef = useRef<DictationController | null>(null);
 
   if (!editor) return null;
 
@@ -28,6 +33,45 @@ export function EditorToolbar({ editor, onToggleAiAssist, aiAssistOpen }: Editor
     };
     reader.readAsDataURL(file);
     if (imageInputRef.current) imageInputRef.current.value = "";
+  };
+
+  const toggleDictation = async () => {
+    if (dictating) {
+      const controller = dictationRef.current;
+      if (controller) {
+        try {
+          const text = await controller.stop();
+          if (text) {
+            const current = editor.getText();
+            editor
+              .chain()
+              .focus()
+              .insertContent((current ? "\n\n" : "") + text)
+              .run();
+          }
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : String(err);
+          if (msg.includes("NO_KEY")) {
+            // Key missing — surface as a quiet failure
+          }
+          console.error("Dictation failed:", err);
+        }
+      }
+      dictationRef.current = null;
+      setDictating(false);
+      return;
+    }
+    try {
+      const controller = createDictationController();
+      dictationRef.current = controller;
+      await controller.start();
+      setDictating(true);
+      void playSound("autocorr");
+    } catch (err) {
+      dictationRef.current = null;
+      setDictating(false);
+      console.error("Dictation start failed:", err);
+    }
   };
 
   const btn = (
@@ -103,6 +147,29 @@ export function EditorToolbar({ editor, onToggleAiAssist, aiAssistOpen }: Editor
         </button>
       )}
 
+      <button
+        type="button"
+        onClick={() => setShowTranslateDialog(true)}
+        disabled={translating}
+        title={t("translate.composer")}
+        className="px-1.5 py-1 text-xs rounded hover:bg-bg-hover transition-colors flex items-center gap-1 text-text-secondary disabled:opacity-50"
+      >
+        <Languages size={12} />
+        {t("translate.composer")}
+      </button>
+
+      <button
+        type="button"
+        onClick={() => void toggleDictation()}
+        title={dictating ? t("voice.stop") : t("voice.start")}
+        className={`px-1.5 py-1 text-xs rounded hover:bg-bg-hover transition-colors flex items-center gap-1 ${
+          dictating ? "bg-danger/15 text-danger font-semibold" : "text-text-secondary"
+        }`}
+      >
+        {dictating ? <Square size={12} /> : <Mic size={12} />}
+        {dictating ? t("voice.stop") : t("voice.title")}
+      </button>
+
       {btn(t("composer.undo"), false, () => {
         editor.chain().focus().undo().run();
         void playSound("undo");
@@ -122,6 +189,37 @@ export function EditorToolbar({ editor, onToggleAiAssist, aiAssistOpen }: Editor
         title={t("composer.insertLink")}
         fields={[{ key: "url", label: t("composer.url"), placeholder: "https://..." }]}
         submitLabel={t("composer.insert")}
+      />
+      <InputDialog
+        isOpen={showTranslateDialog}
+        onClose={() => setShowTranslateDialog(false)}
+        onSubmit={async (values) => {
+          const target = values.language || "English";
+          const html = editor.getHTML();
+          setTranslating(true);
+          try {
+            const { translateEmail } = await import("@/services/ai/aiService");
+            const translated = await translateEmail(html, target);
+            editor.chain().focus().setContent(translated, { emitUpdate: true }).run();
+            void playSound("autocorr");
+          } catch {
+            // failed silently — the button state resets
+          } finally {
+            setTranslating(false);
+            setShowTranslateDialog(false);
+          }
+        }}
+        title={t("translate.composerTitle")}
+        fields={[
+          {
+            key: "language",
+            label: t("translate.title"),
+            placeholder: "English",
+            defaultValue: "English",
+            required: false,
+          },
+        ]}
+        submitLabel={translating ? t("common.loading") : t("translate.title")}
       />
     </div>
   );

@@ -7,7 +7,16 @@ import {
 import type { SubscriptionEntry } from "@/services/unsubscribe/unsubscribeManager";
 import { getThreadsForCategory } from "@/services/db/threads";
 import { searchMessages } from "@/services/db/search";
-import { archiveThread } from "@/services/emailActions";
+import {
+  archiveThread,
+  starThread,
+  moveThread,
+} from "@/services/emailActions";
+import { getMessagesForThread } from "@/services/db/messages";
+import { getCalendarsForAccount } from "@/services/db/calendars";
+import { createCalendarEvent } from "@/services/calendar/createEvent";
+import { insertTask } from "@/services/db/tasks";
+import { generateReply } from "./aiService";
 import type {
   ClaudeAgentMessage,
   ClaudeTool,
@@ -26,14 +35,30 @@ export interface AgentChatMessage {
   timestamp: number;
 }
 
+/** What the agent wants to do and why — shown to the user before it runs. */
+export interface AgentApprovalRequest {
+  toolName: string;
+  description: string;
+  args: Record<string, unknown>;
+}
+
 export type AgentEvent =
   | { type: "message"; message: AgentChatMessage }
   | { type: "tool_start"; toolName: string; description: string }
   | { type: "tool_end"; toolName: string; success: boolean }
+  | {
+      type: "draft_ready";
+      draft: { threadId: string; to: string | null; subject: string; bodyHtml: string };
+    }
   | { type: "error"; error: string }
   | { type: "done" };
 
 export type AgentEventCallback = (event: AgentEvent) => void;
+
+export interface AgentOptions {
+  /** Called before a mutating tool executes. Resolve true to allow, false to cancel. */
+  onApproval?: (request: AgentApprovalRequest) => Promise<boolean>;
+}
 
 // ---------------------------------------------------------------------------
 // System prompt
@@ -44,6 +69,12 @@ const AGENT_SYSTEM_PROMPT = `You are an intelligent email assistant in NAI. You 
 When finding subscriptions: call get_subscriptions first (finds senders with unsubscribe headers), then call get_newsletter_threads for both "Newsletters" and "Promotions" categories. Combine results, deduplicate by sender, and present a numbered list organized by email volume.
 
 When unsubscribing: call unsubscribe_sender for each sender the user confirms. Report each result. If unsubscribe fails, explain why.
+
+When the user asks to reply: call draft_reply with the thread id and any instructions, then tell the user the draft is ready in the composer.
+
+When the user asks to star or move a thread, call star_thread or move_thread. When they ask to schedule a meeting or create a calendar event, call create_calendar_event. When they ask to make a task, call create_task.
+
+Mutating tools (unsubscribe_sender, archive_sender_threads, draft_reply, star_thread, move_thread, create_calendar_event, create_task) ask the user for confirmation before running — that is automatic, you do not need to warn about it.
 
 Format responses in clear, concise markdown. Use numbered lists when presenting items to select from. Be direct and don't repeat yourself.
 
@@ -113,7 +144,93 @@ const AGENT_TOOLS: ClaudeTool[] = [
       required: ["query"],
     },
   },
+  {
+    name: "draft_reply",
+    description:
+      "Write a reply draft for a thread. The draft opens in the composer for the user to review and send.",
+    input_schema: {
+      type: "object" as const,
+      properties: {
+        threadId: { type: "string" },
+        instructions: {
+          type: "string",
+          description: "Optional guidance for the reply (tone, points to cover).",
+        },
+      },
+      required: ["threadId"],
+    },
+  },
+  {
+    name: "star_thread",
+    description: "Star or unstar a thread.",
+    input_schema: {
+      type: "object" as const,
+      properties: {
+        threadId: { type: "string" },
+        starred: { type: "boolean" },
+      },
+      required: ["threadId", "starred"],
+    },
+  },
+  {
+    name: "move_thread",
+    description:
+      "Move a thread to a folder or label (e.g. 'Archive', 'Work', 'INBOX').",
+    input_schema: {
+      type: "object" as const,
+      properties: {
+        threadId: { type: "string" },
+        folderPath: { type: "string" },
+      },
+      required: ["threadId", "folderPath"],
+    },
+  },
+  {
+    name: "create_calendar_event",
+    description:
+      "Create a calendar event (meeting, call, reminder) on the account's primary calendar.",
+    input_schema: {
+      type: "object" as const,
+      properties: {
+        summary: { type: "string" },
+        description: { type: "string" },
+        location: { type: "string" },
+        startTime: { type: "string", description: "ISO 8601 start time" },
+        endTime: { type: "string", description: "ISO 8601 end time" },
+      },
+      required: ["summary", "startTime", "endTime"],
+    },
+  },
+  {
+    name: "create_task",
+    description: "Create a task with an optional due date and priority.",
+    input_schema: {
+      type: "object" as const,
+      properties: {
+        title: { type: "string" },
+        description: { type: "string" },
+        dueDate: { type: "string", description: "ISO 8601 due date (optional)" },
+        priority: {
+          type: "string",
+          enum: ["none", "low", "medium", "high", "urgent"],
+        },
+        threadId: { type: "string" },
+      },
+      required: ["title"],
+    },
+  },
 ];
+
+/** Mutating tools always ask for confirmation first. */
+const MUTATING_TOOLS = new Set([
+  "unsubscribe_sender",
+  "archive_sender_threads",
+  "draft_reply",
+  "star_thread",
+  "move_thread",
+  "create_calendar_event",
+  "create_task",
+]);
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -146,6 +263,30 @@ function humanReadableDescription(
         "{query}",
         String(input.query ?? ""),
       );
+    case "draft_reply":
+      return t("agent.tool.draftReply").replace(
+        "{thread}",
+        String(input.threadId ?? ""),
+      );
+    case "star_thread":
+      return t("agent.tool.starThread").replace(
+        "{thread}",
+        String(input.threadId ?? ""),
+      );
+    case "move_thread":
+      return t("agent.tool.moveThread")
+        .replace("{thread}", String(input.threadId ?? ""))
+        .replace("{folder}", String(input.folderPath ?? ""));
+    case "create_calendar_event":
+      return t("agent.tool.createEvent").replace(
+        "{title}",
+        String(input.summary ?? ""),
+      );
+    case "create_task":
+      return t("agent.tool.createTask").replace(
+        "{title}",
+        String(input.title ?? ""),
+      );
     default:
       return `${t("agent.tool.running")} ${toolName}...`;
   }
@@ -166,13 +307,13 @@ async function executeGetNewsletterThreads(
     0,
   );
   return {
-    threads: threads.map((t) => ({
-      id: t.id,
-      subject: t.subject,
-      from_name: t.from_name,
-      from_address: t.from_address,
-      message_count: t.message_count,
-      is_read: t.is_read,
+    threads: threads.map((thread) => ({
+      id: thread.id,
+      subject: thread.subject,
+      from_name: thread.from_name,
+      from_address: thread.from_address,
+      message_count: thread.message_count,
+      is_read: thread.is_read,
     })),
   };
 }
@@ -270,6 +411,111 @@ async function executeSearchEmails(
   };
 }
 
+async function executeDraftReply(
+  accountId: string,
+  threadId: string,
+  instructions?: string,
+): Promise<unknown> {
+  const messages = await getMessagesForThread(accountId, threadId);
+  if (messages.length === 0) {
+    return { success: false, error: "Thread not found" };
+  }
+  const last = messages[messages.length - 1]!;
+  const texts = messages.slice(-4).map((m) => {
+    const from = m.from_name
+      ? `${m.from_name} <${m.from_address}>`
+      : (m.from_address ?? "Unknown");
+    return `From: ${from}\nSubject: ${m.subject ?? ""}\n\n${m.body_text ?? m.snippet ?? ""}`;
+  });
+  const bodyHtml = await generateReply(texts, instructions);
+  return {
+    success: true,
+    threadId,
+    to: last.reply_to ?? last.from_address,
+    subject: `Re: ${last.subject ?? ""}`,
+    bodyHtml,
+  };
+}
+
+async function executeStarThread(
+  accountId: string,
+  threadId: string,
+  starred: boolean,
+): Promise<unknown> {
+  const result = await starThread(accountId, threadId, [], starred);
+  return { success: result.success, threadId, starred };
+}
+
+async function executeMoveThread(
+  accountId: string,
+  threadId: string,
+  folderPath: string,
+): Promise<unknown> {
+  const result = await moveThread(accountId, threadId, [], folderPath);
+  return { success: result.success, threadId, folder: folderPath };
+}
+
+async function executeCreateCalendarEvent(
+  accountId: string,
+  input: Record<string, unknown>,
+): Promise<unknown> {
+  const summary = String(input.summary ?? "").trim();
+  const startTime = String(input.startTime ?? "");
+  const endTime = String(input.endTime ?? "");
+  if (!summary || !startTime || !endTime) {
+    return { success: false, error: "summary, startTime and endTime are required" };
+  }
+  const startMs = Date.parse(startTime);
+  const endMs = Date.parse(endTime);
+  if (Number.isNaN(startMs) || Number.isNaN(endMs)) {
+    return { success: false, error: "Invalid date/time" };
+  }
+  const calendars = await getCalendarsForAccount(accountId);
+  if (calendars.length === 0) {
+    return { success: false, error: "No calendar available for this account" };
+  }
+  await createCalendarEvent(accountId, calendars, {
+    summary,
+    description: String(input.description ?? ""),
+    location: String(input.location ?? ""),
+    startTime: new Date(startMs).toISOString(),
+    endTime: new Date(endMs).toISOString(),
+  });
+  return {
+    success: true,
+    summary,
+    start: new Date(startMs).toISOString(),
+    end: new Date(endMs).toISOString(),
+  };
+}
+
+async function executeCreateTask(
+  input: Record<string, unknown>,
+): Promise<unknown> {
+  const title = String(input.title ?? "").trim();
+  if (!title) return { success: false, error: "title is required" };
+  let dueDate: number | null = null;
+  if (input.dueDate) {
+    const parsed = Date.parse(String(input.dueDate));
+    if (!Number.isNaN(parsed)) dueDate = Math.floor(parsed / 1000);
+  }
+  const priority = ["none", "low", "medium", "high", "urgent"].includes(
+    String(input.priority),
+  )
+    ? (String(input.priority) as "none" | "low" | "medium" | "high" | "urgent")
+    : "none";
+  const id = await insertTask({
+    accountId: null,
+    title,
+    description: input.description ? String(input.description) : null,
+    priority,
+    dueDate,
+    threadId: input.threadId ? String(input.threadId) : null,
+    threadAccountId: input.threadId ? String(input.accountId ?? null) : null,
+  });
+  return { success: true, taskId: id, title };
+}
+
 // ---------------------------------------------------------------------------
 // Main agent loop
 // ---------------------------------------------------------------------------
@@ -279,6 +525,7 @@ export async function sendAgentMessage(
   accountId: string,
   history: ClaudeAgentMessage[],
   onEvent: AgentEventCallback,
+  options: AgentOptions = {},
 ): Promise<ClaudeAgentMessage[]> {
   const apiKey = await getSecureSetting("claude_api_key");
   if (!apiKey) {
@@ -372,6 +619,28 @@ export async function sendAgentMessage(
       let result: unknown;
       let success = true;
       try {
+        // Human-in-the-loop: mutating tools wait for explicit approval.
+        if (MUTATING_TOOLS.has(toolCall.name) && options.onApproval) {
+          const approved = await options.onApproval({
+            toolName: toolCall.name,
+            description: desc,
+            args: toolCall.input,
+          });
+          if (!approved) {
+            result = {
+              cancelled: true,
+              error: "The user declined this action.",
+            };
+            onEvent({ type: "tool_end", toolName: toolCall.name, success: false });
+            toolResults.push({
+              type: "tool_result",
+              tool_use_id: toolCall.id,
+              content: JSON.stringify(result),
+            });
+            continue;
+          }
+        }
+
         switch (toolCall.name) {
           case "get_subscriptions": {
             const entries = await getSubscriptions(accountId);
@@ -416,6 +685,57 @@ export async function sendAgentMessage(
               accountId,
               toolCall.input.query as string,
             );
+            break;
+          case "draft_reply":
+            result = await executeDraftReply(
+              accountId,
+              toolCall.input.threadId as string,
+              toolCall.input.instructions as string | undefined,
+            );
+            if (
+              typeof result === "object" &&
+              result !== null &&
+              (result as { success?: boolean }).success
+            ) {
+              const draft = result as {
+                threadId: string;
+                to: string | null;
+                subject: string;
+                bodyHtml: string;
+              };
+              onEvent({
+                type: "draft_ready",
+                draft: {
+                  threadId: draft.threadId,
+                  to: draft.to,
+                  subject: draft.subject,
+                  bodyHtml: draft.bodyHtml,
+                },
+              });
+            }
+            break;
+          case "star_thread":
+            result = await executeStarThread(
+              accountId,
+              toolCall.input.threadId as string,
+              toolCall.input.starred as boolean,
+            );
+            break;
+          case "move_thread":
+            result = await executeMoveThread(
+              accountId,
+              toolCall.input.threadId as string,
+              toolCall.input.folderPath as string,
+            );
+            break;
+          case "create_calendar_event":
+            result = await executeCreateCalendarEvent(accountId, toolCall.input);
+            break;
+          case "create_task":
+            result = await executeCreateTask({
+              ...toolCall.input,
+              accountId,
+            });
             break;
           default:
             result = { error: `Unknown tool: ${toolCall.name}` };

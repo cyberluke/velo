@@ -24,7 +24,9 @@ import {
   INBOX_DIGEST_PROMPT,
   URGENCY_SCORE_PROMPT,
   CONTACT_SUMMARY_PROMPT,
-  FILTER_SUGGESTIONS_PROMPT,
+FILTER_SUGGESTIONS_PROMPT,
+  TRANSLATE_PROMPT,
+  MEETING_SLOTS_PROMPT,
 } from "./prompts";
 
 async function callAi(systemPrompt: string, userContent: string): Promise<string> {
@@ -103,6 +105,20 @@ export async function transformText(
     formalize: FORMALIZE_PROMPT,
   };
   return callAi(prompts[type], text);
+}
+
+/**
+ * Translate email content (plain text or HTML) into a target language.
+ * HTML markup is preserved verbatim — only visible text is translated.
+ * Never cached: translations depend on the source and target pair.
+ */
+export async function translateEmail(
+  content: string,
+  targetLanguage: string,
+): Promise<string> {
+  const prompt = TRANSLATE_PROMPT.replace("{target_language}", targetLanguage);
+  const userContent = `<email_content>${content}</email_content>`;
+  return callAi(prompt, userContent);
 }
 
 export async function generateSmartReplies(
@@ -441,5 +457,38 @@ export async function suggestFilterRules(
     );
   } catch {
     return [];
+  }
+}
+
+export interface MeetingSlotProposal {
+  slots: string[];
+}
+
+/**
+ * Propose 3 meeting times from free calendar slots, honoring busy events and
+ * meeting context. Pure-AI decision; the caller gathers the free slots.
+ */
+export async function proposeMeetingSlots(
+  freeSlots: string[],
+  busyEvents: { start: number; end: number }[],
+  meetingContext: string,
+): Promise<MeetingSlotProposal> {
+  const slotsText = freeSlots.slice(0, 80).join("\n");
+  const busyText = busyEvents
+    .slice(0, 30)
+    .map((e) => `${new Date(e.start * 1000).toISOString()} -> ${new Date(e.end * 1000).toISOString()}`)
+    .join("\n");
+  const userContent = `<free_slots>\n${slotsText}\n</free_slots>\n\n<busy_events>\n${busyText}\n</busy_events>\n\n<meeting_context>\n${meetingContext.slice(0, 1000)}\n</meeting_context>`;
+  try {
+    const raw = await callAi(MEETING_SLOTS_PROMPT, userContent);
+    const jsonMatch = raw.match(/\[[\s\S]*?\]/);
+    const parsed = jsonMatch ? (JSON.parse(jsonMatch[0]) as string[]) : [];
+    return {
+      slots: parsed
+        .filter((s) => typeof s === "string" && !Number.isNaN(Date.parse(s)))
+        .slice(0, 3),
+    };
+  } catch {
+    return { slots: [] };
   }
 }

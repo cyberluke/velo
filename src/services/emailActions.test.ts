@@ -350,7 +350,7 @@ describe("emailActions", () => {
     it("fills in the thread's message ids when the caller passed none", async () => {
       // The IMAP provider moves messages, not threads: with no ids it moved
       // nothing and the mail stayed on the server
-      vi.mocked(getDb).mockResolvedValueOnce({
+      vi.mocked(getDb).mockResolvedValue({
         execute: vi.fn(() => Promise.resolve()),
         select: vi.fn(() => Promise.resolve([{ id: "imap-a-INBOX-1" }, { id: "imap-a-INBOX-2" }])),
       } as never);
@@ -359,7 +359,7 @@ describe("emailActions", () => {
     });
 
     it("queues the resolved ids so a replay after the rows are gone still works", async () => {
-      vi.mocked(getDb).mockResolvedValueOnce({
+      vi.mocked(getDb).mockResolvedValue({
         execute: vi.fn(() => Promise.resolve()),
         select: vi.fn(() => Promise.resolve([{ id: "m9" }])),
       } as never);

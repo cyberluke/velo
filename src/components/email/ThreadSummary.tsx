@@ -1,8 +1,9 @@
 import { useState, useCallback, useRef, useEffect } from "react";
-import { Sparkles, ChevronDown, ChevronUp, RefreshCw } from "lucide-react";
+import { Sparkles, ChevronDown, ChevronUp, RefreshCw, ThumbsUp, ThumbsDown } from "lucide-react";
 import { isAiAvailable } from "@/services/ai/providerManager";
 import { summarizeThread } from "@/services/ai/aiService";
 import { deleteAiCache } from "@/services/db/aiCache";
+import { recordAiFeedback, getLatestAiFeedback } from "@/services/db/aiFeedback";
 import { notifyAiEvent } from "@/services/notifications/notificationManager";
 import type { DbMessage } from "@/services/db/messages";
 import { useI18n } from "@/i18n";
@@ -19,6 +20,7 @@ export function ThreadSummary({ threadId, accountId, messages }: ThreadSummaryPr
   const [loading, setLoading] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
   const [available, setAvailable] = useState(false);
+  const [feedback, setFeedback] = useState<1 | -1 | null>(null);
   const checkedRef = useRef(false);
 
   useEffect(() => {
@@ -50,6 +52,36 @@ export function ThreadSummary({ threadId, accountId, messages }: ThreadSummaryPr
     if (!available || messages.length < 2 || summary !== null || loadingRef.current) return;
     loadSummary();
   }, [available, messages.length, summary, loadSummary]);
+
+  // Load the last feedback for this summary when it becomes available
+  useEffect(() => {
+    if (!available || messages.length < 2) return;
+    getLatestAiFeedback(accountId, threadId, "summary").then((value) => {
+      if (value !== null) setFeedback(value);
+    });
+  }, [available, messages.length, accountId, threadId]);
+
+  const handleFeedback = useCallback(
+    async (value: 1 | -1) => {
+      await recordAiFeedback(accountId, threadId, "summary", value);
+      setFeedback(value);
+      if (value === -1) {
+        // Regenerate: a "not helpful" answer should not be served from cache.
+        await deleteAiCache(accountId, threadId, "summary");
+        setSummary(null);
+        setLoading(true);
+        try {
+          const result = await summarizeThread(threadId, accountId, messages);
+          setSummary(result);
+        } catch (err) {
+          console.error("Failed to regenerate summary:", err);
+        } finally {
+          setLoading(false);
+        }
+      }
+    },
+    [accountId, threadId, messages],
+  );
 
   const handleRefresh = useCallback(async () => {
     await deleteAiCache(accountId, threadId, "summary");
@@ -91,6 +123,24 @@ export function ThreadSummary({ threadId, accountId, messages }: ThreadSummaryPr
             title={t("email.refreshSummary")}
           >
             <RefreshCw size={12} className={loading ? "animate-spin" : ""} />
+          </span>
+        )}
+        {summary && (
+          <span className="flex items-center gap-0.5">
+            <button
+              onClick={(e) => { e.stopPropagation(); void handleFeedback(1); }}
+              className={`p-0.5 transition-colors cursor-pointer ${feedback === 1 ? "text-accent" : "text-text-tertiary hover:text-accent"}`}
+              title={t("feedback.helpful")}
+            >
+              <ThumbsUp size={11} />
+            </button>
+            <button
+              onClick={(e) => { e.stopPropagation(); void handleFeedback(-1); }}
+              className={`p-0.5 transition-colors cursor-pointer ${feedback === -1 ? "text-danger" : "text-text-tertiary hover:text-danger"}`}
+              title={t("feedback.notHelpful")}
+            >
+              <ThumbsDown size={11} />
+            </button>
           </span>
         )}
         {collapsed ? <ChevronDown size={14} className="text-text-tertiary" /> : <ChevronUp size={14} className="text-text-tertiary" />}

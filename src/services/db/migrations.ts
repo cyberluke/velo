@@ -989,6 +989,51 @@ export const MIGRATIONS = [
       ALTER TABLE calendar_events ADD COLUMN confirmation_source TEXT;
     `,
   },
+  {
+    version: 40,
+    description: "AI feedback, audit log, PGP keys, and account access roles",
+    sql: `
+      -- AI output feedback (thumbs up/down) with cache invalidation.
+      CREATE TABLE IF NOT EXISTS ai_feedback (
+        id TEXT PRIMARY KEY,
+        account_id TEXT,
+        thread_id TEXT,
+        kind TEXT NOT NULL,
+        value INTEGER NOT NULL,
+        created_at INTEGER DEFAULT (unixepoch())
+      );
+      CREATE INDEX IF NOT EXISTS idx_ai_feedback_scope ON ai_feedback(account_id, thread_id, kind);
+
+      -- Immutable audit trail of consequential actions (send, delete, export,
+      -- PGP key changes, account role changes).
+      CREATE TABLE IF NOT EXISTS audit_log (
+        id TEXT PRIMARY KEY,
+        account_id TEXT,
+        action TEXT NOT NULL,
+        details_json TEXT,
+        created_at INTEGER DEFAULT (unixepoch())
+      );
+      CREATE INDEX IF NOT EXISTS idx_audit_log_account ON audit_log(account_id, created_at);
+
+      -- PGP keys per account. The private key is encrypted with the same
+      -- AES-256-GCM keychain-bound key as OAuth tokens / IMAP passwords.
+      CREATE TABLE IF NOT EXISTS pgp_keys (
+        id TEXT PRIMARY KEY,
+        account_id TEXT NOT NULL,
+        fingerprint TEXT NOT NULL,
+        email TEXT,
+        public_key TEXT NOT NULL,
+        private_key_encrypted TEXT,
+        created_at INTEGER DEFAULT (unixepoch()),
+        updated_at INTEGER DEFAULT (unixepoch())
+      );
+      CREATE UNIQUE INDEX IF NOT EXISTS idx_pgp_keys_account_fp ON pgp_keys(account_id, fingerprint);
+
+      -- Account access role: 'owner' (full), 'assistant' (can draft/send on
+      -- behalf but not delete/change settings), 'read_only' (view only).
+      ALTER TABLE accounts ADD COLUMN access_role TEXT DEFAULT 'owner';
+    `,
+  },
 ];
 
 function isAlreadyAppliedSchemaError(message: string): boolean {

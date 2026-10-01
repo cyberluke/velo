@@ -51,6 +51,10 @@ export interface ComposerState {
   signatureHtml: string;
   signatureId: string | null;
   requestReadReceipt: boolean;
+  /** Encrypt this message with the account's PGP keys before sending. */
+  pgpEncrypt: boolean;
+  /** Sign this message with the given local key fingerprint ("" = no sign). */
+  pgpSignFingerprint: string | null;
   /**
    * Bumped every time the composer is opened. The editor instance outlives a
    * single message, so it needs a signal to reload — `isOpen` alone misses
@@ -97,6 +101,8 @@ export interface ComposerState {
   setSignatureHtml: (html: string) => void;
   setSignatureId: (id: string | null) => void;
   setRequestReadReceipt: (request: boolean) => void;
+  setPgpEncrypt: (encrypt: boolean) => void;
+  setPgpSignFingerprint: (fingerprint: string | null) => void;
 }
 
 export const useComposerStore = create<ComposerState>((set) => ({
@@ -127,6 +133,8 @@ export const useComposerStore = create<ComposerState>((set) => ({
   signatureHtml: "",
   signatureId: null,
   requestReadReceipt: false,
+  pgpEncrypt: false,
+  pgpSignFingerprint: null,
   composeSession: 0,
 
   openComposer: (opts) =>
@@ -152,6 +160,8 @@ export const useComposerStore = create<ComposerState>((set) => ({
       signatureHtml: "",
       signatureId: null,
       requestReadReceipt: false,
+      pgpEncrypt: false,
+      pgpSignFingerprint: null,
       composeSession: state.composeSession + 1,
     })),
   closeComposer: () =>
@@ -177,6 +187,8 @@ export const useComposerStore = create<ComposerState>((set) => ({
       signatureHtml: "",
       signatureId: null,
       requestReadReceipt: false,
+      pgpEncrypt: false,
+      pgpSignFingerprint: null,
     }),
   setTo: (to) => set({ to }),
   setCc: (cc) => set({ cc }),
@@ -232,4 +244,6 @@ export const useComposerStore = create<ComposerState>((set) => ({
   setSignatureHtml: (signatureHtml) => set({ signatureHtml }),
   setSignatureId: (signatureId) => set({ signatureId }),
   setRequestReadReceipt: (requestReadReceipt) => set({ requestReadReceipt }),
+  setPgpEncrypt: (pgpEncrypt) => set({ pgpEncrypt }),
+  setPgpSignFingerprint: (pgpSignFingerprint) => set({ pgpSignFingerprint }),
 }));

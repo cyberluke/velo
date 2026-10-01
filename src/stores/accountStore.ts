@@ -12,6 +12,11 @@ export interface Account {
   calendarProvider?: string | null;
   /** Palette id from ACCOUNT_COLORS; null means "derive one from position" */
   color?: string | null;
+  /**
+   * Delegation role: "owner" (full), "assistant" (draft/send on behalf, no
+   * destructive changes), "read_only" (view only). Undefined/absent = owner.
+   */
+  accessRole?: "owner" | "assistant" | "read_only" | null;
 }
 
 interface AccountState {

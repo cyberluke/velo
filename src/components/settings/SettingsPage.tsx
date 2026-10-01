@@ -71,6 +71,8 @@ import {
 import { SignatureEditor } from "./SignatureEditor";
 import { TemplateEditor } from "./TemplateEditor";
 import { FilterEditor } from "./FilterEditor";
+import { AuditLogView } from "./AuditLogView";
+import { PgpSettings } from "./PgpSettings";
 import { LabelEditor } from "./LabelEditor";
 import { ContactEditor } from "./ContactEditor";
 import { SubscriptionManager } from "./SubscriptionManager";
@@ -1455,12 +1457,79 @@ export function SettingsPage() {
                                 >
                                   {t("settings.remove")}
                                 </button>
+                                <select
+                                  value={account.accessRole ?? "owner"}
+                                  onChange={async (e) => {
+                                    const role = e.target.value as "owner" | "assistant" | "read_only";
+                                    const { updateAccountAccessRole } = await import("@/services/db/accounts");
+                                    const { logAudit } = await import("@/services/db/auditLog");
+                                    await updateAccountAccessRole(account.id, role);
+                                    await logAudit("access_role_changed", { account: account.email, role }, account.id);
+                                    const { reloadAccountsIntoStore } = await import("@/services/accounts/accountLifecycle");
+                                    await reloadAccountsIntoStore();
+                                    notify("success", t("account.roleSaved"));
+                                  }}
+                                  title={t("account.role")}
+                                  className="bg-bg-tertiary text-text-primary text-xs px-2 py-1 rounded-md border border-border-primary"
+                                >
+                                  <option value="owner">{t("account.roleOwner")}</option>
+                                  <option value="assistant">{t("account.roleAssistant")}</option>
+                                  <option value="read_only">{t("account.roleReadOnly")}</option>
+                                </select>
                               </div>
                             </div>
                           );
                         })}
                       </div>
                     )}
+                  </Section>
+
+                  <Section title={t("pgp.title")}>
+                    <PgpSettings />
+                  </Section>
+
+                  <Section title={t("export.title")}>
+                    <div className="space-y-2">
+                      {accounts.filter((a) => a.provider !== "caldav").map((account) => (
+                        <div key={account.id} className="flex items-center justify-between py-1.5 px-3 bg-bg-secondary rounded-md">
+                          <span className="text-xs text-text-primary truncate">{account.email}</span>
+                          <button
+                            onClick={async () => {
+                              const { buildAccountMbox, countAccountMessages } = await import("@/services/export/exportService");
+                              const { save } = await import("@tauri-apps/plugin-dialog");
+                              const { writeTextFile } = await import("@tauri-apps/plugin-fs");
+                              try {
+                                const count = await countAccountMessages(account.id);
+                                if (count === 0) {
+                                  notify("info", t("export.mboxFailed"));
+                                  return;
+                                }
+                                const defaultName = `${account.email.split("@")[0]}.mbox`;
+                                const filePath = await save({
+                                  defaultPath: defaultName,
+                                  filters: [{ name: "MBOX", extensions: ["mbox"] }],
+                                });
+                                if (!filePath) return;
+                                notify("success", t("export.mboxRunning"));
+                                const content = await buildAccountMbox(account.id);
+                                await writeTextFile(filePath, content);
+                                notify("success", t("export.mboxDone"));
+                              } catch (err) {
+                                reportError(t("export.mboxFailed"), err);
+                              }
+                            }}
+                            className="text-xs text-accent hover:text-accent-hover transition-colors"
+                          >
+                            {t("export.accountMbox")}
+                          </button>
+                        </div>
+                      ))}
+                      <p className="text-xs text-text-tertiary">{t("export.threadEml")}</p>
+                    </div>
+                  </Section>
+
+                  <Section title={t("audit.title")}>
+                    <AuditLogView />
                   </Section>
 
                   <Section title={t("settings.instantDelivery")}>
