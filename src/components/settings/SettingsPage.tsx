@@ -220,6 +220,8 @@ export function SettingsPage() {
   const [aiKeySaved, setAiKeySaved] = useState(false);
   const [aiTesting, setAiTesting] = useState(false);
   const [aiTestResult, setAiTestResult] = useState<{ ok: boolean; error?: string } | null>(null);
+  const [dictationModel, setDictationModel] = useState("whisper-1");
+  const [dictationSaved, setDictationSaved] = useState(false);
   const [aiAutoDraftEnabled, setAiAutoDraftEnabled] = useState(true);
   const [aiWritingStyleEnabled, setAiWritingStyleEnabled] = useState(true);
   // New AI feature toggles
@@ -321,6 +323,8 @@ export function SettingsPage() {
       if (openaiModelVal) setOpenaiModel(openaiModelVal);
       const geminiModelVal = await getSetting("gemini_model");
       if (geminiModelVal) setGeminiModel(resolveModelId(geminiModelVal));
+      const dictModel = await getSetting("dictation_model");
+      if (dictModel) setDictationModel(dictModel);
       const aiKey = await getSecureSetting("claude_api_key");
       setClaudeApiKey(aiKey ?? "");
       const oaiKey = await getSecureSetting("openai_api_key");
@@ -2224,6 +2228,32 @@ export function SettingsPage() {
                       </div>
                     </Section>
                   )}
+
+                  <Section title={t("voice.settingsTitle")}>
+                    <p className="text-xs text-text-tertiary mb-3">{t("voice.settingsDesc")}</p>
+                    <SettingRow label={t("voice.settingsModel")}>
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="text"
+                          value={dictationModel}
+                          onChange={(e) => setDictationModel(e.target.value)}
+                          placeholder="whisper-1"
+                          className="w-48 bg-bg-tertiary text-text-primary text-sm px-3 py-1.5 rounded-md border border-border-primary focus:border-accent outline-none"
+                        />
+                        <Button
+                          variant="primary"
+                          size="md"
+                          onClick={async () => {
+                            await setSetting("dictation_model", dictationModel.trim() || "whisper-1");
+                            setDictationSaved(true);
+                            setTimeout(() => setDictationSaved(false), 2000);
+                          }}
+                        >
+                          {dictationSaved ? t("settings.savedMark") : t("voice.settingsSave")}
+                        </Button>
+                      </div>
+                    </SettingRow>
+                  </Section>
 
                   <Section title={t("mcp.title")}>
                     <p className="text-xs text-text-tertiary mb-3">{t("mcp.description")}</p>

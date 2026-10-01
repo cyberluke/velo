@@ -59,6 +59,8 @@ export function EditorToolbar({ editor, onToggleAiAssist, aiAssistOpen }: Editor
           const msg = err instanceof Error ? err.message : String(err);
           if (msg.includes("NO_KEY")) {
             reportError(t("voice.noKey"), err);
+          } else if (msg.includes("VOICE_PROVIDER")) {
+            reportError(t("voice.provider"), err);
           } else {
             reportError(t("voice.failed"), err);
           }
@@ -80,6 +82,8 @@ export function EditorToolbar({ editor, onToggleAiAssist, aiAssistOpen }: Editor
       const msg = err instanceof Error ? err.message : String(err);
       if (msg.includes("VOICE_UNSUPPORTED")) {
         reportError(t("voice.unsupported"), err);
+      } else if (msg.includes("VOICE_PROVIDER")) {
+        reportError(t("voice.provider"), err);
       } else {
         reportError(t("voice.failed"), err);
       }

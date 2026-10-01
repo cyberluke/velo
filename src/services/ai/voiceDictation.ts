@@ -1,14 +1,24 @@
-import { getSecureSetting } from "@/services/db/settings";
+import { getSetting, getSecureSetting } from "@/services/db/settings";
 import { getLocale } from "@/i18n";
+import { getActiveProviderName } from "./providerManager";
+import { fetch as tauriFetch } from "@tauri-apps/plugin-http";
+import { normalizeLocalBaseUrl, localApiKey } from "./localOpenAi";
 
 /**
  * Voice dictation into the composer.
  *
  * Captures microphone audio with the MediaRecorder API (available in the
- * Tauri WebView on every platform) and transcribes it through the OpenAI
- * audio transcriptions endpoint with the user's configured OpenAI key.
- * The `openai` SDK is already a dependency; audio never leaves the machine
- * except to the OpenAI API the user explicitly configured.
+ * Tauri WebView on every platform) and transcribes it through the *active
+ * provider's* OpenAI-compatible `audio/transcriptions` endpoint:
+ *
+ * - openai  → api.openai.com (whisper-1 or a `dictation_model` override)
+ * - custom  → any OpenAI-compatible gateway (Azure, Groq, vLLM, ...)
+ * - ollama  → a local server; point a gateway at it to run faster-whisper
+ *             locally (model name comes from `dictation_model`)
+ *
+ * The custom/ollama legs go through the Tauri HTTP plugin so non-CORS local
+ * gateways still work from the webview. Claude/Gemini/Copilot/Bedrock expose
+ * no OpenAI-compatible audio endpoint, so dictation reports VOICE_PROVIDER.
  */
 
 export type DictationState = "idle" | "recording" | "transcribing" | "failed";
@@ -19,6 +29,8 @@ export interface DictationController {
   stop: () => Promise<string | null>;
   cancel: () => void;
 }
+
+const DICTATION_MODEL_DEFAULT = "whisper-1";
 
 const MIME_CANDIDATES = [
   "audio/webm",
@@ -36,16 +48,73 @@ function pickMimeType(): string {
   return "audio/webm";
 }
 
-/** Transcribe an audio blob via the OpenAI transcriptions API. */
+interface DictationEndpoint {
+  baseURL?: string;
+  apiKey: string;
+  model: string;
+  useTauriFetch?: boolean;
+}
+
+/**
+ * Resolve the OpenAI-compatible endpoint + model for dictation from the
+ * active AI provider configuration. Throws VOICE_NO_KEY when the provider's
+ * key/URL is missing and VOICE_PROVIDER when the provider has no
+ * OpenAI-compatible audio endpoint.
+ */
+export async function resolveDictationEndpoint(): Promise<DictationEndpoint> {
+  const provider = await getActiveProviderName();
+  const model =
+    (await getSetting("dictation_model")) || DICTATION_MODEL_DEFAULT;
+
+  if (provider === "openai") {
+    const apiKey = await getSecureSetting("openai_api_key");
+    if (!apiKey) throw new Error("VOICE_NO_KEY");
+    return { apiKey, model };
+  }
+
+  if (provider === "custom") {
+    const apiKey = await getSecureSetting("custom_api_key");
+    const baseUrl = await getSetting("custom_base_url");
+    if (!apiKey || !baseUrl) throw new Error("VOICE_NO_KEY");
+    return {
+      baseURL: baseUrl.trim().replace(/\/+$/, ""),
+      apiKey,
+      model,
+      useTauriFetch: true,
+    };
+  }
+
+  if (provider === "ollama") {
+    const serverUrl =
+      (await getSetting("ollama_server_url")) || "http://localhost:11434";
+    const apiKey = await getSecureSetting("ollama_api_key");
+    return {
+      baseURL: normalizeLocalBaseUrl(serverUrl),
+      apiKey: localApiKey(apiKey),
+      model,
+      useTauriFetch: true,
+    };
+  }
+
+  // Claude / Gemini / Copilot / Bedrock have no OpenAI-compatible
+  // /audio/transcriptions endpoint.
+  throw new Error("VOICE_PROVIDER");
+}
+
+/** Transcribe an audio blob via the active provider's transcriptions endpoint. */
 async function transcribe(blob: Blob): Promise<string> {
-  const apiKey = await getSecureSetting("openai_api_key");
-  if (!apiKey) throw new Error("VOICE_NO_KEY");
+  const endpoint = await resolveDictationEndpoint();
   const { default: OpenAI } = await import("openai");
-  const client = new OpenAI({ apiKey, dangerouslyAllowBrowser: true });
+  const client = new OpenAI({
+    apiKey: endpoint.apiKey,
+    baseURL: endpoint.baseURL,
+    dangerouslyAllowBrowser: true,
+    ...(endpoint.useTauriFetch ? { fetch: tauriFetch } : {}),
+  });
   const file = new File([blob], "dictation.webm", { type: blob.type });
   const response = await client.audio.transcriptions.create({
     file,
-    model: "whisper-1",
+    model: endpoint.model,
     // Hint the spoken language from the active UI locale — whisper transcribes
     // far more accurately when it knows the language up front.
     language: getLocale(),
