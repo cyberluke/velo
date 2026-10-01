@@ -14,10 +14,23 @@ export const INVOICE_SEARCH_TERMS: Record<Locale, string[]> = {
   vi: ["hóa đơn", "hoa don", "hoadon", "invoice"],
 };
 
+import { composerKeys } from "./patches/composer";
+import { emailKeys } from "./patches/email";
+
 type Dict = Record<string, string>;
 
+const ALL_PATCHES: Record<Locale, Dict>[] = [composerKeys, emailKeys];
+
+function withPatches(locale: Locale, base: Dict): Dict {
+  let out: Dict = { ...base };
+  for (const patch of ALL_PATCHES) {
+    Object.assign(out, patch[locale]);
+  }
+  return out;
+}
+
 export const translations: Record<Locale, Dict> = {
-  en: {
+  en: withPatches("en", {
     "app.name": "NAI",
     "toolbar.compose": "Compose",
     "toolbar.back": "Back",
@@ -816,8 +829,8 @@ export const translations: Record<Locale, Dict> = {
     "semantic.modelStateLabel": "Model state:",
     "semantic.notReported": "Not reported",
     "semantic.none": "None",
-  },
-  cs: {
+  }),
+  cs: withPatches("cs", {
     "app.name": "NAI",
     "toolbar.compose": "Napsat",
     "toolbar.back": "Zpět",
@@ -1616,8 +1629,8 @@ export const translations: Record<Locale, Dict> = {
     "semantic.modelStateLabel": "Stav modelu:",
     "semantic.notReported": "Neuvedeno",
     "semantic.none": "Žádné",
-  },
-  sk: {
+  }),
+  sk: withPatches("sk", {
     "app.name": "NAI",
     "toolbar.compose": "Napísať",
     "toolbar.back": "Späť",
@@ -2416,8 +2429,8 @@ export const translations: Record<Locale, Dict> = {
     "semantic.modelStateLabel": "Stav modelu:",
     "semantic.notReported": "Neuvádza sa",
     "semantic.none": "Žiadne",
-  },
-  vi: {
+  }),
+  vi: withPatches("vi", {
     "app.name": "NAI",
     "toolbar.compose": "Soạn thư",
     "toolbar.back": "Quay lại",
@@ -3216,5 +3229,5 @@ export const translations: Record<Locale, Dict> = {
     "semantic.modelStateLabel": "Trạng thái mô hình:",
     "semantic.notReported": "Không báo cáo",
     "semantic.none": "Không có",
-  },
+  }),
 };

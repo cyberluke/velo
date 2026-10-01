@@ -1,6 +1,7 @@
 import { ShieldCheck, ShieldAlert, ShieldX, ShieldQuestion } from "lucide-react";
 import { Tooltip } from "@/components/ui/Tooltip";
 import type { AuthResult } from "@/services/gmail/authParser";
+import { useI18n } from "@/i18n";
 
 interface AuthBadgeProps {
   authResults: string | null;
@@ -16,6 +17,7 @@ interface AuthBadgeProps {
  * so no ancestor's overflow can reach it.
  */
 export function AuthBadge({ authResults }: AuthBadgeProps) {
+  const { t } = useI18n();
   if (!authResults) return null;
 
   let parsed: AuthResult;
@@ -37,22 +39,22 @@ export function AuthBadge({ authResults }: AuthBadgeProps) {
     case "pass":
       icon = <ShieldCheck {...iconProps} />;
       colorClass = "text-success";
-      label = "Authentication passed";
+      label = t("email.authPassed");
       break;
     case "warning":
       icon = <ShieldAlert {...iconProps} />;
       colorClass = "text-warning";
-      label = "Authentication warning";
+      label = t("email.authWarning");
       break;
     case "fail":
       icon = <ShieldX {...iconProps} />;
       colorClass = "text-danger";
-      label = "Authentication failed";
+      label = t("email.authFailed");
       break;
     default:
       icon = <ShieldQuestion {...iconProps} />;
       colorClass = "text-text-tertiary";
-      label = "Authentication unknown";
+      label = t("email.authUnknown");
       break;
   }
 
@@ -63,7 +65,11 @@ export function AuthBadge({ authResults }: AuthBadgeProps) {
     <Tooltip
       content={
         <span className="block whitespace-pre-line">
-          {`${label}\nSPF: ${detail(spf)}\nDKIM: ${detail(dkim)}\nDMARC: ${detail(dmarc)}`}
+          {t("email.authDetail")
+            .replace("{label}", label)
+            .replace("{spf}", detail(spf))
+            .replace("{dkim}", detail(dkim))
+            .replace("{dmarc}", detail(dmarc))}
         </span>
       }
     >

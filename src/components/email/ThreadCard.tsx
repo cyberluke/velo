@@ -120,7 +120,7 @@ export const ThreadCard = memo(function ThreadCard({ thread, isSelected, onClick
       {...listeners}
       onClick={handleClick}
       onContextMenu={handleContextMenu}
-      aria-label={`${thread.isRead ? "" : "Unread "}email from ${thread.fromName ?? thread.fromAddress ?? "Unknown"}: ${thread.subject ?? "(No subject)"}`}
+      aria-label={`${thread.isRead ? "" : `${t("email.unread")} `}${t("email.emailFrom").replace("{name}", thread.fromName ?? thread.fromAddress ?? t("email.unknown")).replace("{subject}", thread.subject ?? t("email.noSubject"))}`}
       aria-selected={isSelected}
       className={`relative mx-2 mb-1.5 w-[calc(100%-1rem)] overflow-hidden rounded-xl border border-transparent text-left group hover-lift press-scale transition-[background-color,box-shadow,transform,border-color] duration-200 ${
         isRemoving ? "thread-exit " : ""
@@ -193,7 +193,7 @@ export const ThreadCard = memo(function ThreadCard({ thread, isSelected, onClick
               }`}
             >
               <HighlightedText
-                text={thread.fromName ?? thread.fromAddress ?? "Unknown"}
+                text={thread.fromName ?? thread.fromAddress ?? t("email.unknown")}
                 terms={highlightTerms}
               />
             </span>
@@ -204,7 +204,7 @@ export const ThreadCard = memo(function ThreadCard({ thread, isSelected, onClick
                   className={`text-[0.625rem] px-1.5 rounded-full leading-normal whitespace-nowrap max-w-24 truncate ${
                     FOLDER_COLORS[folder.id] ?? "bg-bg-tertiary text-text-secondary"
                   }`}
-                  title={`In ${folder.name}`}
+                  title={t("email.inFolder").replace("{name}", folder.name)}
                 >
                   {folder.name}
                 </span>
@@ -222,7 +222,7 @@ export const ThreadCard = memo(function ThreadCard({ thread, isSelected, onClick
             }`}
           >
             <HighlightedText
-              text={thread.subject ?? "(No subject)"}
+              text={thread.subject ?? t("email.noSubject")}
               terms={highlightTerms}
             />
           </div>
@@ -236,7 +236,7 @@ export const ThreadCard = memo(function ThreadCard({ thread, isSelected, onClick
                 <span
                   className="mr-1 px-1 py-px bg-blue-500/15 text-blue-600 dark:text-blue-300 font-medium align-baseline"
                   style={{ borderRadius: "5px" }}
-                  title="You sent the last message"
+                  title={t("email.youSentLastMessage")}
                 >
                   me:
                 </span>
@@ -252,12 +252,12 @@ export const ThreadCard = memo(function ThreadCard({ thread, isSelected, onClick
               </span>
             )}
             {hasFollowUp && (
-              <span className="shrink-0 text-accent" title="Follow-up reminder set">
+              <span className="shrink-0 text-accent" title={t("email.followUpReminderSet")}>
                 <BellRing size={12} />
               </span>
             )}
             {hasTask && (
-              <span className="shrink-0 text-accent" title="Has an open task">
+              <span className="shrink-0 text-accent" title={t("email.hasOpenTask")}>
                 <CheckSquare size={12} />
               </span>
             )}
@@ -270,22 +270,22 @@ export const ThreadCard = memo(function ThreadCard({ thread, isSelected, onClick
               <span className="shrink-0 w-2 h-2 rounded-full bg-amber-500 inline-block" title={t("ai.urgency.medium")} />
             )}
             {thread.isMuted && (
-              <span className="shrink-0 text-warning" title="Muted">
+              <span className="shrink-0 text-warning" title={t("email.muted")}>
                 <VolumeX size={12} />
               </span>
             )}
             {thread.isPinned && (
-              <span className="shrink-0 text-accent" title="Pinned">
+              <span className="shrink-0 text-accent" title={t("email.pinned")}>
                 <Pin size={12} className="fill-current" />
               </span>
             )}
             {thread.hasAttachments && (
-              <span className="shrink-0 text-text-tertiary" title="Has attachments">
+              <span className="shrink-0 text-text-tertiary" title={t("email.hasAttachments")}>
                 <Paperclip size={12} />
               </span>
             )}
             {thread.isStarred && (
-              <span className="shrink-0 text-warning star-animate" title="Starred">
+              <span className="shrink-0 text-warning star-animate" title={t("email.starred")}>
                 <Star size={12} className="fill-current" />
               </span>
             )}

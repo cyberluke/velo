@@ -1,11 +1,12 @@
 import { DateTimePickerDialog } from "@/components/ui/DateTimePickerDialog";
+import { useI18n } from "@/i18n";
 
 interface ScheduleSendDialogProps {
   onSchedule: (timestamp: number) => void;
   onClose: () => void;
 }
 
-function getSchedulePresets(): { label: string; detail: string; timestamp: number }[] {
+function getSchedulePresets(t: (key: string) => string): { label: string; detail: string; timestamp: number }[] {
   const now = new Date();
   const today = new Date(now);
 
@@ -28,17 +29,17 @@ function getSchedulePresets(): { label: string; detail: string; timestamp: numbe
 
   return [
     {
-      label: "Tomorrow morning",
+      label: t("composer.tomorrowMorning"),
       detail: tomorrowMorning.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" }) + " 9:00 AM",
       timestamp: Math.floor(tomorrowMorning.getTime() / 1000),
     },
     {
-      label: "Tomorrow afternoon",
+      label: t("composer.tomorrowAfternoon"),
       detail: tomorrowAfternoon.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" }) + " 1:00 PM",
       timestamp: Math.floor(tomorrowAfternoon.getTime() / 1000),
     },
     {
-      label: "Monday morning",
+      label: t("composer.mondayMorning"),
       detail: monday.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" }) + " 9:00 AM",
       timestamp: Math.floor(monday.getTime() / 1000),
     },
@@ -46,16 +47,17 @@ function getSchedulePresets(): { label: string; detail: string; timestamp: numbe
 }
 
 export function ScheduleSendDialog({ onSchedule, onClose }: ScheduleSendDialogProps) {
-  const presets = getSchedulePresets();
+  const { t } = useI18n();
+  const presets = getSchedulePresets(t);
 
   return (
     <DateTimePickerDialog
       isOpen={true}
       onClose={onClose}
-      title="Schedule send"
+      title={t("composer.scheduleTitle")}
       presets={presets}
       onSelect={onSchedule}
-      submitLabel="Schedule"
+      submitLabel={t("composer.scheduleSubmit")}
       zIndex="z-[60]"
     />
   );

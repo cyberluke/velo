@@ -1,4 +1,5 @@
 import type { Identity } from "@/services/accounts/identities";
+import { useI18n } from "@/i18n";
 
 interface FromSelectorProps {
   identities: Identity[];
@@ -32,6 +33,7 @@ export function FromSelector({
   selectedAccountId,
   onChange,
 }: FromSelectorProps) {
+  const { t } = useI18n();
   if (identities.length <= 1) return null;
 
   // Keep the accounts in the order they were collected in
@@ -44,8 +46,8 @@ export function FromSelector({
 
   return (
     <div className="flex items-center gap-2">
-      <span className="text-xs text-text-tertiary w-8 shrink-0">
-        From
+      <span className="text-xs text-text-tertiary min-w-8 shrink-0">
+        {t("composer.from")}
       </span>
       <select
         value={selected ? key(selected) : ""}

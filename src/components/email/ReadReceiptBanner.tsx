@@ -12,6 +12,7 @@ import {
   parseReceiptAddress,
   sendReadReceipt,
 } from "@/services/email/readReceipts";
+import { useI18n } from "@/i18n";
 
 interface ReadReceiptBannerProps {
   message: DbMessage;
@@ -31,6 +32,7 @@ type BannerState =
  * dismissed request never prompts again.
  */
 export function ReadReceiptBanner({ message }: ReadReceiptBannerProps) {
+  const { t } = useI18n();
   const accounts = useAccountStore((s) => s.accounts);
   const [state, setState] = useState<BannerState>("hidden");
   const evaluatedMessageRef = useRef<string | null>(null);
@@ -95,7 +97,7 @@ export function ReadReceiptBanner({ message }: ReadReceiptBannerProps) {
 
   if (state === "hidden" || state === "sending") return null;
 
-  const requester = message.from_name ?? message.from_address ?? "The sender";
+  const requester = message.from_name ?? message.from_address ?? t("email.theSender");
 
   const handleSend = async () => {
     setState("sending");
@@ -103,7 +105,7 @@ export function ReadReceiptBanner({ message }: ReadReceiptBannerProps) {
       await sendReadReceipt(message, false);
       setState("sent");
     } catch (err) {
-      reportError("Read receipt not sent", err);
+      reportError(t("email.readReceiptNotSent"), err);
       setState("failed");
     }
   };
@@ -121,7 +123,7 @@ export function ReadReceiptBanner({ message }: ReadReceiptBannerProps) {
     return (
       <div className="bg-success/10 border border-success/20 rounded-lg p-3 mb-3 flex items-center gap-2">
         <CheckCheck size={16} className="text-success shrink-0" />
-        <p className="text-sm text-text-secondary">Read receipt sent.</p>
+        <p className="text-sm text-text-secondary">{t("email.readReceiptSent")}</p>
       </div>
     );
   }
@@ -132,31 +134,31 @@ export function ReadReceiptBanner({ message }: ReadReceiptBannerProps) {
       <div className="flex-1 min-w-0">
         <p className="text-sm text-text-primary font-medium">
           {state === "failed"
-            ? "Sending the read receipt failed"
-            : "Read receipt requested"}
+            ? t("email.readReceiptSendFailed")
+            : t("email.readReceiptRequested")}
         </p>
         <p className="text-xs text-text-secondary mt-0.5">
-          {requester} asked to be notified when you read this message.
+          {t("email.readReceiptAsked").replace("{requester}", requester)}
         </p>
         <div className="flex items-center gap-2 mt-2">
           <button
             onClick={handleSend}
             className="text-xs px-2.5 py-1 rounded-md bg-accent text-on-accent hover:bg-accent-hover transition-colors"
           >
-            {state === "failed" ? "Retry" : "Send receipt"}
+            {state === "failed" ? t("email.retry") : t("email.sendReceipt")}
           </button>
           <button
             onClick={handleDismiss}
             className="text-xs px-2.5 py-1 rounded-md text-text-secondary hover:bg-bg-hover transition-colors"
           >
-            Don't send
+            {t("email.dontSend")}
           </button>
         </div>
       </div>
       <button
         onClick={handleDismiss}
         className="shrink-0 p-0.5 rounded hover:bg-accent/10 text-text-tertiary hover:text-text-secondary transition-colors"
-        aria-label="Dismiss read receipt request"
+        aria-label={t("email.dismissReadReceipt")}
       >
         <X size={14} />
       </button>

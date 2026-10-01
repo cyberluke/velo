@@ -16,6 +16,7 @@ import { ReadReceiptBadge } from "./ReadReceiptBadge";
 import { OneTimeCodeBanner } from "./OneTimeCodeBanner";
 import { RecipientLine } from "./RecipientLine";
 import type { MessageScanResult } from "@/utils/phishingDetector";
+import { useI18n } from "@/i18n";
 
 interface MessageItemProps {
   message: DbMessage;
@@ -39,6 +40,7 @@ interface MessageItemProps {
 }
 
 export const MessageItem = memo(forwardRef<HTMLDivElement, MessageItemProps>(function MessageItem({ message, isLast, blockImages, senderAllowlisted, accountId, threadId, isSpam, focused, isSearchMatch, highlightTerms, ownAddresses, onContextMenu, onSelectionContextMenu }, ref) {
+  const { t } = useI18n();
   const [expanded, setExpanded] = useState(isLast || !!isSearchMatch);
   // Repaint when the 12/24-hour preference changes
   useTimeFormat();
@@ -152,7 +154,7 @@ export const MessageItem = memo(forwardRef<HTMLDivElement, MessageItemProps>(fun
     referencedCids,
   );
 
-  const fromDisplay = message.from_name ?? message.from_address ?? "Unknown";
+  const fromDisplay = message.from_name ?? message.from_address ?? t("email.unknown");
 
   // "Opened" marker: read receipts received for a message the user sent
   const accounts = useAccountStore((s) => s.accounts);
@@ -260,7 +262,7 @@ export const MessageItem = memo(forwardRef<HTMLDivElement, MessageItemProps>(fun
               onSelectionContextMenu={onSelectionContextMenu}
             />
           ) : (
-            <div className="py-8 text-center text-text-tertiary text-sm">Loading...</div>
+            <div className="py-8 text-center text-text-tertiary text-sm">{t("email.loading")}</div>
           )}
 
           <InlineAttachmentPreview
@@ -311,6 +313,7 @@ function UnsubscribeLink({
   fromName: string | null;
 }) {
   const url = parseUnsubscribeUrl(header);
+  const { t } = useI18n();
   const [status, setStatus] = useState<"idle" | "loading" | "done" | "failed">("idle");
   if (!url) return null;
 
@@ -347,10 +350,10 @@ function UnsubscribeLink({
       }`}
     >
       <MailMinus size={12} />
-      {status === "loading" && "Unsubscribing..."}
-      {status === "done" && "Unsubscribed"}
-      {status === "failed" && "Unsubscribe failed — click to retry"}
-      {status === "idle" && "Unsubscribe"}
+      {status === "loading" && t("email.unsubscribing")}
+      {status === "done" && t("email.unsubscribed")}
+      {status === "failed" && t("email.unsubscribeFailed")}
+      {status === "idle" && t("email.unsubscribe")}
     </button>
   );
 }

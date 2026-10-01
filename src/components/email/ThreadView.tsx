@@ -15,7 +15,7 @@ import { getSetting } from "@/services/db/settings";
 import { getAllowlistedSenders } from "@/services/db/imageAllowlist";
 import { VolumeX, Merge, CalendarDays, Calendar, X } from "lucide-react";
 import type { MeetingDetectionResult } from "@/services/ai/types";
-import { useI18n } from "@/i18n";
+import { useI18n, t as translate } from "@/i18n";
 import { escapeHtml, sanitizeHtml } from "@/utils/sanitize";
 import { isNoReplyAddress } from "@/utils/noReply";
 import { recipientHeadersFromMessages } from "@/utils/resolveFromAddress";
@@ -58,7 +58,7 @@ async function handlePopOut(thread: Thread) {
 
     const win = new WebviewWindow(windowLabel, {
       url,
-      title: thread.subject ?? "Thread",
+      title: thread.subject ?? translate("email.thread"),
       width: 800,
       height: 700,
       center: true,
@@ -120,7 +120,7 @@ export function ThreadView({ thread }: ThreadViewProps) {
     try {
       const result = await spamThread(threadAccountId, thread.id, [], false);
       if (!result.success) {
-        reportError("Could not move conversation out of Spam", result.error);
+        reportError(t("email.couldNotMoveFromSpam"), result.error);
         return;
       }
       updateThread(thread.id, {
@@ -133,11 +133,11 @@ export function ThreadView({ thread }: ThreadViewProps) {
       });
       notify(
         "success",
-        "Moved to Inbox",
-        result.queued ? "The change will sync when you are back online." : undefined,
+        t("email.movedToInbox"),
+        result.queued ? t("email.willSyncWhenOnline") : undefined,
       );
     } catch (err) {
-      reportError("Could not move conversation out of Spam", err);
+      reportError(t("email.couldNotMoveFromSpam"), err);
     } finally {
       setRestoringFromSpam(false);
     }
@@ -168,7 +168,7 @@ export function ThreadView({ thread }: ThreadViewProps) {
     setLoading(true);
     setLoadError(null);
     const timeout = setTimeout(() => {
-      if (!cancelled) { cancelled = true; setLoadError("Loading this email took too long. Please retry."); setLoading(false); }
+      if (!cancelled) { cancelled = true; setLoadError(t("email.loadTimedOut")); setLoading(false); }
     }, 15000);
     (async () => {
       try {
@@ -324,7 +324,7 @@ export function ThreadView({ thread }: ThreadViewProps) {
       const date = formatDateTime(msg.date);
       const from = msg.from_name
         ? `${escapeHtml(msg.from_name)} &lt;${escapeHtml(msg.from_address ?? "")}&gt;`
-        : escapeHtml(msg.from_address ?? "Unknown");
+        : escapeHtml(msg.from_address ?? t("email.unknown"));
       const to = escapeHtml(msg.to_addresses ?? "");
       const body = msg.body_html ? sanitizeHtml(msg.body_html) : escapeHtml(msg.body_text ?? "");
       return `
@@ -340,16 +340,16 @@ export function ThreadView({ thread }: ThreadViewProps) {
 
     const safeSubject = escapeHtml(thread.subject ?? "");
     doc.open();
-    doc.write(`<!DOCTYPE html><html><head><title>${safeSubject || "Email"}</title>
+    doc.write(`<!DOCTYPE html><html><head><title>${safeSubject || t("email.emailTitle")}</title>
       <style>body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;max-width:800px;margin:20px auto;color:#333;font-size:14px}
       h1{font-size:18px;margin-bottom:8px}img{max-width:100%}</style></head>
-      <body><h1>${safeSubject || "(No subject)"}</h1>${messagesHtml}</body></html>`);
+      <body><h1>${safeSubject || t("email.noSubject")}</h1>${messagesHtml}</body></html>`);
     doc.close();
 
     iframe.contentWindow?.focus();
     iframe.contentWindow?.print();
     setTimeout(() => document.body.removeChild(iframe), 1000);
-  }, [messages, thread.subject]);
+  }, [messages, thread.subject, t]);
 
   // Message-level keyboard navigation (ArrowUp / ArrowDown)
   const [focusedMsgIdx, setFocusedMsgIdx] = useState(-1);
@@ -505,7 +505,7 @@ export function ThreadView({ thread }: ThreadViewProps) {
       });
 
       const content = emlParts.join("\r\n\r\n");
-      const defaultName = `${(thread.subject ?? "email").replace(/[^a-zA-Z0-9_-]/g, "_")}.eml`;
+      const defaultName = `${(thread.subject ?? t("email.emailDefaultName")).replace(/[^a-zA-Z0-9_-]/g, "_")}.eml`;
 
       const filePath = await save({
         defaultPath: defaultName,
@@ -517,7 +517,7 @@ export function ThreadView({ thread }: ThreadViewProps) {
     } catch (err) {
       console.error("Failed to export thread:", err);
     }
-  }, [messages, thread.subject]);
+  }, [messages, thread.subject, t]);
 
   // While a contact is pinned the sidebar stays with them, so clicking through
   // their past conversations does not swap it out from under the user.
@@ -525,7 +525,7 @@ export function ThreadView({ thread }: ThreadViewProps) {
   const pinnedContact = useUIStore((s) => s.pinnedContact);
 
   if (loadError) {
-    return <div className="p-6" role="alert"><p>Could not open this email</p><p className="text-sm text-text-secondary">{loadError}</p><button className="mt-3 text-accent underline" onClick={() => setLoadAttempt((n) => n + 1)}>Retry</button></div>;
+    return <div className="p-6" role="alert"><p>{t("email.couldNotOpen")}</p><p className="text-sm text-text-secondary">{loadError}</p><button className="mt-3 text-accent underline" onClick={() => setLoadAttempt((n) => n + 1)}>{t("email.retry")}</button></div>;
   }
   if (loading) {
     return (
@@ -592,7 +592,7 @@ export function ThreadView({ thread }: ThreadViewProps) {
           <div className="flex items-center gap-2 px-6 py-2 bg-accent/5 border-b border-border-secondary text-xs text-text-secondary">
             <Merge size={13} className="shrink-0 text-accent" />
             <span className="flex-1">
-              {mergedIds.length} other conversation{mergedIds.length === 1 ? "" : "s"} merged into this one
+              {t("email.mergedCount").replace("{count}", String(mergedIds.length)).replace("{plural}", mergedIds.length === 1 ? "" : "s")}
             </span>
             <button
               onClick={async () => {
@@ -604,7 +604,7 @@ export function ThreadView({ thread }: ThreadViewProps) {
               }}
               className="text-accent hover:underline shrink-0"
             >
-              Separate again
+              {t("email.separateAgain")}
             </button>
           </div>
         )}
@@ -612,25 +612,25 @@ export function ThreadView({ thread }: ThreadViewProps) {
         {/* Thread subject */}
         <div className="px-10 py-8 bg-gradient-to-br from-white/55 to-transparent dark:from-white/[0.02]">
           <h1 className="font-serif text-3xl font-semibold tracking-[-0.025em] text-text-primary flex items-center gap-2">
-            {thread.subject ?? "(No subject)"}
+            {thread.subject ?? t("email.noSubject")}
             {thread.isMuted && (
-              <span className="text-warning shrink-0" title="Muted">
+              <span className="text-warning shrink-0" title={t("email.muted")}>
                 <VolumeX size={16} />
               </span>
             )}
           </h1>
           <div className="text-xs text-text-tertiary mt-2 flex items-center gap-3">
             <span>
-              {messages.length} message{messages.length !== 1 ? "s" : ""} in this thread
+              {t("email.messageCount").replace("{count}", String(messages.length)).replace("{plural}", messages.length !== 1 ? "s" : "")}
             </span>
             {threadAccountId && (
               <button
                 onClick={() => setShowRelatedEvents(true)}
                 className="flex items-center gap-1 text-accent hover:underline"
-                title="Meetings related to this thread"
+                title={t("email.relatedMeetingsTitle")}
               >
                 <CalendarDays size={12} />
-                Related meetings
+                {t("email.relatedMeetings")}
               </button>
             )}
           </div>

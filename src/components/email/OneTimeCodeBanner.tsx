@@ -3,6 +3,7 @@ import { Copy, Check, ExternalLink, KeyRound } from "lucide-react";
 import { detectOtpCode, detectSignInLink } from "@/utils/otpDetector";
 import { reportError } from "@/stores/toastStore";
 import type { DbMessage } from "@/services/db/messages";
+import { useI18n } from "@/i18n";
 
 /**
  * The code and the sign-in link of a login mail, as buttons on the message.
@@ -12,6 +13,7 @@ import type { DbMessage } from "@/services/db/messages";
  * click to open, without hunting through the body for either.
  */
 export function OneTimeCodeBanner({ message }: { message: DbMessage }) {
+  const { t } = useI18n();
   const found = useMemo(() => {
     const text = message.body_text ?? stripTags(message.body_html);
     return {
@@ -31,7 +33,7 @@ export function OneTimeCodeBanner({ message }: { message: DbMessage }) {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
-      reportError("Could not copy the code", err);
+      reportError(t("email.couldNotCopyCode"), err);
     }
   };
 
@@ -53,7 +55,7 @@ export function OneTimeCodeBanner({ message }: { message: DbMessage }) {
             className="flex items-center gap-1 text-xs font-medium text-accent hover:underline"
           >
             {copied ? <Check size={12} /> : <Copy size={12} />}
-            {copied ? "Copied" : "Copy code"}
+            {copied ? t("email.copied") : t("email.copyCode")}
           </button>
         </>
       )}
@@ -63,7 +65,7 @@ export function OneTimeCodeBanner({ message }: { message: DbMessage }) {
           className="flex items-center gap-1 text-xs font-medium text-accent hover:underline ml-auto"
         >
           <ExternalLink size={12} />
-          Open sign-in link
+          {t("email.openSignInLink")}
         </button>
       )}
     </div>

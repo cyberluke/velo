@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { CSSTransition } from "react-transition-group";
 import { useComposerStore } from "@/stores/composerStore";
+import { useI18n } from "@/i18n";
 
 export function UndoSendToast() {
   const {
@@ -11,6 +12,7 @@ export function UndoSendToast() {
     undoSendSkip,
     clearUndoSend,
   } = useComposerStore();
+  const { t } = useI18n();
   const toastRef = useRef<HTMLDivElement>(null);
   const [remainingMs, setRemainingMs] = useState(0);
 
@@ -45,19 +47,19 @@ export function UndoSendToast() {
       <div ref={toastRef} className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 bg-text-primary text-bg-primary rounded-lg shadow-lg overflow-hidden">
         <div className="px-4 py-2.5 flex items-center gap-3">
           <span className="text-sm tabular-nums">
-            Sending email... {remainingSeconds}s
+            {t("composer.sendingEmail").replace("{seconds}", `${remainingSeconds}`)}
           </span>
           <button
             onClick={handleCancel}
             className="text-sm font-medium text-accent hover:text-accent-hover underline"
           >
-            Cancel
+            {t("composer.cancel")}
           </button>
           <button
             onClick={handleSkip}
             className="text-sm font-medium text-accent hover:text-accent-hover underline"
           >
-            Skip
+            {t("composer.skip")}
           </button>
         </div>
         <div className="h-0.5 bg-white/20">

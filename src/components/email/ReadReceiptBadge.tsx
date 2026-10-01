@@ -1,6 +1,7 @@
 import { CheckCheck, Hourglass } from "lucide-react";
 import { formatFullDate } from "@/utils/date";
 import type { DbMessage } from "@/services/db/messages";
+import { useI18n } from "@/i18n";
 
 interface ReadReceiptBadgeProps {
   message: DbMessage;
@@ -17,6 +18,7 @@ interface ReadReceiptBadgeProps {
  * Nothing at all when no receipt was requested.
  */
 export function ReadReceiptBadge({ message, isOwnMessage }: ReadReceiptBadgeProps) {
+  const { t } = useI18n();
   if (!isOwnMessage) return null;
 
   const count = message.read_receipt_count ?? 0;
@@ -24,12 +26,12 @@ export function ReadReceiptBadge({ message, isOwnMessage }: ReadReceiptBadgeProp
     return (
       <span
         className="inline-flex items-center gap-0.5 text-[0.625rem] px-1.5 py-px rounded-full bg-success/15 text-success shrink-0"
-        title={`Read receipt received${
-          message.read_receipt_last_at ? ` — last ${formatFullDate(message.read_receipt_last_at)}` : ""
+        title={`${t("email.receiptReceived")}${
+          message.read_receipt_last_at ? t("email.receiptLast").replace("{date}", formatFullDate(message.read_receipt_last_at)) : ""
         }`}
       >
         <CheckCheck size={10} />
-        {count > 1 ? `Opened ${count}×` : "Opened"}
+        {count > 1 ? t("email.openedCount").replace("{count}", String(count)) : t("email.opened")}
       </span>
     );
   }
@@ -40,10 +42,10 @@ export function ReadReceiptBadge({ message, isOwnMessage }: ReadReceiptBadgeProp
   return (
     <span
       className="inline-flex items-center gap-0.5 text-[0.625rem] px-1.5 py-px rounded-full bg-bg-tertiary text-text-tertiary shrink-0"
-      title="A read receipt was requested — nothing back yet. Many clients never answer."
+      title={t("email.receiptAwaiting")}
     >
       <Hourglass size={10} />
-      Awaiting
+      {t("email.awaiting")}
     </span>
   );
 }

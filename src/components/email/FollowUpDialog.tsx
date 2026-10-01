@@ -1,4 +1,5 @@
 import { DateTimePickerDialog } from "@/components/ui/DateTimePickerDialog";
+import { useI18n } from "@/i18n";
 
 interface FollowUpDialogProps {
   isOpen?: boolean;
@@ -6,7 +7,7 @@ interface FollowUpDialogProps {
   onClose: () => void;
 }
 
-function getFollowUpPresets(): { label: string; timestamp: number }[] {
+function getFollowUpPresets(t: (key: string) => string): { label: string; timestamp: number }[] {
   const now = new Date();
 
   // In 1 day
@@ -30,24 +31,25 @@ function getFollowUpPresets(): { label: string; timestamp: number }[] {
   oneWeek.setHours(9, 0, 0, 0);
 
   return [
-    { label: "In 1 day", timestamp: Math.floor(oneDay.getTime() / 1000) },
-    { label: "In 2 days", timestamp: Math.floor(twoDays.getTime() / 1000) },
-    { label: "In 3 days", timestamp: Math.floor(threeDays.getTime() / 1000) },
-    { label: "In 1 week", timestamp: Math.floor(oneWeek.getTime() / 1000) },
+    { label: t("email.followUpIn1Day"), timestamp: Math.floor(oneDay.getTime() / 1000) },
+    { label: t("email.followUpIn2Days"), timestamp: Math.floor(twoDays.getTime() / 1000) },
+    { label: t("email.followUpIn3Days"), timestamp: Math.floor(threeDays.getTime() / 1000) },
+    { label: t("email.followUpIn1Week"), timestamp: Math.floor(oneWeek.getTime() / 1000) },
   ];
 }
 
 export function FollowUpDialog({ isOpen = true, onSetReminder, onClose }: FollowUpDialogProps) {
-  const presets = getFollowUpPresets();
+  const { t } = useI18n();
+  const presets = getFollowUpPresets(t);
 
   return (
     <DateTimePickerDialog
       isOpen={isOpen}
       onClose={onClose}
-      title="Remind me if no reply..."
+      title={t("email.followUpDialogTitle")}
       presets={presets}
       onSelect={onSetReminder}
-      submitLabel="Set reminder"
+      submitLabel={t("email.followUpSubmit")}
     />
   );
 }

@@ -1,6 +1,7 @@
 import { useEffect, useLayoutEffect, useCallback, useRef, useState } from "react";
 import { Inbox, Bell, Tag, Users, Newspaper, type LucideIcon } from "lucide-react";
 import { ALL_CATEGORIES } from "@/services/db/threadCategories";
+import { useI18n } from "@/i18n";
 
 export interface CategoryTabsProps {
   activeCategory: string;
@@ -17,6 +18,7 @@ const CATEGORY_ICONS: Record<string, LucideIcon> = {
 };
 
 export function CategoryTabs({ activeCategory, onCategoryChange, unreadCounts }: CategoryTabsProps) {
+  const { t } = useI18n();
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const tabRefs = useRef<Map<string, HTMLButtonElement>>(new Map());
   const [indicatorStyle, setIndicatorStyle] = useState<{ left: number; width: number } | null>(null);
@@ -83,7 +85,7 @@ export function CategoryTabs({ activeCategory, onCategoryChange, unreadCounts }:
               }`}
             >
               {Icon && <Icon size={13} />}
-              {cat}
+              {t(`nav.${cat.toLowerCase()}`)}
               {count > 0 && (
                 <span className="text-[0.625rem] bg-accent/15 text-accent px-1.5 rounded-full leading-normal">
                   {count}

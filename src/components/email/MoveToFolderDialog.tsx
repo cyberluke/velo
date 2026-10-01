@@ -21,6 +21,7 @@ import {
   Tag,
   Folder,
 } from "lucide-react";
+import { useI18n } from "@/i18n";
 
 interface MoveToFolderDialogProps {
   isOpen: boolean;
@@ -31,6 +32,7 @@ interface MoveToFolderDialogProps {
 interface Destination {
   id: string;
   label: string;
+  labelKey?: string;
   icon: typeof Inbox;
   type: "system" | "label";
   /** For IMAP: the folder path to move to */
@@ -45,10 +47,10 @@ const VIEW_TO_DESTINATION: Record<string, string> = {
 };
 
 const SYSTEM_DESTINATIONS: Destination[] = [
-  { id: "INBOX", label: "Inbox", icon: Inbox, type: "system" },
-  { id: "__archive__", label: "Archive", icon: Archive, type: "system" },
-  { id: "TRASH", label: "Trash", icon: Trash2, type: "system" },
-  { id: "SPAM", label: "Spam", icon: Ban, type: "system" },
+  { id: "INBOX", labelKey: "email.moveInbox", label: "Inbox", icon: Inbox, type: "system" },
+  { id: "__archive__", labelKey: "email.moveArchive", label: "Archive", icon: Archive, type: "system" },
+  { id: "TRASH", labelKey: "email.moveTrash", label: "Trash", icon: Trash2, type: "system" },
+  { id: "SPAM", labelKey: "email.moveSpam", label: "Spam", icon: Ban, type: "system" },
 ];
 
 export function MoveToFolderDialog({
@@ -56,6 +58,7 @@ export function MoveToFolderDialog({
   threadIds,
   onClose,
 }: MoveToFolderDialogProps) {
+  const { t } = useI18n();
   const [query, setQuery] = useState("");
   const [selectedIdx, setSelectedIdx] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -76,8 +79,12 @@ export function MoveToFolderDialog({
       icon: Tag,
       type: "label" as const,
     }));
-    return [...SYSTEM_DESTINATIONS, ...userLabels];
-  }, [labels]);
+    const system = SYSTEM_DESTINATIONS.map((d) => ({
+      ...d,
+      label: d.labelKey ? t(d.labelKey) : d.label,
+    }));
+    return [...system, ...userLabels];
+  }, [labels, t]);
 
   // Filter destinations by search query
   const filtered = useMemo(() => {
@@ -223,7 +230,7 @@ export function MoveToFolderDialog({
                 setQuery(e.target.value);
                 setSelectedIdx(0);
               }}
-              placeholder="Move to..."
+              placeholder={t("email.moveToPlaceholder")}
               className="flex-1 bg-transparent text-sm text-text-primary placeholder:text-text-tertiary outline-none"
               autoFocus
             />
@@ -237,7 +244,7 @@ export function MoveToFolderDialog({
           >
             {filtered.length === 0 && (
               <div className="px-3 py-4 text-center text-xs text-text-tertiary">
-                No matching folders or labels
+                {t("email.noMatchingFolders")}
               </div>
             )}
             {filtered.map((dest, idx) => {
@@ -267,7 +274,7 @@ export function MoveToFolderDialog({
                   <span className="truncate">{dest.label}</span>
                   {dest.type === "system" && (
                     <span className="ml-auto text-[10px] text-text-tertiary uppercase tracking-wider">
-                      System
+                      {t("email.system")}
                     </span>
                   )}
                 </button>
@@ -281,19 +288,19 @@ export function MoveToFolderDialog({
               <kbd className="px-1 py-0.5 rounded bg-bg-tertiary text-text-tertiary">
                 ↑↓
               </kbd>{" "}
-              navigate
+              {t("email.navigate")}
             </span>
             <span>
               <kbd className="px-1 py-0.5 rounded bg-bg-tertiary text-text-tertiary">
                 ↵
               </kbd>{" "}
-              select
+              {t("email.select")}
             </span>
             <span>
               <kbd className="px-1 py-0.5 rounded bg-bg-tertiary text-text-tertiary">
                 esc
               </kbd>{" "}
-              close
+              {t("email.close")}
             </span>
           </div>
         </div>

@@ -1,4 +1,5 @@
 import { DateTimePickerDialog } from "@/components/ui/DateTimePickerDialog";
+import { useI18n } from "@/i18n";
 
 interface SnoozeDialogProps {
   isOpen?: boolean;
@@ -6,7 +7,7 @@ interface SnoozeDialogProps {
   onClose: () => void;
 }
 
-function getSnoozePresets(): { label: string; timestamp: number }[] {
+function getSnoozePresets(t: (key: string) => string): { label: string; timestamp: number }[] {
   const now = new Date();
   const today = new Date(now);
 
@@ -37,24 +38,25 @@ function getSnoozePresets(): { label: string; timestamp: number }[] {
   nextWeek.setHours(9, 0, 0, 0);
 
   return [
-    { label: "Later Today", timestamp: Math.floor(laterToday.getTime() / 1000) },
-    { label: "Tomorrow", timestamp: Math.floor(tomorrow.getTime() / 1000) },
-    { label: "This Weekend", timestamp: Math.floor(weekend.getTime() / 1000) },
-    { label: "Next Week", timestamp: Math.floor(nextWeek.getTime() / 1000) },
+    { label: t("email.snoozeLaterToday"), timestamp: Math.floor(laterToday.getTime() / 1000) },
+    { label: t("email.snoozeTomorrow"), timestamp: Math.floor(tomorrow.getTime() / 1000) },
+    { label: t("email.snoozeThisWeekend"), timestamp: Math.floor(weekend.getTime() / 1000) },
+    { label: t("email.snoozeNextWeek"), timestamp: Math.floor(nextWeek.getTime() / 1000) },
   ];
 }
 
 export function SnoozeDialog({ isOpen = true, onSnooze, onClose }: SnoozeDialogProps) {
-  const presets = getSnoozePresets();
+  const { t } = useI18n();
+  const presets = getSnoozePresets(t);
 
   return (
     <DateTimePickerDialog
       isOpen={isOpen}
       onClose={onClose}
-      title="Snooze until..."
+      title={t("email.snoozeTitle")}
       presets={presets}
       onSelect={onSnooze}
-      submitLabel="Snooze"
+      submitLabel={t("email.snoozeSubmit")}
     />
   );
 }
