@@ -8,6 +8,7 @@ import {
 } from "@/services/attachments/attachmentActions";
 import { formatFileSize, getFileIcon } from "@/utils/fileTypeHelpers";
 import { AttachmentPreview, AttachmentSaveButton, attachmentRef } from "./AttachmentList";
+import { useI18n } from "@/i18n";
 
 interface ThreadFilesSectionProps {
   accountId: string;
@@ -36,6 +37,7 @@ export function dedupKeepLatest(all: DbAttachment[]): DbAttachment[] {
  * with per-file Quick Look/preview and save, plus a save-all-into-folder action.
  */
 export function ThreadFilesSection({ accountId, threadId }: ThreadFilesSectionProps) {
+  const { t } = useI18n();
   const [files, setFiles] = useState<DbAttachment[]>([]);
   const [previewIndex, setPreviewIndex] = useState<number | null>(null);
   const [saveState, setSaveState] = useState<
@@ -71,7 +73,7 @@ export function ThreadFilesSection({ accountId, threadId }: ThreadFilesSectionPr
 
   const handleSaveAll = async () => {
     if (saveState.phase === "saving") return;
-    const dir = await open({ directory: true, multiple: false, title: "Save attachments to..." });
+    const dir = await open({ directory: true, multiple: false, title: t("email.saveAttachmentsTo") });
     if (!dir || Array.isArray(dir)) return;
 
     setSaveState({ phase: "saving", done: 0, total: files.length });
@@ -110,22 +112,22 @@ export function ThreadFilesSection({ accountId, threadId }: ThreadFilesSectionPr
       <div className="flex items-center justify-between mb-2">
         <h4 className="flex items-center gap-1 text-xs font-semibold uppercase tracking-wider text-text-tertiary">
           <Paperclip size={11} />
-          Files in this thread
+          {t("email.filesInThread")}
         </h4>
         <button
           onClick={handleSaveAll}
           disabled={saveState.phase === "saving"}
           className="flex items-center gap-1 text-[0.625rem] text-accent hover:text-accent-hover transition-colors disabled:opacity-60"
-          title="Save all files to a folder"
+          title={t("email.saveAllToFolder")}
         >
           <Download size={10} />
           {saveState.phase === "saving"
-            ? `Saving ${saveState.done}/${saveState.total}...`
+            ? t("email.savingCount").replace("{done}", String(saveState.done)).replace("{total}", String(saveState.total))
             : saveState.phase === "done"
-              ? `Saved ${saveState.total}`
+              ? t("email.savedCount").replace("{count}", String(saveState.total))
               : saveState.phase === "failed"
-                ? "Failed — retry"
-                : "Save all"}
+                ? t("email.failedRetry")
+                : t("email.saveAll")}
         </button>
       </div>
       <div className="space-y-1">
@@ -136,12 +138,12 @@ export function ThreadFilesSection({ accountId, threadId }: ThreadFilesSectionPr
           >
             <button
               onClick={() => handleOpen(att)}
-              title="Preview"
+              title={t("email.preview")}
               className="flex items-center gap-2 min-w-0 flex-1 text-left"
             >
               <span className="shrink-0">{getFileIcon(att.mime_type)}</span>
               <div className="min-w-0 flex-1">
-                <div className="text-text-secondary truncate">{att.filename ?? "Unnamed"}</div>
+                <div className="text-text-secondary truncate">{att.filename ?? t("email.unnamed")}</div>
                 {att.size != null && (
                   <div className="text-text-tertiary text-[0.625rem]">{formatFileSize(att.size)}</div>
                 )}

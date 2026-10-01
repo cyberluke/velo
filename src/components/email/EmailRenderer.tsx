@@ -33,6 +33,7 @@ import {
 } from "@/services/links/emailNavigation";
 import { highlightSearchTerms } from "@/utils/searchHighlight";
 import { EMAIL_FRAME_CSP, EMAIL_FRAME_SANDBOX } from "@/utils/emailFramePolicy";
+import { useI18n } from "@/i18n";
 
 export interface EmailSelectionRequest {
   position: { x: number; y: number };
@@ -100,6 +101,7 @@ export function EmailRenderer({
   highlightTerms,
   onSelectionContextMenu,
 }: EmailRendererProps) {
+  const { t } = useI18n();
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
   const observerRef = useRef<ResizeObserver | null>(null);
   const rafRef = useRef<number>(0);
@@ -557,7 +559,7 @@ export function EmailRenderer({
         sandbox={EMAIL_FRAME_SANDBOX}
         className={`w-full border-0 ${isDark && !isPlainText ? "rounded-md" : ""}`}
         style={{ overflow: "hidden" }}
-        title="Email content"
+        title={t("email.emailContent")}
       />
       {pendingLink && (
         <LinkConfirmDialog

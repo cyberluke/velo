@@ -12,6 +12,7 @@ import { ReadReceiptBadge } from "./ReadReceiptBadge";
 import { OneTimeCodeBanner } from "./OneTimeCodeBanner";
 import type { DbMessage } from "@/services/db/messages";
 import type { DbAttachment } from "@/services/db/attachments";
+import { useI18n } from "@/i18n";
 
 interface ChatMessageProps {
   message: DbMessage;
@@ -51,6 +52,7 @@ export const ChatMessage = memo(function ChatMessage({
   onContextMenu,
   onSelectionContextMenu,
 }: ChatMessageProps) {
+  const { t } = useI18n();
   useTimeFormat();
   const [showFull, setShowFull] = useState(!!isSearchMatch);
   const [attachments, setAttachments] = useState<DbAttachment[]>([]);
@@ -93,7 +95,7 @@ export const ChatMessage = memo(function ChatMessage({
     referencedCids,
   );
 
-  const fromDisplay = message.from_name ?? message.from_address ?? "Unknown";
+  const fromDisplay = message.from_name ?? message.from_address ?? t("email.unknown");
   const bodyHtml = showFull ? message.body_html : trimmed.html;
   const bodyText = showFull ? message.body_text : trimmed.text;
 
@@ -104,8 +106,8 @@ export const ChatMessage = memo(function ChatMessage({
   // The stored snippet comes from the untrimmed mail, so a folded message
   // would otherwise preview the very quote the trim removed
   const preview = forwardOnly
-    ? "Forwarded an email"
-    : previewText(trimmed) || message.snippet || "(No message)";
+    ? t("email.forwardedEmail")
+    : previewText(trimmed) || message.snippet || t("email.noMessage");
 
   return (
     <div
@@ -129,7 +131,7 @@ export const ChatMessage = memo(function ChatMessage({
         />
         <div className={`flex items-baseline gap-1.5 min-w-0 flex-1 ${isMine ? "flex-row-reverse" : ""}`}>
           <span className="text-xs font-medium text-text-primary truncate">
-            {isMine ? "You" : fromDisplay}
+            {isMine ? t("email.you") : fromDisplay}
           </span>
           <span className="text-[0.625rem] text-text-tertiary whitespace-nowrap">
             {formatFullDate(message.date)}
@@ -152,7 +154,7 @@ export const ChatMessage = memo(function ChatMessage({
           <OneTimeCodeBanner message={message} />
           {forwardOnly && !showFull ? (
             // Attachments still render below — a forward usually carries them
-            <div className="text-sm text-text-tertiary italic">Forwarded an email</div>
+            <div className="text-sm text-text-tertiary italic">{t("email.forwardedEmail")}</div>
           ) : blockImages != null ? (
             <EmailRenderer
               html={bodyHtml}
@@ -167,7 +169,7 @@ export const ChatMessage = memo(function ChatMessage({
               onSelectionContextMenu={onSelectionContextMenu}
             />
           ) : (
-            <div className="py-4 text-center text-text-tertiary text-xs">Loading...</div>
+            <div className="py-4 text-center text-text-tertiary text-xs">{t("email.loading")}</div>
           )}
 
           <InlineAttachmentPreview
@@ -196,19 +198,19 @@ export const ChatMessage = memo(function ChatMessage({
           <button
             onClick={onToggleCollapse}
             className="flex items-center gap-0.5 text-[0.625rem] text-text-tertiary hover:text-text-secondary transition-colors"
-            title="Collapse this message"
+            title={t("email.collapseMessage")}
           >
             <ChevronDown size={11} />
-            Collapse
+            {t("email.collapse")}
           </button>
           {(trimmed.trimmed || showFull) && (
             <button
               onClick={() => setShowFull((v) => !v)}
               className="flex items-center gap-0.5 text-[0.625rem] text-accent hover:underline"
-              title={showFull ? "Hide quotes and signature again" : "Show the original mail with quotes and signature"}
+              title={showFull ? t("email.hideQuotes") : t("email.showOriginal")}
             >
               {showFull ? <Minimize2 size={11} /> : <Maximize2 size={11} />}
-              {showFull ? "View trimmed" : "View full"}
+              {showFull ? t("email.viewTrimmed") : t("email.viewFull")}
             </button>
           )}
         </div>

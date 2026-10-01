@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import { CalendarPlus, Copy, ExternalLink, MapPin, MessageSquare, Phone, UserPlus, X } from "lucide-react";
 import type { EmailDataAction } from "@/utils/emailDataActions";
 import { menuSurface, menuRow, menuHover, menuFont } from "@/components/ui/menuStyles";
+import { useI18n } from "@/i18n";
 
 interface EmailDataActionMenuProps {
   action: EmailDataAction;
@@ -44,6 +45,7 @@ export function EmailDataActionMenu({
   onAddContact,
   onCreateEvent,
 }: EmailDataActionMenuProps) {
+  const { t } = useI18n();
   const panelRef = useRef<HTMLDivElement>(null);
   const safePosition = useMemo(() => ({
     left: Math.max(8, Math.min(position.x, window.innerWidth - 248)),
@@ -79,7 +81,7 @@ export function EmailDataActionMenu({
     <div
       ref={panelRef}
       role="menu"
-      aria-label={`Actions for ${action.label}`}
+      aria-label={t("email.actionsFor").replace("{label}", action.label)}
       className={`${menuSurface} w-60 overflow-hidden`}
       style={{ ...menuFont, ...safePosition }}
     >
@@ -87,17 +89,17 @@ export function EmailDataActionMenu({
         <p className="min-w-0 flex-1 whitespace-normal break-words text-xs font-medium text-text-primary">
           {action.label}
         </p>
-        <button type="button" onClick={onClose} aria-label="Close actions" className="text-text-tertiary hover:text-text-primary">
+        <button type="button" onClick={onClose} aria-label={t("email.closeActions")} className="text-text-tertiary hover:text-text-primary">
           <X size={13} />
         </button>
       </div>
 
       {action.kind === "email" && (
         <>
-          <ActionButton icon={MessageSquare} label="Write email" onClick={() => run(() => onCompose(action.href ?? `mailto:${action.value}`))} />
-          <ActionButton icon={Copy} label="Copy email address" onClick={() => run(() => onCopy(action.value))} />
+          <ActionButton icon={MessageSquare} label={t("email.writeEmail")} onClick={() => run(() => onCompose(action.href ?? `mailto:${action.value}`))} />
+          <ActionButton icon={Copy} label={t("email.copyEmailAddress")} onClick={() => run(() => onCopy(action.value))} />
           {simpleEmail && (
-            <ActionButton icon={UserPlus} label="Add to contacts" onClick={() => run(() => onAddContact(action.value, displayName))} />
+            <ActionButton icon={UserPlus} label={t("email.addToContact")} onClick={() => run(() => onAddContact(action.value, displayName))} />
           )}
         </>
       )}
@@ -106,17 +108,17 @@ export function EmailDataActionMenu({
         <>
           <ActionButton
             icon={action.href?.startsWith("sms:") ? MessageSquare : Phone}
-            label={action.href?.startsWith("sms:") ? "Send message" : "Call"}
+            label={action.href?.startsWith("sms:") ? t("email.sendMessage") : t("email.call")}
             onClick={() => run(() => onOpen(action.href ?? `tel:${action.value.replace(/[^+\d]/g, "")}`))}
           />
-          <ActionButton icon={Copy} label="Copy phone number" onClick={() => run(() => onCopy(action.value))} />
+          <ActionButton icon={Copy} label={t("email.copyPhoneNumber")} onClick={() => run(() => onCopy(action.value))} />
         </>
       )}
 
       {action.kind === "date" && (
         <>
-          <ActionButton icon={CalendarPlus} label="Create calendar event" onClick={() => run(() => onCreateEvent(action))} />
-          <ActionButton icon={Copy} label="Copy date" onClick={() => run(() => onCopy(action.value))} />
+          <ActionButton icon={CalendarPlus} label={t("email.createCalendarEvent")} onClick={() => run(() => onCreateEvent(action))} />
+          <ActionButton icon={Copy} label={t("email.copyDate")} onClick={() => run(() => onCopy(action.value))} />
         </>
       )}
 
@@ -124,17 +126,17 @@ export function EmailDataActionMenu({
         <>
           <ActionButton
             icon={MapPin}
-            label="Open in Maps"
+            label={t("email.openInMaps")}
             onClick={() => run(() => onOpen(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(action.value)}`))}
           />
-          <ActionButton icon={Copy} label="Copy address" onClick={() => run(() => onCopy(action.value))} />
+          <ActionButton icon={Copy} label={t("email.copyAddress")} onClick={() => run(() => onCopy(action.value))} />
         </>
       )}
 
       {(action.kind === "url" || action.kind === "app") && action.href && (
         <>
-          <ActionButton icon={ExternalLink} label="Open link" onClick={() => run(() => onOpen(action.href!))} />
-          <ActionButton icon={Copy} label="Copy link" onClick={() => run(() => onCopy(action.href!))} />
+          <ActionButton icon={ExternalLink} label={t("email.openLink")} onClick={() => run(() => onOpen(action.href!))} />
+          <ActionButton icon={Copy} label={t("email.copyLink")} onClick={() => run(() => onCopy(action.href!))} />
         </>
       )}
     </div>,

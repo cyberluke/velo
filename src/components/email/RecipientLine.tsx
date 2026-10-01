@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { extractEmailAddresses } from "@/utils/emailUtils";
+import { useI18n } from "@/i18n";
 
 /** Recipients shown before the line folds into "+N more". */
 const PREVIEW_COUNT = 3;
@@ -19,6 +20,7 @@ interface RecipientLineProps {
  * folds on its own, so a long recipient list costs one line until asked for.
  */
 export function RecipientLine({ toAddresses, ccAddresses }: RecipientLineProps) {
+  const { t } = useI18n();
   const [expanded, setExpanded] = useState(false);
 
   const to = useMemo(() => extractEmailAddresses(toAddresses), [toAddresses]);
@@ -32,8 +34,8 @@ export function RecipientLine({ toAddresses, ccAddresses }: RecipientLineProps) 
   if (!foldable) {
     return (
       <div className="mt-1 text-xs text-text-tertiary break-words">
-        {to.length > 0 && <span>To: {to.join(", ")}</span>}
-        {cc.length > 0 && <span>{to.length > 0 ? " · " : ""}Cc: {cc.join(", ")}</span>}
+        {to.length > 0 && <span>{t("email.toLine").replace("{list}", to.join(", "))}</span>}
+        {cc.length > 0 && <span>{to.length > 0 ? " · " : ""}{t("email.ccLine").replace("{list}", cc.join(", "))}</span>}
       </div>
     );
   }
@@ -45,12 +47,12 @@ export function RecipientLine({ toAddresses, ccAddresses }: RecipientLineProps) 
       <button
         onClick={(e) => { e.stopPropagation(); setExpanded(true); }}
         className="mt-1 flex items-start gap-1 text-xs text-text-tertiary hover:text-text-secondary transition-colors text-left w-full"
-        title="Show every recipient"
+        title={t("email.showEveryRecipient")}
       >
         <ChevronRight size={11} className="shrink-0 mt-0.5" />
         <span className="truncate">
-          To: {shown.join(", ")}
-          <span className="text-text-tertiary"> +{hidden} more</span>
+          {t("email.toLine").replace("{list}", shown.join(", "))}
+          <span className="text-text-tertiary"> {t("email.moreRecipients").replace("{count}", String(hidden))}</span>
         </span>
       </button>
     );
@@ -61,16 +63,16 @@ export function RecipientLine({ toAddresses, ccAddresses }: RecipientLineProps) 
       <button
         onClick={(e) => { e.stopPropagation(); setExpanded(false); }}
         className="flex items-center gap-1 hover:text-text-secondary transition-colors"
-        title="Hide the recipient list"
+        title={t("email.hideRecipientList")}
       >
         <ChevronDown size={11} className="shrink-0" />
-        {total} recipient{total === 1 ? "" : "s"}
+        {t("email.recipientCount").replace("{count}", String(total)).replace("{plural}", total === 1 ? "" : "s")}
       </button>
       {/* Capped and scrollable: a few hundred addresses must not push the
           message itself off the screen */}
       <div onClick={(e) => e.stopPropagation()} className="mt-1 pl-4 max-h-40 overflow-y-auto break-words select-text">
-        {to.length > 0 && <div>To: {to.join(", ")}</div>}
-        {cc.length > 0 && <div className="mt-1">Cc: {cc.join(", ")}</div>}
+        {to.length > 0 && <div>{t("email.toLine").replace("{list}", to.join(", "))}</div>}
+        {cc.length > 0 && <div className="mt-1">{t("email.ccLine").replace("{list}", cc.join(", "))}</div>}
       </div>
     </div>
   );

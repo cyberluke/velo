@@ -9,6 +9,7 @@ import { navigateToThread } from "@/router/navigate";
 import { MessageItem } from "./MessageItem";
 import { ChatThread } from "./ChatThread";
 import type { ThreadViewMode } from "@/stores/uiStore";
+import { useI18n } from "@/i18n";
 
 /** Threads fetched per page — a click loads the next batch. */
 const PAGE_SIZE = 10;
@@ -43,6 +44,7 @@ export function PastConversations({
   blockImages,
   allowlistedSenders,
 }: PastConversationsProps) {
+  const { t } = useI18n();
   useTimeFormat();
   // A Set identity changes on every render of the parent; the addresses do not
   const ownAddressKey = [...ownAddresses].sort().join(",");
@@ -208,7 +210,7 @@ export function PastConversations({
                       console.error("Failed to open conversation:", err);
                     }
                   }}
-                  title="Open this conversation to reply"
+                  title={t("email.openToReply")}
                   className="absolute right-9 top-1.5 p-1 rounded text-text-tertiary hover:text-accent hover:bg-bg-hover opacity-0 group-hover/conv:opacity-100 transition-opacity"
                 >
                   <ExternalLink size={12} />
@@ -226,7 +228,7 @@ export function PastConversations({
                       console.error("Failed to merge conversation:", err);
                     }
                   }}
-                  title="Merge this into the conversation above"
+                  title={t("email.mergeIntoAbove")}
                   className="absolute right-2 top-1.5 p-1 rounded text-text-tertiary hover:text-accent hover:bg-bg-hover opacity-0 group-hover/conv:opacity-100 transition-opacity"
                 >
                   <Merge size={12} />

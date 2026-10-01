@@ -6,6 +6,7 @@ import { deleteAiCache } from "@/services/db/aiCache";
 import { useComposerStore } from "@/stores/composerStore";
 import { recipientHeadersFromMessages } from "@/utils/resolveFromAddress";
 import type { DbMessage } from "@/services/db/messages";
+import { useI18n } from "@/i18n";
 
 interface SmartReplySuggestionsProps {
   threadId: string;
@@ -15,6 +16,7 @@ interface SmartReplySuggestionsProps {
 }
 
 export function SmartReplySuggestions({ threadId, accountId, messages, noReply }: SmartReplySuggestionsProps) {
+  const { t } = useI18n();
   const [replies, setReplies] = useState<string[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [available, setAvailable] = useState(false);
@@ -86,11 +88,11 @@ export function SmartReplySuggestions({ threadId, accountId, messages, noReply }
     <div className="mx-4 my-2 p-3 rounded-lg bg-accent/5 border border-accent/20">
       <div className="flex items-center gap-2 mb-2">
         <Sparkles size={14} className="text-accent shrink-0" />
-        <span className="text-xs font-medium text-accent flex-1">Quick Replies</span>
+        <span className="text-xs font-medium text-accent flex-1">{t("email.quickReplies")}</span>
         <button
           onClick={handleRefresh}
           className="p-0.5 text-text-tertiary hover:text-accent transition-colors"
-          title="Refresh suggestions"
+          title={t("email.refreshSuggestions")}
         >
           <RefreshCw size={12} className={loading ? "animate-spin" : ""} />
         </button>
@@ -98,7 +100,7 @@ export function SmartReplySuggestions({ threadId, accountId, messages, noReply }
       {loading && !replies && (
         <div className="flex items-center gap-2 text-text-tertiary">
           <div className="w-3 h-3 border-2 border-accent/30 border-t-accent rounded-full animate-spin" />
-          <span className="text-xs">Generating suggestions...</span>
+          <span className="text-xs">{t("email.generatingSuggestions")}</span>
         </div>
       )}
       {replies && (

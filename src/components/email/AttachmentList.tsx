@@ -10,6 +10,7 @@ import { Modal } from "@/components/ui/Modal";
 import { Tooltip } from "@/components/ui/Tooltip";
 import { Download, Eye, Check, ChevronLeft, ChevronRight, FileSearch, TriangleAlert } from "lucide-react";
 import { formatFileSize, isImage, isPdf, isText, canPreview, getFileIcon } from "@/utils/fileTypeHelpers";
+import { useI18n } from "@/i18n";
 
 export function attachmentRef(accountId: string, att: DbAttachment): AttachmentRef {
   return {
@@ -35,6 +36,7 @@ export function AttachmentSaveButton({
   size?: number;
   className?: string;
 }) {
+  const { t } = useI18n();
   const [state, setState] = useState<"idle" | "saving" | "saved" | "failed">("idle");
   const resetRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => () => { if (resetRef.current) clearTimeout(resetRef.current); }, []);
@@ -57,7 +59,7 @@ export function AttachmentSaveButton({
     <button
       onClick={handleSave}
       disabled={!attachment.gmail_attachment_id}
-      title="Save to Downloads — ⌘-click to choose a folder"
+      title={t("email.saveToDownloads")}
       className={`shrink-0 transition-colors disabled:opacity-40 ${
         state === "saved"
           ? "text-success"
@@ -148,6 +150,7 @@ interface AttachmentListProps {
 }
 
 export function AttachmentList({ accountId, attachments, referencedCids, onOpenAttachment }: AttachmentListProps) {
+  const { t } = useI18n();
   const ownViewer = useAttachmentViewer(accountId, attachments, referencedCids);
   const fileAttachments = ownViewer.fileAttachments;
   const handleOpen = onOpenAttachment ?? ownViewer.openAttachment;
@@ -158,7 +161,7 @@ export function AttachmentList({ accountId, attachments, referencedCids, onOpenA
     <>
       <div className="mt-3 pt-3 border-t border-border-secondary">
         <div className="text-xs text-text-tertiary mb-2">
-          {fileAttachments.length} attachment{fileAttachments.length !== 1 ? "s" : ""}
+          {t("email.attachmentCount").replace("{count}", String(fileAttachments.length)).replace("{plural}", fileAttachments.length !== 1 ? "s" : "")}
         </div>
         <div className="flex flex-wrap gap-2">
           {fileAttachments.map((att) => (
@@ -168,12 +171,12 @@ export function AttachmentList({ accountId, attachments, referencedCids, onOpenA
             >
               <button
                 onClick={() => handleOpen(att)}
-                title="Preview"
+                title={t("email.preview")}
                 className="flex items-center gap-2 px-3 py-1.5 hover:bg-bg-hover transition-colors"
               >
                 <span className="text-text-tertiary">{getFileIcon(att.mime_type)}</span>
                 <span className="text-text-secondary truncate max-w-[200px]">
-                  {att.filename ?? "Unnamed"}
+                  {att.filename ?? t("email.unnamed")}
                 </span>
                 {att.size != null && (
                   <span className="text-text-tertiary whitespace-nowrap">
@@ -181,7 +184,7 @@ export function AttachmentList({ accountId, attachments, referencedCids, onOpenA
                   </span>
                 )}
                 {att.extracted_at != null && !att.extraction_error && (
-                  <Tooltip content="Text extracted — this file is findable in search">
+                  <Tooltip content={t("email.textExtracted")}>
                     <FileSearch size={12} className="text-success/80 shrink-0" />
                   </Tooltip>
                 )}
@@ -220,6 +223,7 @@ export function AttachmentPreview({
   startIndex?: number;
   onClose: () => void;
 }) {
+  const { t } = useI18n();
   const clamp = (i: number) => Math.min(Math.max(i, 0), attachments.length - 1);
   const [index, setIndex] = useState(() => clamp(startIndex));
   const [saving, setSaving] = useState(false);
@@ -269,7 +273,7 @@ export function AttachmentPreview({
       <div className="flex items-center gap-2 min-w-0">
         <span>{getFileIcon(attachment.mime_type)}</span>
         <span className="text-sm font-medium text-text-primary truncate">
-          {attachment.filename ?? "Unnamed"}
+          {attachment.filename ?? t("email.unnamed")}
         </span>
         {attachment.size != null && (
           <span className="text-xs text-text-tertiary whitespace-nowrap">
@@ -283,7 +287,7 @@ export function AttachmentPreview({
             <button
               onClick={() => goTo(-1)}
               disabled={index === 0}
-              title="Previous attachment (←)"
+              title={t("email.prevAttachment")}
               className="p-1 rounded text-text-tertiary hover:text-text-primary hover:bg-bg-hover transition-colors disabled:opacity-30"
             >
               <ChevronLeft size={16} />
@@ -294,21 +298,21 @@ export function AttachmentPreview({
             <button
               onClick={() => goTo(1)}
               disabled={index === attachments.length - 1}
-              title="Next attachment (→)"
+              title={t("email.nextAttachment")}
               className="p-1 rounded text-text-tertiary hover:text-text-primary hover:bg-bg-hover transition-colors disabled:opacity-30"
             >
               <ChevronRight size={16} />
             </button>
           </div>
         )}
-        <button
+<button
           onClick={handleDownload}
           disabled={saving}
-          title="Save to Downloads — ⌘-click to choose a folder"
+          title={t("email.saveToDownloads")}
           className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-on-accent bg-accent hover:bg-accent-hover rounded-md transition-colors disabled:opacity-50"
         >
           <Download size={13} />
-          {saving ? "Saving..." : "Download"}
+          {saving ? t("email.saving") : t("email.download")}
         </button>
         <button
           onClick={onClose}
@@ -337,6 +341,7 @@ export function AttachmentPreview({
 
 /** Fetches and renders one attachment's content inside the preview modal. */
 function AttachmentPreviewBody({ attachment }: { attachment: DbAttachment }) {
+  const { t } = useI18n();
   const [loading, setLoading] = useState(false);
   const [blobUrl, setBlobUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -394,7 +399,7 @@ function AttachmentPreviewBody({ attachment }: { attachment: DbAttachment }) {
       {/* Allow native right-click in preview (save image, copy, etc.) */}
       <div className="flex-1 overflow-auto min-h-[200px] flex items-center justify-center p-4" data-native-context-menu>
         {loading && (
-          <p className="text-sm text-text-tertiary">Loading preview...</p>
+          <p className="text-sm text-text-tertiary">{t("email.loadingPreview")}</p>
         )}
         {error && (
           <p className="text-sm text-text-tertiary">{error}</p>
@@ -402,14 +407,14 @@ function AttachmentPreviewBody({ attachment }: { attachment: DbAttachment }) {
         {!loading && !error && blobUrl && isImage(attachment.mime_type) && (
           <img
             src={blobUrl}
-            alt={attachment.filename ?? "Attachment"}
+            alt={attachment.filename ?? t("email.attachment")}
             className="max-w-full max-h-[70vh] object-contain rounded"
           />
         )}
         {!loading && !error && blobUrl && isPdf(attachment.mime_type, attachment.filename) && (
           <iframe
             src={blobUrl}
-            title={attachment.filename ?? "PDF preview"}
+            title={attachment.filename ?? t("email.pdfPreview")}
             className="w-full h-[70vh] border-0 rounded"
           />
         )}
@@ -419,8 +424,8 @@ function AttachmentPreviewBody({ attachment }: { attachment: DbAttachment }) {
         {!isPreviewable && !loading && (
           <div className="flex flex-col items-center gap-3 text-text-tertiary">
             <Eye size={40} strokeWidth={1} />
-            <p className="text-sm">Preview not available for this file type</p>
-            <p className="text-xs">{attachment.mime_type ?? "Unknown type"}</p>
+            <p className="text-sm">{t("email.previewNotAvailable")}</p>
+            <p className="text-xs">{attachment.mime_type ?? t("email.unknownType")}</p>
           </div>
         )}
       </div>

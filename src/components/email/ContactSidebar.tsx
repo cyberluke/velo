@@ -262,18 +262,18 @@ export function ContactSidebar({ email, name, accountId, threadId, ownAddresses,
           {isPinned ? (
             <button
               onClick={() => clearPinnedContact()}
-              title="Stop following this contact and go back to the open message's sender"
+              title={t("email.stopFollowingContact")}
               className="flex items-center gap-1 px-1.5 py-0.5 rounded text-[0.625rem] text-accent bg-accent/10 hover:bg-accent/20 transition-colors"
             >
               <Pin size={10} />
-              Pinned
+              {t("email.pinned")}
             </button>
           ) : (
             <span />
           )}
           <button
             onClick={onClose}
-            title="Close contact sidebar"
+            title={t("email.closeContactSidebar")}
             className="p-1 text-text-tertiary hover:text-text-primary hover:bg-bg-hover rounded transition-colors"
           >
             <X size={14} />
@@ -310,7 +310,7 @@ export function ContactSidebar({ email, name, accountId, threadId, ownAddresses,
               />
               <button
                 onClick={handleSaveEditName}
-                title="Save name"
+                title={t("email.saveName")}
                 className="p-0.5 text-success hover:text-success/80 transition-colors"
               >
                 <Check size={14} />
@@ -332,21 +332,21 @@ export function ContactSidebar({ email, name, accountId, threadId, ownAddresses,
         <div className="flex items-center justify-center gap-3 mb-4">
           <button
             onClick={handleCompose}
-            title="Send email"
+            title={t("email.sendEmail")}
             className="p-2 text-text-secondary hover:text-accent hover:bg-bg-hover rounded-lg transition-colors"
           >
             <Send size={16} />
           </button>
           <button
             onClick={handleCopyEmail}
-            title={copyFeedback ? "Copied!" : "Copy email"}
+            title={copyFeedback ? t("email.copiedExclaim") : t("email.copyEmail")}
             className="p-2 text-text-secondary hover:text-accent hover:bg-bg-hover rounded-lg transition-colors"
           >
             {copyFeedback ? <Check size={16} className="text-success" /> : <Copy size={16} />}
           </button>
           <button
             onClick={handleToggleVip}
-            title={isVip ? "Remove VIP" : "Mark as VIP"}
+            title={isVip ? t("email.removeVip") : t("email.markVip")}
             className={`p-2 rounded-lg transition-colors ${
               isVip
                 ? "text-warning hover:text-warning/80 hover:bg-bg-hover"
@@ -366,12 +366,12 @@ export function ContactSidebar({ email, name, accountId, threadId, ownAddresses,
             {addedFeedback ? (
               <>
                 <Check size={12} className="text-success" />
-                <span className="text-success">Added!</span>
+                <span className="text-success">{t("email.addedExclaim")}</span>
               </>
             ) : (
               <>
                 <UserPlus size={12} />
-                <span>Add to Contacts</span>
+                <span>{t("email.addToContacts")}</span>
               </>
             )}
           </button>
@@ -381,7 +381,7 @@ export function ContactSidebar({ email, name, accountId, threadId, ownAddresses,
             className="w-full flex items-center justify-center gap-1.5 px-3 py-1 text-xs text-text-tertiary hover:text-text-secondary transition-colors mb-4"
           >
             <PenLine size={11} />
-            <span>Edit name</span>
+            <span>{t("email.editName")}</span>
           </button>
         ) : null}
 
@@ -390,18 +390,18 @@ export function ContactSidebar({ email, name, accountId, threadId, ownAddresses,
           <div className="space-y-2 mb-4">
             <div className="flex items-center gap-2 text-xs text-text-secondary">
               <Mail size={12} className="text-text-tertiary shrink-0" />
-              <span>{stats.emailCount} emails</span>
+              <span>{t("email.emailCount").replace("{count}", String(stats.emailCount))}</span>
             </div>
             {stats.firstEmail && (
               <div className="flex items-center gap-2 text-xs text-text-secondary">
                 <Clock size={12} className="text-text-tertiary shrink-0" />
-                <span>First email: {formatRelativeDate(stats.firstEmail)}</span>
+                <span>{t("email.firstEmail").replace("{date}", formatRelativeDate(stats.firstEmail))}</span>
               </div>
             )}
             {stats.lastEmail && (
               <div className="flex items-center gap-2 text-xs text-text-secondary">
                 <Clock size={12} className="text-text-tertiary shrink-0" />
-                <span>Last email: {formatRelativeDate(stats.lastEmail)}</span>
+                <span>{t("email.lastEmail").replace("{date}", formatRelativeDate(stats.lastEmail))}</span>
               </div>
             )}
           </div>
@@ -427,14 +427,14 @@ export function ContactSidebar({ email, name, accountId, threadId, ownAddresses,
               className="flex items-center gap-1 text-xs font-semibold uppercase tracking-wider text-text-tertiary mb-2 hover:text-text-secondary transition-colors"
             >
               {notesExpanded ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
-              Notes
+              {t("email.notes")}
             </button>
             {notesExpanded && (
               <textarea
                 value={notes}
                 onChange={(e) => handleNotesChange(e.target.value)}
                 onBlur={handleNotesBlur}
-                placeholder="Add a note..."
+                placeholder={t("email.addNote")}
                 rows={3}
                 className="w-full text-xs bg-bg-primary border border-border-primary rounded-md px-2 py-1.5 text-text-secondary placeholder:text-text-tertiary focus:outline-none focus:ring-1 focus:ring-accent resize-y"
               />
@@ -498,7 +498,7 @@ export function ContactSidebar({ email, name, accountId, threadId, ownAddresses,
                         in usually says why it was sent */}
                     <button
                       onClick={() => handleThreadClick(att.thread_id)}
-                      title="Open the email this file came in"
+                      title={t("email.openSourceEmail")}
                       className="p-1 text-text-tertiary hover:text-accent opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-colors"
                     >
                       <Mail size={12} />

@@ -3,6 +3,7 @@ import { ChevronsDownUp, ChevronsUpDown } from "lucide-react";
 import { ChatMessage } from "./ChatMessage";
 import type { EmailSelectionRequest } from "./EmailRenderer";
 import type { DbMessage } from "@/services/db/messages";
+import { useI18n } from "@/i18n";
 
 interface ChatThreadProps {
   messages: DbMessage[];
@@ -53,6 +54,7 @@ export function ChatThread({
   focusedMessageId,
   messageRef,
 }: ChatThreadProps) {
+  const { t } = useI18n();
   // Only the exceptions to the default are tracked, so a newly synced message
   // inherits the default instead of appearing in whatever state a stale map
   // happened to hold
@@ -95,7 +97,7 @@ export function ChatThread({
             className="flex items-center gap-1 text-xs text-text-tertiary hover:text-text-secondary transition-colors"
           >
             {allCollapsed ? <ChevronsUpDown size={12} /> : <ChevronsDownUp size={12} />}
-            {allCollapsed ? "Expand all" : "Collapse all"}
+            {allCollapsed ? t("email.expandAll") : t("email.collapseAll")}
           </button>
         </div>
       )}

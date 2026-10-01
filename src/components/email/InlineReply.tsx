@@ -23,6 +23,7 @@ import {
 } from "@/services/ai/writingStyleService";
 import type { DbMessage } from "@/services/db/messages";
 import type { Thread } from "@/stores/threadStore";
+import { useI18n } from "@/i18n";
 
 type ReplyMode = "reply" | "replyAll" | "forward";
 
@@ -35,6 +36,7 @@ interface InlineReplyProps {
 }
 
 export function InlineReply({ thread, messages, accountId, noReply, onSent }: InlineReplyProps) {
+  const { t } = useI18n();
   const [mode, setMode] = useState<ReplyMode | null>(null);
   const [sending, setSending] = useState(false);
   const [signatureHtml, setSignatureHtml] = useState("");
@@ -56,7 +58,7 @@ export function InlineReply({ thread, messages, accountId, noReply, onSent }: In
     extensions: [
       StarterKit.configure({ heading: false, link: { openOnClick: false } }),
       Placeholder.configure({
-        placeholder: "Write your reply...",
+        placeholder: t("email.writeYourReply"),
       }),
     ],
     content: "",
@@ -248,7 +250,7 @@ export function InlineReply({ thread, messages, accountId, noReply, onSent }: In
             await upsertContact(addr, null);
           }
         } catch (err) {
-          reportError("Reply not sent", err);
+          reportError(t("email.replyNotSent"), err);
         } finally {
           useComposerStore.getState().clearUndoSend();
         }
@@ -274,11 +276,11 @@ export function InlineReply({ thread, messages, accountId, noReply, onSent }: In
       setMode(null);
       onSent();
     } catch (err) {
-      reportError("Reply not sent", err);
+      reportError(t("email.replyNotSent"), err);
     } finally {
       setSending(false);
     }
-  }, [activeAccount, editor, sending, getRecipients, getSubject, signatureHtml, lastMessage, thread.id, accountId, mode, onSent, fromEmail]);
+  }, [activeAccount, editor, sending, getRecipients, getSubject, signatureHtml, lastMessage, thread.id, accountId, mode, onSent, fromEmail, t]);
 
   const handleExpandToComposer = useCallback(() => {
     if (!editor || !lastMessage) return;
@@ -375,27 +377,27 @@ export function InlineReply({ thread, messages, accountId, noReply, onSent }: In
         <button
           onClick={() => activateMode("reply")}
           disabled={noReply}
-          title={noReply ? "This sender does not accept replies" : undefined}
+          title={noReply ? t("email.noReplies") : undefined}
           className="flex items-center gap-1.5 px-4 py-2 text-xs text-text-secondary border border-border-primary rounded-lg hover:bg-bg-hover hover:text-text-primary transition-colors disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-text-secondary"
         >
           <Reply size={14} />
-          Reply
+          {t("composer.reply")}
         </button>
         <button
           onClick={() => activateMode("replyAll")}
           disabled={noReply}
-          title={noReply ? "This sender does not accept replies" : undefined}
+          title={noReply ? t("email.noReplies") : undefined}
           className="flex items-center gap-1.5 px-4 py-2 text-xs text-text-secondary border border-border-primary rounded-lg hover:bg-bg-hover hover:text-text-primary transition-colors disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-text-secondary"
         >
           <ReplyAll size={14} />
-          Reply All
+          {t("composer.replyAll")}
         </button>
         <button
           onClick={() => activateMode("forward")}
           className="flex items-center gap-1.5 px-4 py-2 text-xs text-text-secondary border border-border-primary rounded-lg hover:bg-bg-hover hover:text-text-primary transition-colors"
         >
           <Forward size={14} />
-          Forward
+          {t("composer.forward")}
         </button>
       </div>
     );
@@ -403,7 +405,7 @@ export function InlineReply({ thread, messages, accountId, noReply, onSent }: In
 
   // Expanded state — editor visible
   const { to } = getRecipients();
-  const modeLabel = mode === "reply" ? "Reply" : mode === "replyAll" ? "Reply All" : "Forward";
+  const modeLabel = mode === "reply" ? t("composer.reply") : mode === "replyAll" ? t("composer.replyAll") : t("composer.forward");
 
   return (
     <div ref={containerRef} className="mx-4 my-3 border border-border-primary rounded-lg overflow-hidden bg-bg-primary">
@@ -421,18 +423,18 @@ export function InlineReply({ thread, messages, accountId, noReply, onSent }: In
                     : "text-text-tertiary hover:text-text-primary"
                 }`}
               >
-                {m === "reply" ? "Reply" : m === "replyAll" ? "Reply All" : "Forward"}
+                {m === "reply" ? t("composer.reply") : m === "replyAll" ? t("composer.replyAll") : t("composer.forward")}
               </button>
             ))}
           </div>
           {to.length > 0 && (
             <span className="text-[0.6875rem] text-text-tertiary truncate max-w-[200px]">
-              to {to.join(", ")}
+              {t("email.toRecipients").replace("{list}", to.join(", "))}
             </span>
           )}
           {aliases.length > 1 && (
             <label className="flex items-center gap-1 text-[0.6875rem] text-text-tertiary">
-              from
+              {t("email.fromLabel")}
               <select
                 value={fromEmail ?? activeAccount?.email ?? ""}
                 onChange={(e) => setFromEmail(e.target.value)}
@@ -451,7 +453,7 @@ export function InlineReply({ thread, messages, accountId, noReply, onSent }: In
           onClick={() => setMode(null)}
           className="text-xs text-text-tertiary hover:text-text-primary transition-colors"
         >
-          Cancel
+          {t("composer.cancel")}
         </button>
       </div>
 
@@ -462,7 +464,7 @@ export function InlineReply({ thread, messages, accountId, noReply, onSent }: In
           <div className="absolute inset-0 flex items-center justify-center bg-bg-primary/60 backdrop-blur-[1px]">
             <div className="flex items-center gap-2 text-xs text-text-secondary">
               <Loader2 size={14} className="animate-spin" />
-              Generating draft...
+              {t("email.generatingDraft")}
             </div>
           </div>
         )}
@@ -473,30 +475,30 @@ export function InlineReply({ thread, messages, accountId, noReply, onSent }: In
         <div className="flex items-center gap-1">
           <button
             onClick={handleExpandToComposer}
-            title="Expand to full composer"
+            title={t("email.expandToComposer")}
             className="flex items-center gap-1.5 px-2 py-1 text-xs text-text-tertiary hover:text-text-primary transition-colors"
           >
             <Maximize2 size={12} />
-            Expand
+            {t("composer.expand")}
           </button>
           {hasAutoDraft && mode !== "forward" && (
             <>
               <button
                 onClick={handleRegenerateDraft}
                 disabled={autoDraftLoading}
-                title="Regenerate AI draft"
+                title={t("email.regenerateDraft")}
                 className="flex items-center gap-1 px-2 py-1 text-xs text-text-tertiary hover:text-accent transition-colors disabled:opacity-50"
               >
                 <RotateCcw size={11} />
-                Regenerate
+                {t("email.regenerate")}
               </button>
               <button
                 onClick={handleClearDraft}
-                title="Clear AI draft"
+                title={t("email.clearDraft")}
                 className="flex items-center gap-1 px-2 py-1 text-xs text-text-tertiary hover:text-danger transition-colors"
               >
                 <X size={11} />
-                Clear
+                {t("email.clear")}
               </button>
             </>
           )}
