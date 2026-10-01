@@ -355,11 +355,11 @@ export function AddAccount({ onClose, onSuccess, zIndex }: AddAccountProps) {
               title={`${t("addImap.setupPreset")} ${preset.name}`}
             >
               {preset.logo ? (
-                <span className="w-7 h-7 rounded-md bg-white flex items-center justify-center overflow-hidden shrink-0">
+                <span className="w-full h-8 rounded-md bg-white flex items-center justify-center overflow-hidden shrink-0">
                   <img
                     src={preset.logo}
                     alt=""
-                    className="w-full h-full object-contain p-0.5"
+                    className="max-h-5 max-w-[85%] object-contain"
                   />
                 </span>
               ) : (
