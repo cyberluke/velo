@@ -19,6 +19,7 @@ import { cacheThreadForOpening } from "@/services/threads/openThread";
 import { useThreadStore } from "@/stores/threadStore";
 import { openExternalLink } from "@/services/links/emailNavigation";
 import { useTimeFormat } from "@/hooks/useTimeFormat";
+import { useI18n } from "@/i18n";
 
 interface EventDetailModalProps {
   event: DbCalendarEvent;
@@ -29,6 +30,7 @@ interface EventDetailModalProps {
 }
 
 export function EventDetailModal({ event, calendars, accountId, onClose, onUpdated }: EventDetailModalProps) {
+  const { t } = useI18n();
   // Repaint when the 12/24-hour preference changes
   useTimeFormat();
   const [editing, setEditing] = useState(false);
@@ -127,10 +129,10 @@ export function EventDetailModal({ event, calendars, accountId, onClose, onUpdat
 
   if (editing) {
     return (
-      <Modal isOpen={true} onClose={onClose} title="Edit Event" width="w-full max-w-md">
+      <Modal isOpen={true} onClose={onClose} title={t("calendar.editEvent")} width="w-full max-w-md">
         <div className="p-4 space-y-3">
           <TextField
-            label="Title"
+            label={t("calendar.titleField")}
             type="text"
             value={summary}
             onChange={(e) => setSummary(e.target.value)}
@@ -139,13 +141,13 @@ export function EventDetailModal({ event, calendars, accountId, onClose, onUpdat
 
           <div className="grid grid-cols-2 gap-3">
             <TextField
-              label="Start"
+              label={t("calendar.start")}
               type="datetime-local"
               value={startTime}
               onChange={(e) => setStartTime(e.target.value)}
             />
             <TextField
-              label="End"
+              label={t("calendar.end")}
               type="datetime-local"
               value={endTime}
               onChange={(e) => setEndTime(e.target.value)}
@@ -153,19 +155,19 @@ export function EventDetailModal({ event, calendars, accountId, onClose, onUpdat
           </div>
 
           <TextField
-            label="Location"
+            label={t("calendar.location")}
             type="text"
             value={location}
             onChange={(e) => setLocation(e.target.value)}
-            placeholder="Add location"
+            placeholder={t("calendar.addLocation")}
           />
 
           <div>
-            <label className="text-xs text-text-secondary block mb-1">Description</label>
+            <label className="text-xs text-text-secondary block mb-1">{t("calendar.description")}</label>
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="Add description"
+              placeholder={t("calendar.addDescription")}
               rows={3}
               className="w-full px-3 py-1.5 bg-bg-tertiary border border-border-primary rounded text-sm text-text-primary outline-none focus:border-accent resize-none"
             />
@@ -173,10 +175,10 @@ export function EventDetailModal({ event, calendars, accountId, onClose, onUpdat
 
           <div className="flex justify-end gap-2 pt-2">
             <Button variant="secondary" size="md" onClick={() => setEditing(false)}>
-              Cancel
+              {t("composer.cancel")}
             </Button>
             <Button variant="primary" size="md" onClick={handleSave} disabled={saving || !summary.trim()}>
-              {saving ? "Saving..." : "Save"}
+              {saving ? t("calendar.saving") : t("calendar.save")}
             </Button>
           </div>
         </div>
@@ -185,7 +187,7 @@ export function EventDetailModal({ event, calendars, accountId, onClose, onUpdat
   }
 
   return (
-    <Modal isOpen={true} onClose={onClose} title={event.summary ?? "Event"} width="w-full max-w-md">
+    <Modal isOpen={true} onClose={onClose} title={event.summary ?? t("calendar.event")} width="w-full max-w-md">
       <div className="p-4 space-y-3">
         {calendar && (
           <div className="flex items-center gap-2 text-xs text-text-tertiary">
@@ -196,7 +198,7 @@ export function EventDetailModal({ event, calendars, accountId, onClose, onUpdat
             {calendar.display_name}
             {event.recurrence_rule && (
               <span className="flex items-center gap-1 ml-auto" title={event.recurrence_rule}>
-                <Repeat size={12} /> Recurring
+                <Repeat size={12} /> {t("calendar.recurring")}
               </span>
             )}
           </div>
@@ -225,7 +227,7 @@ export function EventDetailModal({ event, calendars, accountId, onClose, onUpdat
               icon={<Video size={14} />}
               onClick={() => void openExternalLink(event.meeting_link!)}
             >
-              Join meeting
+              {t("calendar.joinMeeting")}
             </Button>
             {event.meeting_record_url && (
               <Button
@@ -234,7 +236,7 @@ export function EventDetailModal({ event, calendars, accountId, onClose, onUpdat
                 icon={<FileText size={14} />}
                 onClick={() => void openExternalLink(event.meeting_record_url!)}
               >
-                Meeting record
+                {t("calendar.meetingRecord")}
               </Button>
             )}
           </div>
@@ -248,7 +250,7 @@ export function EventDetailModal({ event, calendars, accountId, onClose, onUpdat
 
         {attendees.length > 0 && (
           <div className="border-t border-border-primary pt-3">
-            <div className="text-xs text-text-tertiary mb-1.5">Attendees</div>
+            <div className="text-xs text-text-tertiary mb-1.5">{t("calendar.attendees")}</div>
             <div className="space-y-1">
               {attendees.map((a, i) => (
                 <div key={i} className="flex items-center gap-2 text-sm text-text-secondary">
@@ -263,10 +265,10 @@ export function EventDetailModal({ event, calendars, accountId, onClose, onUpdat
         {linkedThread && (
           <div className="border-t border-border-primary pt-3">
             <div className="text-xs text-text-tertiary mb-1.5 flex items-center gap-1.5">
-              <Mail size={12} /> Related email thread
+              <Mail size={12} /> {t("calendar.relatedThread")}
             </div>
             <Button variant="secondary" size="sm" onClick={() => void handleOpenThread()}>
-              Open thread
+              {t("calendar.openThread")}
             </Button>
           </div>
         )}
@@ -274,14 +276,14 @@ export function EventDetailModal({ event, calendars, accountId, onClose, onUpdat
         {record && (record.summary || meetingRecordDecisions(record).length > 0 || meetingRecordActionItems(record).length > 0) && (
           <div className="border-t border-border-primary pt-3 space-y-2">
             <div className="text-xs text-text-tertiary flex items-center gap-1.5">
-              <FileText size={12} /> Meeting record
+              <FileText size={12} /> {t("calendar.meetingRecord")}
             </div>
             {record.summary && (
               <p className="text-sm text-text-secondary whitespace-pre-wrap">{record.summary}</p>
             )}
             {meetingRecordDecisions(record).length > 0 && (
               <div>
-                <div className="text-xs text-text-tertiary mb-1">Decisions</div>
+                <div className="text-xs text-text-tertiary mb-1">{t("calendar.decisions")}</div>
                 <ul className="list-disc pl-4 text-sm text-text-secondary space-y-0.5">
                   {meetingRecordDecisions(record).map((d, i) => (
                     <li key={i}>{d}</li>
@@ -291,7 +293,7 @@ export function EventDetailModal({ event, calendars, accountId, onClose, onUpdat
             )}
             {meetingRecordActionItems(record).length > 0 && (
               <div>
-                <div className="text-xs text-text-tertiary mb-1">Action items</div>
+                <div className="text-xs text-text-tertiary mb-1">{t("calendar.actionItems")}</div>
                 <ul className="list-disc pl-4 text-sm text-text-secondary space-y-0.5">
                   {meetingRecordActionItems(record).map((a, i) => (
                     <li key={i}>{a}</li>
@@ -305,12 +307,12 @@ export function EventDetailModal({ event, calendars, accountId, onClose, onUpdat
         <div className="flex justify-between pt-2 border-t border-border-primary">
           {confirmDelete ? (
             <div className="flex items-center gap-2">
-              <span className="text-xs text-danger">Delete this event?</span>
+              <span className="text-xs text-danger">{t("calendar.deleteEventQuestion")}</span>
               <Button variant="danger" size="xs" onClick={handleDelete} disabled={deleting}>
-                {deleting ? "Deleting..." : "Yes, delete"}
+                {deleting ? t("calendar.deleting") : t("calendar.yesDelete")}
               </Button>
               <Button variant="secondary" size="xs" onClick={() => setConfirmDelete(false)}>
-                Cancel
+                {t("composer.cancel")}
               </Button>
             </div>
           ) : (
@@ -320,7 +322,7 @@ export function EventDetailModal({ event, calendars, accountId, onClose, onUpdat
               icon={<Trash2 size={14} />}
               onClick={() => setConfirmDelete(true)}
             >
-              Delete
+              {t("email.deleteShort")}
             </Button>
           )}
           <Button
@@ -329,7 +331,7 @@ export function EventDetailModal({ event, calendars, accountId, onClose, onUpdat
             icon={<Pencil size={14} />}
             onClick={() => setEditing(true)}
           >
-            Edit
+            {t("calendar.edit")}
           </Button>
         </div>
       </div>

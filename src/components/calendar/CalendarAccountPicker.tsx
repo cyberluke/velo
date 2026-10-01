@@ -4,6 +4,7 @@ import { useAccountStore, type Account } from "@/stores/accountStore";
 import { useUIStore } from "@/stores/uiStore";
 import { useClickOutside } from "@/hooks/useClickOutside";
 import { accountColor } from "@/constants/accountColors";
+import { useI18n } from "@/i18n";
 
 interface CalendarAccountPickerProps {
   /** Accounts that actually have a calendar — Google, CalDAV, or IMAP+CalDAV */
@@ -24,6 +25,7 @@ export function CalendarAccountPicker({
   selectedId,
   onSelect,
 }: CalendarAccountPickerProps) {
+  const { t } = useI18n();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement | null>(null);
   const allAccounts = useAccountStore((s) => s.accounts);
@@ -57,11 +59,11 @@ export function CalendarAccountPicker({
       <button
         onClick={() => setOpen((v) => !v)}
         className="flex items-center gap-2 px-2.5 py-1.5 rounded-md text-sm text-text-secondary hover:bg-bg-hover hover:text-text-primary transition-colors max-w-[16rem]"
-        title="Choose which account's calendar to show"
+        title={t("calendar.chooseAccount")}
       >
         <CalendarDays size={15} className="shrink-0" />
         <span className="truncate">
-          {selected ? selected.email : "No calendar account"}
+          {selected ? selected.email : t("calendar.noAccount")}
         </span>
         <ChevronDown
           size={13}
@@ -73,7 +75,7 @@ export function CalendarAccountPicker({
         <div className="absolute z-50 mt-1 left-0 min-w-[16rem] py-1 rounded-lg border border-border-primary bg-bg-primary shadow-lg glass-panel">
           {showList && (
             <div className="px-3 py-1.5 text-[0.625rem] font-medium text-text-tertiary uppercase tracking-wider">
-              Calendars
+              {t("calendar.calendars")}
             </div>
           )}
           {accounts.map((account) => {
@@ -120,7 +122,7 @@ export function CalendarAccountPicker({
             <div className="w-7 h-7 rounded-full bg-bg-tertiary flex items-center justify-center shrink-0">
               <Plus size={14} />
             </div>
-            <span>Add calendar account</span>
+            <span>{t("calendar.addAccount")}</span>
           </button>
         </div>
       )}

@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import type { DbCalendarEvent } from "@/services/db/calendarEvents";
 import { EventCard } from "./EventCard";
+import { useI18n } from "@/i18n";
 
 interface MonthViewProps {
   currentDate: Date;
@@ -11,6 +12,7 @@ interface MonthViewProps {
 const DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 export function MonthView({ currentDate, events, onEventClick }: MonthViewProps) {
+  const { t } = useI18n();
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
   const firstDay = new Date(year, month, 1);
@@ -79,7 +81,7 @@ export function MonthView({ currentDate, events, onEventClick }: MonthViewProps)
                 ))}
                 {dayEvents.length > 3 && (
                   <div className="text-[0.625rem] text-text-tertiary pl-1">
-                    +{dayEvents.length - 3} more
+                    {t("calendar.moreEvents").replace("{count}", String(dayEvents.length - 3))}
                   </div>
                 )}
               </div>

@@ -7,6 +7,7 @@ import { navigateToThread } from "@/router/navigate";
 import { formatFullDate } from "@/utils/date";
 import { useTimeFormat } from "@/hooks/useTimeFormat";
 import { EmailRenderer } from "@/components/email/EmailRenderer";
+import { useI18n } from "@/i18n";
 
 interface TaskEmailSidebarProps {
   accountId: string;
@@ -19,6 +20,7 @@ interface TaskEmailSidebarProps {
  * was created from, so the task can be worked without leaving the page.
  */
 export function TaskEmailSidebar({ accountId, threadId, onClose }: TaskEmailSidebarProps) {
+  const { t } = useI18n();
   // Repaint when the 12/24-hour preference changes
   useTimeFormat();
   const [messages, setMessages] = useState<DbMessage[]>([]);
@@ -79,12 +81,12 @@ export function TaskEmailSidebar({ accountId, threadId, onClose }: TaskEmailSide
       <div className="flex items-center justify-between px-4 py-3 border-b border-border-secondary shrink-0">
         <h3 className="flex items-center gap-1.5 text-sm font-semibold text-text-primary">
           <Mail size={14} className="text-accent" />
-          Linked email
+          {t("tasks.linkedEmail")}
         </h3>
         <div className="flex items-center gap-1">
           <button
             onClick={handleOpenInInbox}
-            title="Open in inbox"
+            title={t("tasks.openInInbox")}
             className="p-1 text-text-tertiary hover:text-text-primary transition-colors"
           >
             <ExternalLink size={13} />

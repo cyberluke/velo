@@ -15,6 +15,7 @@ import { handleRecurringTaskCompletion } from "@/services/tasks/taskManager";
 import { TaskItem } from "./TaskItem";
 import { TaskQuickAdd } from "./TaskQuickAdd";
 import { navigateToLabel } from "@/router/navigate";
+import { useI18n } from "@/i18n";
 
 interface TaskSidebarProps {
   accountId: string;
@@ -22,6 +23,7 @@ interface TaskSidebarProps {
 }
 
 export function TaskSidebar({ accountId, threadId }: TaskSidebarProps) {
+  const { t } = useI18n();
   const threadTasks = useTaskStore((s) => s.threadTasks);
   const setThreadTasks = useTaskStore((s) => s.setThreadTasks);
   const toggleTaskSidebar = useUIStore((s) => s.toggleTaskSidebar);
@@ -96,7 +98,7 @@ export function TaskSidebar({ accountId, threadId }: TaskSidebarProps) {
 
   return (
     <aside
-      aria-label="Tasks for this conversation"
+      aria-label={t("tasks.forConversation")}
       className="task-panel flex h-full w-[min(23rem,calc(100vw-2rem))] flex-col overflow-hidden rounded-2xl border border-white/70 bg-bg-primary/95 shadow-[0_24px_70px_rgba(62,50,39,0.16)] backdrop-blur-xl dark:border-white/10"
     >
       {/* Header */}
@@ -106,16 +108,16 @@ export function TaskSidebar({ accountId, threadId }: TaskSidebarProps) {
             <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-accent/10 text-accent">
               <ListTodo size={15} />
             </span>
-            <h3 className="font-serif text-xl font-semibold tracking-tight text-text-primary">Tasks</h3>
+            <h3 className="font-serif text-xl font-semibold tracking-tight text-text-primary">{t("tasks.title")}</h3>
           </div>
           <p className="mt-1 text-xs text-text-tertiary">
-            {threadTasks.length === 0 ? "Turn this conversation into momentum" : `${threadTasks.length} linked to this conversation`}
+            {threadTasks.length === 0 ? t("tasks.turnIntoMomentum") : t("tasks.linkedCount").replace("{count}", String(threadTasks.length))}
           </p>
         </div>
         <div className="flex items-center gap-1">
           <button
             onClick={() => navigateToLabel("tasks")}
-            title="Open tasks page"
+            title={t("tasks.openPage")}
             className="rounded-lg p-2 text-text-tertiary hover:bg-bg-hover hover:text-text-primary transition-colors"
           >
             <ExternalLink size={13} />
@@ -136,8 +138,8 @@ export function TaskSidebar({ accountId, threadId }: TaskSidebarProps) {
             <span className="mb-3 flex h-11 w-11 items-center justify-center rounded-2xl bg-accent/10 text-accent">
               <Sparkles size={19} />
             </span>
-            <p className="text-sm font-medium text-text-primary">Nothing to hold onto yet</p>
-            <p className="mt-1 max-w-52 text-xs leading-5 text-text-tertiary">Add the next small step, or extract tasks from the message toolbar.</p>
+            <p className="text-sm font-medium text-text-primary">{t("tasks.nothingYet")}</p>
+            <p className="mt-1 max-w-52 text-xs leading-5 text-text-tertiary">{t("tasks.emptyHint")}</p>
           </div>
         ) : (
           <div className="space-y-1.5">
@@ -156,7 +158,7 @@ export function TaskSidebar({ accountId, threadId }: TaskSidebarProps) {
 
       {/* Quick add */}
       <div className="border-t border-border-secondary bg-white/45 dark:bg-black/10">
-        <TaskQuickAdd onAdd={handleAddTask} placeholder="Add a task…" />
+        <TaskQuickAdd onAdd={handleAddTask} placeholder={t("tasks.quickAddPlaceholder")} />
       </div>
     </aside>
   );

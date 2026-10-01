@@ -5,13 +5,14 @@ import { insertTask, getIncompleteTaskCount } from "@/services/db/tasks";
 import type { TaskPriority } from "@/services/db/tasks";
 import type { DbMessage } from "@/services/db/messages";
 import { useTaskStore } from "@/stores/taskStore";
+import { useI18n } from "@/i18n";
 
-const PRIORITY_OPTIONS: { value: TaskPriority; label: string; color: string }[] = [
-  { value: "none", label: "None", color: "text-text-tertiary" },
-  { value: "low", label: "Low", color: "text-blue-400" },
-  { value: "medium", label: "Medium", color: "text-amber-400" },
-  { value: "high", label: "High", color: "text-orange-500" },
-  { value: "urgent", label: "Urgent", color: "text-red-500" },
+const PRIORITY_OPTIONS: { value: TaskPriority; labelKey: string; color: string }[] = [
+  { value: "none", labelKey: "tasks.none", color: "text-text-tertiary" },
+  { value: "low", labelKey: "tasks.low", color: "text-blue-400" },
+  { value: "medium", labelKey: "tasks.medium", color: "text-amber-400" },
+  { value: "high", labelKey: "tasks.high", color: "text-orange-500" },
+  { value: "urgent", labelKey: "tasks.urgent", color: "text-red-500" },
 ];
 
 interface AiTaskExtractDialogProps {
@@ -29,6 +30,7 @@ export function AiTaskExtractDialog({
   onClose,
   onCreated,
 }: AiTaskExtractDialogProps) {
+  const { t } = useI18n();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [title, setTitle] = useState("");
@@ -96,7 +98,7 @@ export function AiTaskExtractDialog({
         <div className="flex items-center justify-between px-5 py-4 border-b border-border-secondary">
           <div className="flex items-center gap-2">
             <Sparkles size={16} className="text-accent" />
-            <h3 className="text-sm font-semibold text-text-primary">Create Task from Email</h3>
+            <h3 className="text-sm font-semibold text-text-primary">{t("tasks.createFromEmail")}</h3>
           </div>
           <button onClick={onClose} className="p-1 text-text-tertiary hover:text-text-primary">
             <X size={16} />
@@ -108,7 +110,7 @@ export function AiTaskExtractDialog({
           {loading ? (
             <div className="flex flex-col items-center justify-center py-8 gap-3">
               <Loader2 size={24} className="animate-spin text-accent" />
-              <p className="text-sm text-text-secondary">Extracting task from email...</p>
+              <p className="text-sm text-text-secondary">{t("tasks.extracting")}</p>
             </div>
           ) : error && !title ? (
             <div className="text-center py-8">
@@ -118,7 +120,7 @@ export function AiTaskExtractDialog({
             <>
               {/* Title */}
               <div>
-                <label className="block text-xs font-medium text-text-secondary mb-1.5">Title</label>
+                <label className="block text-xs font-medium text-text-secondary mb-1.5">{t("tasks.titleField")}</label>
                 <input
                   type="text"
                   value={title}
@@ -130,7 +132,7 @@ export function AiTaskExtractDialog({
 
               {/* Description */}
               <div>
-                <label className="block text-xs font-medium text-text-secondary mb-1.5">Description</label>
+                <label className="block text-xs font-medium text-text-secondary mb-1.5">{t("tasks.descriptionField")}</label>
                 <textarea
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
@@ -152,7 +154,7 @@ export function AiTaskExtractDialog({
                     className="w-full px-3 py-2 bg-bg-tertiary border border-border-primary rounded-lg text-sm text-text-primary outline-none focus:border-accent"
                   >
                     {PRIORITY_OPTIONS.map((opt) => (
-                      <option key={opt.value} value={opt.value}>{opt.label}</option>
+                      <option key={opt.value} value={opt.value}>{t(opt.labelKey)}</option>
                     ))}
                   </select>
                 </div>

@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import type { DbTask, TaskPriority } from "@/services/db/tasks";
 import { DateTimePickerDialog } from "@/components/ui/DateTimePickerDialog";
+import { useI18n } from "@/i18n";
 
 const PRIORITY_COLORS: Record<TaskPriority, string> = {
   none: "text-text-tertiary",
@@ -73,6 +74,7 @@ export function TaskItem({
   isSelected,
   compact,
 }: TaskItemProps) {
+  const { t } = useI18n();
   const [expanded, setExpanded] = useState(false);
   const [pickingDue, setPickingDue] = useState(false);
   const tags: string[] = (() => {
@@ -130,7 +132,7 @@ export function TaskItem({
             {/* A follow-up reminder is a task with a bell — same list, same
                 due date, but it is waiting on someone else, not on you */}
             {task.kind === "reminder" && (
-              <BellRing size={11} className="shrink-0 text-accent" aria-label="Follow-up reminder" />
+              <BellRing size={11} className="shrink-0 text-accent" aria-label={t("tasks.followUpReminder")} />
             )}
           </div>
 
@@ -140,7 +142,7 @@ export function TaskItem({
                 <button
                   onClick={(e) => { e.stopPropagation(); if (onSetDueDate) setPickingDue(true); }}
                   disabled={!onSetDueDate}
-                  title={onSetDueDate ? "Change when this is due" : undefined}
+                  title={onSetDueDate ? t("tasks.changeDue") : undefined}
                   className={`inline-flex items-center gap-1 text-[0.6875rem] px-1.5 py-0.5 rounded-full ${getDueDateColor(task.due_date)} ${onSetDueDate ? "hover:brightness-95" : "cursor-default"}`}
                 >
                   <Calendar size={10} />
@@ -149,11 +151,11 @@ export function TaskItem({
               ) : onSetDueDate ? (
                 <button
                   onClick={(e) => { e.stopPropagation(); setPickingDue(true); }}
-                  title="Set a due date"
+                  title={t("tasks.setDueDate")}
                   className="inline-flex items-center gap-1 text-[0.6875rem] px-1.5 py-0.5 rounded-full text-text-tertiary hover:text-accent hover:bg-bg-hover transition-colors opacity-0 group-hover:opacity-100"
                 >
                   <Calendar size={10} />
-                  Due
+                  {t("tasks.due")}
                 </button>
               ) : null}
               {hasRecurrence && (

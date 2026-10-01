@@ -23,6 +23,7 @@ import { handleRecurringTaskCompletion } from "@/services/tasks/taskManager";
 import { TaskItem } from "./TaskItem";
 import { TaskQuickAdd } from "./TaskQuickAdd";
 import { TaskEmailSidebar } from "./TaskEmailSidebar";
+import { useI18n } from "@/i18n";
 
 const PRIORITY_ORDER: Record<TaskPriority, number> = {
   urgent: 0,
@@ -33,6 +34,7 @@ const PRIORITY_ORDER: Record<TaskPriority, number> = {
 };
 
 export function TasksPage() {
+  const { t } = useI18n();
   const accounts = useAccountStore((s) => s.accounts);
   const activeAccountId = useAccountStore((s) => s.activeAccountId);
   const unifiedInbox = useAccountStore((s) => s.unifiedInbox);
@@ -236,7 +238,7 @@ export function TasksPage() {
       <div className="flex items-center justify-between px-5 py-3 border-b border-border-primary shrink-0 bg-bg-primary/60 backdrop-blur-sm">
         <div className="flex items-center gap-2">
           <CheckSquare size={18} className="text-accent" />
-          <h1 className="text-base font-semibold text-text-primary">Tasks</h1>
+          <h1 className="text-base font-semibold text-text-primary">{t("tasks.title")}</h1>
           {filteredTasks.length > 0 && (
             <span className="text-xs text-text-tertiary bg-bg-tertiary px-2 py-0.5 rounded-full">
               {filteredTasks.length}
@@ -252,7 +254,7 @@ export function TasksPage() {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search tasks..."
+              placeholder={t("tasks.searchPlaceholder")}
               className="w-48 pl-8 pr-3 py-1.5 bg-bg-tertiary border border-border-primary rounded-lg text-xs text-text-primary outline-none focus:border-accent"
             />
           </div>
@@ -263,9 +265,9 @@ export function TasksPage() {
             onChange={(e) => setFilterStatus(e.target.value as TaskFilterStatus)}
             className="bg-bg-tertiary text-text-primary text-xs px-2.5 py-1.5 rounded-lg border border-border-primary"
           >
-            <option value="incomplete">Active</option>
-            <option value="all">All</option>
-            <option value="completed">Completed</option>
+            <option value="incomplete">{t("tasks.active")}</option>
+            <option value="all">{t("tasks.all")}</option>
+            <option value="completed">{t("tasks.completed")}</option>
           </select>
 
           <select
@@ -273,12 +275,12 @@ export function TasksPage() {
             onChange={(e) => setFilterPriority(e.target.value as TaskPriority | "all")}
             className="bg-bg-tertiary text-text-primary text-xs px-2.5 py-1.5 rounded-lg border border-border-primary"
           >
-            <option value="all">All priorities</option>
-            <option value="urgent">Urgent</option>
-            <option value="high">High</option>
-            <option value="medium">Medium</option>
-            <option value="low">Low</option>
-            <option value="none">None</option>
+            <option value="all">{t("tasks.allPriorities")}</option>
+            <option value="urgent">{t("tasks.urgent")}</option>
+            <option value="high">{t("tasks.high")}</option>
+            <option value="medium">{t("tasks.medium")}</option>
+            <option value="low">{t("tasks.low")}</option>
+            <option value="none">{t("tasks.none")}</option>
           </select>
 
           {/* Group by */}
@@ -287,10 +289,10 @@ export function TasksPage() {
             onChange={(e) => setGroupBy(e.target.value as TaskGroupBy)}
             className="bg-bg-tertiary text-text-primary text-xs px-2.5 py-1.5 rounded-lg border border-border-primary"
           >
-            <option value="none">No grouping</option>
-            <option value="priority">Group by priority</option>
-            <option value="dueDate">Group by due date</option>
-            <option value="tag">Group by tag</option>
+            <option value="none">{t("tasks.noGrouping")}</option>
+            <option value="priority">{t("tasks.groupByPriority")}</option>
+            <option value="dueDate">{t("tasks.groupByDueDate")}</option>
+            <option value="tag">{t("tasks.groupByTag")}</option>
           </select>
         </div>
       </div>
@@ -298,26 +300,26 @@ export function TasksPage() {
       {/* Bulk actions bar */}
       {selectedIds.size > 0 && (
         <div className="flex items-center gap-3 px-5 py-2 bg-accent/5 border-b border-accent/20">
-          <span className="text-xs text-text-secondary">{selectedIds.size} selected</span>
+          <span className="text-xs text-text-secondary">{t("tasks.selectedCount").replace("{count}", String(selectedIds.size))}</span>
           <button
             onClick={handleBulkComplete}
             className="flex items-center gap-1 text-xs text-accent hover:text-accent-hover"
           >
             <CheckCircle2 size={13} />
-            Complete
+            {t("tasks.complete")}
           </button>
           <button
             onClick={handleBulkDelete}
             className="flex items-center gap-1 text-xs text-danger hover:opacity-80"
           >
             <Trash2 size={13} />
-            Delete
+            {t("tasks.delete")}
           </button>
           <button
             onClick={() => setSelectedIds(new Set())}
             className="text-xs text-text-tertiary hover:text-text-primary ml-auto"
           >
-            Clear selection
+            {t("tasks.clearSelection")}
           </button>
         </div>
       )}
@@ -332,9 +334,9 @@ export function TasksPage() {
         {filteredTasks.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-center">
             <CheckSquare size={48} className="text-text-tertiary/30 mb-4" />
-            <p className="text-sm text-text-secondary mb-1">No tasks</p>
+            <p className="text-sm text-text-secondary mb-1">{t("tasks.noTasks")}</p>
             <p className="text-xs text-text-tertiary">
-              {searchQuery ? "Try a different search term" : "Add a task above or press 't' on any email thread"}
+              {searchQuery ? t("tasks.searchEmptyHint") : t("tasks.emptyHint")}
             </p>
           </div>
         ) : (

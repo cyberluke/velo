@@ -1,12 +1,15 @@
 import { useState, useCallback, useRef } from "react";
 import { Plus } from "lucide-react";
+import { useI18n } from "@/i18n";
 
 interface TaskQuickAddProps {
   onAdd: (title: string) => void | Promise<void>;
   placeholder?: string;
 }
 
-export function TaskQuickAdd({ onAdd, placeholder = "Add a task..." }: TaskQuickAddProps) {
+export function TaskQuickAdd({ onAdd, placeholder }: TaskQuickAddProps) {
+  const { t } = useI18n();
+  const resolvedPlaceholder = placeholder ?? t("tasks.quickAddPlaceholder");
   const [value, setValue] = useState("");
   const [isAdding, setIsAdding] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -39,7 +42,7 @@ export function TaskQuickAdd({ onAdd, placeholder = "Add a task..." }: TaskQuick
             void handleSubmit();
           }
         }}
-        placeholder={placeholder}
+        placeholder={resolvedPlaceholder}
         className="flex-1 bg-transparent text-sm text-text-primary placeholder:text-text-tertiary outline-none disabled:opacity-60"
       />
     </div>

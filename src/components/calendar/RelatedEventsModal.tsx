@@ -7,6 +7,7 @@ import type { DbCalendar } from "@/services/db/calendars";
 import { getVisibleCalendars } from "@/services/db/calendars";
 import { findEventsForThread } from "@/services/calendar/eventThreadLinks";
 import { EventDetailModal } from "./EventDetailModal";
+import { useI18n } from "@/i18n";
 
 /**
  * The mail thread -> meeting direction of the cross-links: lists the events
@@ -22,6 +23,7 @@ export function RelatedEventsModal({
   threadId: string;
   onClose: () => void;
 }) {
+  const { t } = useI18n();
   const [events, setEvents] = useState<DbCalendarEvent[] | null>(null);
   const [calendars, setCalendars] = useState<DbCalendar[]>([]);
   const [openEvent, setOpenEvent] = useState<DbCalendarEvent | null>(null);
@@ -44,7 +46,7 @@ export function RelatedEventsModal({
 
   return (
     <>
-      <Modal isOpen={true} onClose={onClose} title="Related meetings" width="w-full max-w-md">
+      <Modal isOpen={true} onClose={onClose} title={t("calendar.relatedMeetings")} width="w-full max-w-md">
         <div className="p-4">
           {events === null ? (
             <div className="flex justify-center py-8">
@@ -52,7 +54,7 @@ export function RelatedEventsModal({
             </div>
           ) : events.length === 0 ? (
             <p className="text-sm text-text-tertiary py-6 text-center">
-              No calendar events related to this thread.
+              {t("calendar.noRelatedEvents")}
             </p>
           ) : (
             <ul className="space-y-1.5">

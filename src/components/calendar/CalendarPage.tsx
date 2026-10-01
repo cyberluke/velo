@@ -14,8 +14,10 @@ import { EventDetailModal } from "./EventDetailModal";
 import { CalendarList } from "./CalendarList";
 import { CalendarReauthBanner } from "./CalendarReauthBanner";
 import { CalendarAccountPicker } from "./CalendarAccountPicker";
+import { useI18n } from "@/i18n";
 
 export function CalendarPage() {
+  const { t } = useI18n();
   const mailAccountId = useAccountStore((s) => s.activeAccountId);
   const accounts = useAccountStore((s) => s.accounts);
   const calendarAccountId = useAccountStore((s) => s.calendarAccountId);
@@ -161,7 +163,7 @@ export function CalendarPage() {
             setNeedsReauth(true);
           }
         } else {
-          setCalendarError(`Calendar sync failed: ${message}`);
+          setCalendarError(t("calendar.syncFailed").replace("{message}", message));
         }
       })
       .finally(() => {
@@ -227,9 +229,9 @@ export function CalendarPage() {
   if (!activeAccountId) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center gap-3 text-text-tertiary text-sm">
-        <p>No account with a calendar yet.</p>
+        <p>{t("calendar.noAccountYet")}</p>
         <p className="text-xs">
-          Google accounts bring their calendar along; anything else needs CalDAV.
+          {t("calendar.noAccountYetHint")}
         </p>
         <CalendarAccountPicker
           accounts={calendarAccounts}
@@ -244,8 +246,8 @@ export function CalendarPage() {
     return (
       <div className="flex-1 flex flex-col items-center justify-center gap-3 text-text-tertiary text-sm">
         <div className="text-center">
-          <p>Calendar is not configured for this account.</p>
-          <p className="mt-1 text-xs">For IMAP accounts, configure CalDAV in Settings.</p>
+          <p>{t("calendar.notConfigured")}</p>
+          <p className="mt-1 text-xs">{t("calendar.configureCalDav")}</p>
         </div>
         <CalendarAccountPicker
           accounts={calendarAccounts}
@@ -290,7 +292,7 @@ export function CalendarPage() {
                 .then(() => setSyncRevision((revision) => revision + 1))
                 .catch((err) => {
                   const message = err instanceof Error ? err.message : String(err);
-                  setCalendarError(`Calendar sync failed: ${message}`);
+setCalendarError(t("calendar.syncFailed").replace("{message}", message));
                 });
             }
           }}
@@ -300,7 +302,7 @@ export function CalendarPage() {
       {calendarError && !needsReauth && (
         <div className="mx-6 my-4 p-4 rounded-lg bg-danger/10 border border-danger/30 flex items-start gap-3">
           <div>
-            <p className="text-sm font-medium text-text-primary">Calendar access error</p>
+            <p className="text-sm font-medium text-text-primary">{t("calendar.accessError")}</p>
             <p className="text-xs text-text-secondary mt-1">{calendarError}</p>
           </div>
         </div>
@@ -308,7 +310,7 @@ export function CalendarPage() {
 
       {loading && events.length === 0 && (
         <div className="flex-1 flex items-center justify-center text-text-tertiary text-sm">
-          Loading calendar...
+          {t("calendar.loading")}
         </div>
       )}
 
