@@ -5,6 +5,7 @@ import { summarizeThread } from "@/services/ai/aiService";
 import { deleteAiCache } from "@/services/db/aiCache";
 import { recordAiFeedback, getLatestAiFeedback } from "@/services/db/aiFeedback";
 import { notifyAiEvent } from "@/services/notifications/notificationManager";
+import { notify } from "@/stores/toastStore";
 import type { DbMessage } from "@/services/db/messages";
 import { useI18n } from "@/i18n";
 
@@ -73,14 +74,17 @@ export function ThreadSummary({ threadId, accountId, messages }: ThreadSummaryPr
         try {
           const result = await summarizeThread(threadId, accountId, messages);
           setSummary(result);
+          notify("success", t("feedback.invalidated"));
         } catch (err) {
           console.error("Failed to regenerate summary:", err);
         } finally {
           setLoading(false);
         }
+      } else {
+        notify("success", t("feedback.thanks"));
       }
     },
-    [accountId, threadId, messages],
+    [accountId, threadId, messages, t],
   );
 
   const handleRefresh = useCallback(async () => {
@@ -92,7 +96,7 @@ export function ThreadSummary({ threadId, accountId, messages }: ThreadSummaryPr
       setSummary(result);
       // The auto-load on thread open is silent (the summary appears in front
       // of the reader); a manual regenerate is a real AI processing event
-      notifyAiEvent("Thread summary ready", "A fresh summary was generated for this thread", {
+      notifyAiEvent(t("feedback.notifyTitle"), t("feedback.notifyBody"), {
         threadId,
         accountId,
       });
@@ -101,7 +105,7 @@ export function ThreadSummary({ threadId, accountId, messages }: ThreadSummaryPr
     } finally {
       setLoading(false);
     }
-  }, [threadId, accountId, messages]);
+  }, [threadId, accountId, messages, t]);
 
   if (!available || messages.length < 2) return null;
 

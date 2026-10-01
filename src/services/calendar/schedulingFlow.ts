@@ -2,6 +2,8 @@ import { getCalendarEventsInRange } from "@/services/db/calendarEvents";
 import { proposeMeetingSlots } from "@/services/ai/aiService";
 import { createCalendarEvent } from "./createEvent";
 import { getCalendarsForAccount } from "@/services/db/calendars";
+import { t, getLocale } from "@/i18n";
+import { escapeHtml } from "@/utils/sanitize";
 
 export interface SchedulingResult {
   proposedSlots: string[];
@@ -62,17 +64,18 @@ export function generateFreeSlots(
 }
 
 function formatDraftBody(slots: string[], title: string, durationMinutes: number): string {
+  const locale = getLocale();
   const lines = slots
     .map((s, i) => {
       const d = parseLocalIso(s);
-      const day = d.toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" });
-      const time = d.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
+      const day = d.toLocaleDateString(locale, { weekday: "long", month: "long", day: "numeric" });
+      const time = d.toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" });
       const end = new Date(d.getTime() + durationMinutes * 60 * 1000)
-        .toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
-      return `${i + 1}. ${day} at ${time}–${end}`;
+        .toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" });
+      return `${i + 1}. ${day}, ${time}–${end}`;
     })
     .join("<br>");
-  return `<p>Hi,</p><p>Here are some times that work for "${title}":</p><p>${lines}</p><p>Let me know which suits you best.</p><p>Thanks!</p>`;
+  return `<p>${t("schedule.emailGreeting")}</p><p>${t("schedule.emailIntro").replace("{title}", escapeHtml(title))}</p><p>${lines}</p><p>${t("schedule.emailClosing")}</p><p>${t("schedule.emailSignoff")}</p>`;
 }
 
 /**
@@ -94,7 +97,7 @@ export async function scheduleMeeting(
     ? new Date(context.startAfter)
     : new Date(Date.now() + 24 * 3600 * 1000); // default: from tomorrow
   if (Number.isNaN(start.getTime())) {
-    return { proposedSlots: [], createdEvent: false, error: "Invalid startAfter" };
+    return { proposedSlots: [], createdEvent: false, error: t("schedule.errorInvalidStart") };
   }
 
   const rangeStart = Math.floor(start.getTime() / 1000) - 3600;
@@ -108,7 +111,7 @@ export async function scheduleMeeting(
 
   const freeSlots = generateFreeSlots(start, busy);
   if (freeSlots.length === 0) {
-    return { proposedSlots: [], createdEvent: false, error: "No free slots found" };
+    return { proposedSlots: [], createdEvent: false, error: t("schedule.errorNoSlots") };
   }
 
   const meetingContext = `${context.title} (${durationMinutes} min)${context.attendees?.length ? ` with ${context.attendees.join(", ")}` : ""}`;
@@ -124,7 +127,7 @@ export async function scheduleMeeting(
       const chosen = parseLocalIso(proposal.slots[0]);
       await createCalendarEvent(accountId, calendars, {
         summary: context.title,
-        description: `Scheduled by the NAI scheduling assistant. Proposed alternatives: ${proposal.slots.join(", ")}`,
+        description: t("schedule.eventDescription").replace("{slots}", proposal.slots.join(", ")),
         location: "",
         startTime: chosen.toISOString(),
         endTime: new Date(chosen.getTime() + durationMinutes * 60 * 1000).toISOString(),
@@ -143,7 +146,7 @@ export async function scheduleMeeting(
     createdEvent: createEvent,
     draftEmail: {
       to: context.attendees ?? [],
-      subject: `Meeting: ${context.title}`,
+      subject: t("schedule.emailSubject").replace("{title}", context.title),
       bodyHtml: formatDraftBody(proposal.slots, context.title, durationMinutes),
     },
   };

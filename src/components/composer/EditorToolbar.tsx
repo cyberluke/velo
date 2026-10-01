@@ -3,6 +3,7 @@ import type { Editor } from "@tiptap/react";
 import { InputDialog } from "@/components/ui/InputDialog";
 import { Sparkles, Languages, Mic, Square } from "lucide-react";
 import { useI18n } from "@/i18n";
+import { reportError } from "@/stores/toastStore";
 import { playSound } from "@/services/sounds/soundManager";
 import { createDictationController, type DictationController } from "@/services/ai/voiceDictation";
 
@@ -19,6 +20,7 @@ export function EditorToolbar({ editor, onToggleAiAssist, aiAssistOpen }: Editor
   const [showTranslateDialog, setShowTranslateDialog] = useState(false);
   const [translating, setTranslating] = useState(false);
   const [dictating, setDictating] = useState(false);
+  const [transcribing, setTranscribing] = useState(false);
   const dictationRef = useRef<DictationController | null>(null);
 
   if (!editor) return null;
@@ -40,7 +42,9 @@ export function EditorToolbar({ editor, onToggleAiAssist, aiAssistOpen }: Editor
       const controller = dictationRef.current;
       if (controller) {
         try {
+          setTranscribing(true);
           const text = await controller.stop();
+          setTranscribing(false);
           if (text) {
             const current = editor.getText();
             editor
@@ -48,13 +52,16 @@ export function EditorToolbar({ editor, onToggleAiAssist, aiAssistOpen }: Editor
               .focus()
               .insertContent((current ? "\n\n" : "") + text)
               .run();
+            void playSound("autocorr");
           }
         } catch (err) {
+          setTranscribing(false);
           const msg = err instanceof Error ? err.message : String(err);
           if (msg.includes("NO_KEY")) {
-            // Key missing — surface as a quiet failure
+            reportError(t("voice.noKey"), err);
+          } else {
+            reportError(t("voice.failed"), err);
           }
-          console.error("Dictation failed:", err);
         }
       }
       dictationRef.current = null;
@@ -70,7 +77,12 @@ export function EditorToolbar({ editor, onToggleAiAssist, aiAssistOpen }: Editor
     } catch (err) {
       dictationRef.current = null;
       setDictating(false);
-      console.error("Dictation start failed:", err);
+      const msg = err instanceof Error ? err.message : String(err);
+      if (msg.includes("VOICE_UNSUPPORTED")) {
+        reportError(t("voice.unsupported"), err);
+      } else {
+        reportError(t("voice.failed"), err);
+      }
     }
   };
 
@@ -161,13 +173,13 @@ export function EditorToolbar({ editor, onToggleAiAssist, aiAssistOpen }: Editor
       <button
         type="button"
         onClick={() => void toggleDictation()}
-        title={dictating ? t("voice.stop") : t("voice.start")}
+        title={transcribing ? t("voice.transcribing") : dictating ? t("voice.stop") : t("voice.start")}
         className={`px-1.5 py-1 text-xs rounded hover:bg-bg-hover transition-colors flex items-center gap-1 ${
           dictating ? "bg-danger/15 text-danger font-semibold" : "text-text-secondary"
         }`}
       >
-        {dictating ? <Square size={12} /> : <Mic size={12} />}
-        {dictating ? t("voice.stop") : t("voice.title")}
+        {transcribing ? <Square size={12} /> : dictating ? <Square size={12} /> : <Mic size={12} />}
+        {transcribing ? t("voice.transcribing") : dictating ? t("voice.stop") : t("voice.title")}
       </button>
 
       {btn(t("composer.undo"), false, () => {
@@ -202,8 +214,8 @@ export function EditorToolbar({ editor, onToggleAiAssist, aiAssistOpen }: Editor
             const translated = await translateEmail(html, target);
             editor.chain().focus().setContent(translated, { emitUpdate: true }).run();
             void playSound("autocorr");
-          } catch {
-            // failed silently — the button state resets
+          } catch (err) {
+            reportError(t("translate.failed"), err);
           } finally {
             setTranslating(false);
             setShowTranslateDialog(false);

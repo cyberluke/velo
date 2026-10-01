@@ -8,6 +8,7 @@ import { getDb } from "@/services/db/connection";
 import { navigateToThread, getActiveLabel, getSelectedThreadId } from "@/router/navigate";
 import { playSound } from "@/services/sounds/soundManager";
 import { logAudit } from "@/services/db/auditLog";
+import { t } from "@/i18n";
 
 // ---------------------------------------------------------------------------
 // Action types
@@ -385,13 +386,13 @@ export async function executeEmailAction(
   if (role === "read_only") {
     return {
       success: false,
-      error: "This mailbox is read-only — changes are disabled for delegated access.",
+      error: t("account.readOnlyActionError"),
     };
   }
   if (role === "assistant" && rawAction.type === "permanentDelete") {
     return {
       success: false,
-      error: "This mailbox is assistant-managed — permanent deletion is disabled.",
+      error: t("account.assistantDeleteError"),
     };
   }
 

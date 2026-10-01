@@ -50,7 +50,7 @@ export function PgpSettings() {
       await fn();
       await load();
     } catch (err) {
-      reportError(t("pgp.decryptFailed"), err);
+      reportError(t("pgp.actionFailed"), err);
     } finally {
       setBusy(false);
     }
@@ -78,7 +78,7 @@ export function PgpSettings() {
             </div>
             <div className="text-[0.625rem] text-text-tertiary font-mono truncate">
               {key.fingerprint.slice(0, 32)}…
-              {key.hasPrivate ? " (private)" : " (public)"}
+              {key.hasPrivate ? t("pgp.keyPrivate") : t("pgp.keyPublic")}
             </div>
           </div>
           <button

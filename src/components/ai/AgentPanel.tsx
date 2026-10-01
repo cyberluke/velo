@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import { Bot, X, ArrowUp, ShieldAlert, Check, Ban } from "lucide-react";
 import { useAccountStore } from "@/stores/accountStore";
 import { useComposerStore } from "@/stores/composerStore";
+import { notify } from "@/stores/toastStore";
 import { useI18n } from "@/i18n";
 import { sendAgentMessage } from "@/services/ai/agentService";
 import type { AgentChatMessage, AgentEvent, AgentApprovalRequest } from "@/services/ai/agentService";
@@ -100,6 +101,7 @@ export function AgentPanel({ isOpen, onClose }: AgentPanelProps) {
           threadId: event.draft.threadId,
           accountId,
         });
+        notify("success", t("agent.draftReady"));
         break;
       case "error":
         setMessages((prev) => [

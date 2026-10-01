@@ -113,6 +113,7 @@ export function ThreadView({ thread }: ThreadViewProps) {
   const [translating, setTranslating] = useState(false);
   const [decryptedHtml, setDecryptedHtml] = useState<string | null>(null);
   const [decrypting, setDecrypting] = useState(false);
+  const [scheduling, setScheduling] = useState(false);
   const [allowlistedSenders, setAllowlistedSenders] = useState<Set<string>>(new Set());
   const [restoringFromSpam, setRestoringFromSpam] = useState(false);
   const isSpam = thread.labelIds.includes("SPAM");
@@ -404,7 +405,7 @@ export function ThreadView({ thread }: ThreadViewProps) {
         .replace(/\n/g, "<br>");
       setDecryptedHtml(
         `<div style="font-family:inherit">${escaped}</div>` +
-        (result.signedBy ? `<p style="color:#888;font-size:11px">✓ Verified signature: ${escapeHtml(result.signedBy)}</p>` : ""),
+        (result.signedBy ? `<p style="color:#888;font-size:11px">✓ ${t("pgp.verifiedSignature").replace("{name}", escapeHtml(result.signedBy))}</p>` : ""),
       );
     } catch (err) {
       reportError(t("pgp.decryptFailed"), err);
@@ -557,7 +558,7 @@ export function ThreadView({ thread }: ThreadViewProps) {
 
       const filePath = await save({
         defaultPath: defaultName,
-        filters: [{ name: "Email", extensions: ["eml"] }],
+        filters: [{ name: t("export.emlFilter"), extensions: ["eml"] }],
       });
       if (filePath) {
         await writeTextFile(filePath, content);
@@ -732,7 +733,8 @@ export function ThreadView({ thread }: ThreadViewProps) {
             {threadAccountId && (
               <button
                 onClick={async () => {
-                  if (!threadAccountId) return;
+                  if (!threadAccountId || scheduling) return;
+                  setScheduling(true);
                   try {
                     const { scheduleMeeting } = await import("@/services/calendar/schedulingFlow");
                     const result = await scheduleMeeting(
@@ -759,15 +761,18 @@ export function ThreadView({ thread }: ThreadViewProps) {
                         accountId: threadAccountId,
                       });
                     }
-                    notify("success", t("schedule.slotsReady"));
+                    notify("success", t("schedule.draftOnly"));
                     setMeetingResult(null);
                   } catch (err) {
                     reportError(t("schedule.slotsFailed"), err);
+                  } finally {
+                    setScheduling(false);
                   }
                 }}
-                className="shrink-0 text-xs px-2.5 py-1 rounded-md bg-accent text-on-accent hover:bg-accent-hover transition-colors"
+                disabled={scheduling}
+                className="shrink-0 text-xs px-2.5 py-1 rounded-md bg-accent text-on-accent hover:bg-accent-hover transition-colors disabled:opacity-60"
               >
-                {t("schedule.propose")}
+                {scheduling ? t("schedule.proposing") : t("schedule.propose")}
               </button>
             )}
             <button

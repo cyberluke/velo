@@ -5,7 +5,7 @@ import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Placeholder from "@tiptap/extension-placeholder";
 import Image from "@tiptap/extension-image";
-import { Clock, Maximize2, Minimize2, ExternalLink, CheckCheck, Lock } from "lucide-react";
+import { Clock, Maximize2, Minimize2, ExternalLink, CheckCheck, Lock, PenLine } from "lucide-react";
 import { ProofreadPanel } from "./ProofreadPanel";
 import type { ProofreadResult } from "@/services/ai/types";
 
@@ -36,6 +36,7 @@ import { readFileAsBase64 } from "@/utils/fileUtils";
 import { interpolateVariables } from "@/utils/templateVariables";
 import { sanitizeHtml, escapeHtml } from "@/utils/sanitize";
 import { useI18n } from "@/i18n";
+import { listPgpKeys, type PgpKeySummary } from "@/services/pgp/pgpService";
 
 export function Composer() {
   const { t } = useI18n();
@@ -68,6 +69,9 @@ export function Composer() {
   const setRequestReadReceipt = useComposerStore((s) => s.setRequestReadReceipt);
   const pgpEncrypt = useComposerStore((s) => s.pgpEncrypt);
   const setPgpEncrypt = useComposerStore((s) => s.setPgpEncrypt);
+  const pgpSignFingerprint = useComposerStore((s) => s.pgpSignFingerprint);
+  const setPgpSignFingerprint = useComposerStore((s) => s.setPgpSignFingerprint);
+  const [signKeys, setSignKeys] = useState<PgpKeySummary[]>([]);
 
   const activeAccountId = useAccountStore((s) => s.activeAccountId);
   const accounts = useAccountStore((s) => s.accounts);
@@ -78,6 +82,28 @@ export function Composer() {
   const sendAccountId = composerAccountId ?? activeAccountId;
   const sendAccount = accounts.find((a) => a.id === sendAccountId);
   const sendingRef = useRef(false);
+
+  // PGP signing keys for the send account — loaded only while encryption is on.
+  useEffect(() => {
+    if (!pgpEncrypt || !sendAccountId) {
+      setSignKeys([]);
+      return;
+    }
+    let cancelled = false;
+    listPgpKeys(sendAccountId)
+      .then((keys) => {
+        if (cancelled) return;
+        const privates = keys.filter((key) => key.hasPrivate);
+        setSignKeys(privates);
+        if (privates.length === 0) setPgpSignFingerprint(null);
+      })
+      .catch(() => {
+        if (!cancelled) setSignKeys([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [pgpEncrypt, sendAccountId, setPgpSignFingerprint]);
   const [showSchedule, setShowSchedule] = useState(false);
   const [showAiAssist, setShowAiAssist] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
@@ -329,9 +355,9 @@ export function Composer() {
           state.to,
           state.pgpSignFingerprint,
         );
-        finalHtml = `<pre style="white-space:pre-wrap;word-break:break-all;font-family:monospace;font-size:12px">${escapeHtml(armored)}</pre><p style="color:#888;font-size:11px">🔒 Encrypted with OpenPGP</p>`;
+        finalHtml = `<pre style="white-space:pre-wrap;word-break:break-all;font-family:monospace;font-size:12px">${escapeHtml(armored)}</pre><p style="color:#888;font-size:11px">🔒 ${t("pgp.encryptedFooter")}</p>`;
       } catch (err) {
-        reportError("PGP encryption failed", err);
+        reportError(t("pgp.encryptFailed"), err);
         sendingRef.current = false;
         return;
       }
@@ -786,10 +812,30 @@ export function Composer() {
                   ? "text-accent hover:text-accent-hover"
                   : "text-text-tertiary hover:text-text-primary"
               }`}
-              title={pgpEncrypt ? t("pgp.encrypt") : t("pgp.encrypt")}
+              title={t("pgp.encrypt")}
             >
               <Lock size={14} />
             </button>
+            {pgpEncrypt && signKeys.length > 0 && (
+              <label
+                className="flex items-center gap-1 text-[0.6875rem] text-text-tertiary"
+                title={t("pgp.sign")}
+              >
+                <PenLine size={11} className="shrink-0" />
+                <select
+                  value={pgpSignFingerprint ?? ""}
+                  onChange={(e) => setPgpSignFingerprint(e.target.value || null)}
+                  className="bg-bg-tertiary text-text-primary text-[0.6875rem] px-1 py-0.5 rounded border border-border-primary outline-none focus:border-accent"
+                >
+                  <option value="">{t("pgp.noSign")}</option>
+                  {signKeys.map((key) => (
+                    <option key={key.fingerprint} value={key.fingerprint}>
+                      {key.email ?? t("pgp.selectKey")}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
           </div>
           <div className="flex items-center gap-2">
             <Button
