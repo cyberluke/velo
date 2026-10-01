@@ -403,7 +403,7 @@ export function notifyFollowUpDue(
     title: "Follow up needed",
     body: subject || "(No subject)",
     context: { threadId, accountId, subject },
-    sound: "reminder",
+    sound: "reminderFollowUp",
   });
 }
 
@@ -439,7 +439,7 @@ export function notifyCalendarReminder(
     title: "Calendar reminder",
     body: `${summary || "(No title)"} ${when}`,
     context: { accountId, subject: summary || undefined, eventId },
-    sound: "reminder",
+    sound: "reminderCalendar",
   });
 }
 

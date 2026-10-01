@@ -4,6 +4,7 @@ import { useComposerStore, type ComposerAttachment } from "@/stores/composerStor
 import { readFileAsBase64 } from "@/utils/fileUtils";
 import { formatFileSize } from "@/utils/fileTypeHelpers";
 import { useI18n } from "@/i18n";
+import { playSound } from "@/services/sounds/soundManager";
 
 const MAX_TOTAL_SIZE = 24 * 1024 * 1024; // 24MB
 
@@ -33,6 +34,7 @@ export function AttachmentPicker() {
       };
       addAttachment(attachment);
     }
+    if (files.length > 0) void playSound("insert");
     // Reset input so re-selecting the same file works
     if (inputRef.current) inputRef.current.value = "";
   };

@@ -978,6 +978,17 @@ export const MIGRATIONS = [
       );
     `,
   },
+  {
+    version: 39,
+    description: "Track where a meeting's confirmation email came from",
+    sql: `
+      -- The meetings tab pairs calendar events with their confirmation
+      -- emails (Calendly, Google Calendar, Zoom, ...). This column records
+      -- which provider the paired email came from so the UI can show the
+      -- pairing status prominently; NULL means the event is not paired yet.
+      ALTER TABLE calendar_events ADD COLUMN confirmation_source TEXT;
+    `,
+  },
 ];
 
 function isAlreadyAppliedSchemaError(message: string): boolean {

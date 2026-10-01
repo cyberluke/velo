@@ -21,10 +21,11 @@ import { commandKeys } from "./patches/command";
 import { calendarTasksKeys } from "./patches/calendartasks";
 import { categoryKeys } from "./patches/categories";
 import { soundKeys } from "./patches/sounds";
+import { meetingKeys } from "./patches/meetings";
 
 type Dict = Record<string, string>;
 
-const ALL_PATCHES: Record<Locale, Dict>[] = [composerKeys, emailKeys, miscKeys, commandKeys, calendarTasksKeys, categoryKeys, soundKeys];
+const ALL_PATCHES: Record<Locale, Dict>[] = [composerKeys, emailKeys, miscKeys, commandKeys, calendarTasksKeys, categoryKeys, soundKeys, meetingKeys];
 
 function withPatches(locale: Locale, base: Dict): Dict {
   let out: Dict = { ...base };

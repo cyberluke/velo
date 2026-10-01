@@ -2,6 +2,7 @@ import { useEffect, useCallback, useMemo, useRef, useState } from "react";
 import { CSSTransition } from "react-transition-group";
 import { ThreadCard } from "../email/ThreadCard";
 import { CategoryTabs } from "../email/CategoryTabs";
+import { MeetingsGuidePanel } from "../email/MeetingsGuidePanel";
 import { EmailListSkeleton } from "../ui/Skeleton";
 import { useThreadStore, type Thread } from "@/stores/threadStore";
 import { useAccountStore, listedAccountIds } from "@/stores/accountStore";
@@ -934,6 +935,14 @@ export function EmailList({ width, listRef }: { width?: number; listRef?: React.
           unreadCounts={Object.fromEntries(categoryUnreadCounts)}
         />
       )}
+
+      {/* Meetings guide: pair calendar events with their confirmation emails
+          and surface the meetings that are still missing one */}
+      {activeLabel === "inbox" &&
+        activeCategory === "Meetings" &&
+        searchThreadIds === null && (
+          <MeetingsGuidePanel />
+        )}
 
       {/* Multi-select action bar */}
       <CSSTransition nodeRef={multiSelectBarRef} in={multiSelectCount > 0} timeout={150} classNames="slide-down" unmountOnExit>

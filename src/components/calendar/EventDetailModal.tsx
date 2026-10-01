@@ -1,6 +1,6 @@
 import { hourCycleOption } from "@/utils/date";
 import { useState, useCallback, useEffect } from "react";
-import { MapPin, Clock, User, Pencil, Trash2, Video, FileText, Mail, Repeat } from "lucide-react";
+import { MapPin, Clock, User, Pencil, Trash2, Video, FileText, Mail, Repeat, Check, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { TextField } from "@/components/ui/TextField";
@@ -15,11 +15,21 @@ import {
   type DbMeetingRecord,
 } from "@/services/db/meetingRecords";
 import { getLinkedThreadForEvent } from "@/services/calendar/eventThreadLinks";
+import { tryPairEvent, type ConfirmationSource } from "@/services/calendar/meetingPairing";
 import { cacheThreadForOpening } from "@/services/threads/openThread";
 import { useThreadStore } from "@/stores/threadStore";
 import { openExternalLink } from "@/services/links/emailNavigation";
 import { useTimeFormat } from "@/hooks/useTimeFormat";
 import { useI18n } from "@/i18n";
+
+const SOURCE_KEYS: Record<ConfirmationSource, string> = {
+  calendly: "meetings.source.calendly",
+  google_calendar: "meetings.source.google_calendar",
+  zoom: "meetings.source.zoom",
+  teams: "meetings.source.teams",
+  scheduler: "meetings.source.scheduler",
+  email: "meetings.source.email",
+};
 
 interface EventDetailModalProps {
   event: DbCalendarEvent;
@@ -45,22 +55,42 @@ export function EventDetailModal({ event, calendars, accountId, onClose, onUpdat
 
   const [record, setRecord] = useState<DbMeetingRecord | null>(null);
   const [linkedThread, setLinkedThread] = useState<{ threadId: string; accountId: string } | null>(null);
+  const [pairingEvent, setPairingEvent] = useState(false);
+
+  const loadPairing = useCallback(async () => {
+    const [meetingRecord, thread] = await Promise.all([
+      getMeetingRecordForEvent(event.id),
+      getLinkedThreadForEvent(event),
+    ]);
+    setRecord(meetingRecord);
+    setLinkedThread(thread);
+  }, [event]);
 
   useEffect(() => {
-    let cancelled = false;
-    void (async () => {
-      const [meetingRecord, thread] = await Promise.all([
-        getMeetingRecordForEvent(event.id),
-        getLinkedThreadForEvent(event),
-      ]);
-      if (cancelled) return;
-      setRecord(meetingRecord);
-      setLinkedThread(thread);
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [event]);
+    void loadPairing();
+  }, [loadPairing]);
+
+  const handleFindConfirmation = useCallback(async () => {
+    setPairingEvent(true);
+    try {
+      const result = await tryPairEvent(event);
+      if (result) {
+        setLinkedThread({ threadId: result.threadId, accountId: result.threadAccountId });
+        onUpdated();
+      }
+    } catch {
+      /* pairing is best-effort */
+    } finally {
+      setPairingEvent(false);
+    }
+  }, [event, onUpdated]);
+
+  const confirmationSourceKey = (source: string | null): string => {
+    if (source && SOURCE_KEYS[source as ConfirmationSource]) {
+      return SOURCE_KEYS[source as ConfirmationSource];
+    }
+    return "meetings.source.email";
+  };
 
   const calendar = calendars.find((c) => c.id === event.calendar_id);
 
@@ -272,6 +302,32 @@ export function EventDetailModal({ event, calendars, accountId, onClose, onUpdat
             </Button>
           </div>
         )}
+
+        {/* Where the meeting confirmation came from — or that it is missing */}
+        <div className="border-t border-border-primary pt-3">
+          <div className="text-xs text-text-tertiary mb-1.5 flex items-center gap-1.5">
+            <Mail size={12} /> {t("meetings.guideTitle")}
+          </div>
+          {linkedThread ? (
+            <span className="inline-flex items-center gap-1 text-xs text-success">
+              <Check size={12} />
+              {t("meetings.pairedSource").replace("{source}", t(confirmationSourceKey(event.confirmation_source)))}
+            </span>
+          ) : (
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-text-tertiary">{t("meetings.unpairedSingle")}</span>
+              <Button
+                variant="secondary"
+                size="sm"
+                icon={pairingEvent ? <Loader2 size={12} className="animate-spin" /> : undefined}
+                disabled={pairingEvent}
+                onClick={() => void handleFindConfirmation()}
+              >
+                {t("meetings.findInEmail")}
+              </Button>
+            </div>
+          )}
+        </div>
 
         {record && (record.summary || meetingRecordDecisions(record).length > 0 || meetingRecordActionItems(record).length > 0) && (
           <div className="border-t border-border-primary pt-3 space-y-2">

@@ -9,6 +9,7 @@ import { Search, X, FolderPlus } from "lucide-react";
 import { useActiveLabel } from "@/hooks/useRouteNavigation";
 import { useLabelStore } from "@/stores/labelStore";
 import { parseSearchQuery } from "@/services/search/searchParser";
+import { playSound } from "@/services/sounds/soundManager";
 import { resolveQueryTokens } from "@/services/search/smartFolderQuery";
 import { looksLikeInvoiceQuery, useI18n } from "@/i18n";
 import { searchInvoices } from "@/services/search/invoiceSearch";
@@ -186,6 +187,7 @@ export function SearchBar() {
   const handleClear = useCallback(() => {
     useThreadStore.getState().clearSearch();
     inputRef.current?.focus();
+    void playSound("clear");
   }, []);
 
   const handlePreset = useCallback((token: string, needsValue: boolean) => {

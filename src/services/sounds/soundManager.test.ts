@@ -26,13 +26,36 @@ import {
   type SoundEvent,
 } from "./soundManager";
 
-const ALL_EVENTS: SoundEvent[] = ["newMail", "reminder", "aiComplete", "alert", "sendMail"];
+const ALL_EVENTS: SoundEvent[] = [
+  "newMail", "reminder", "reminderCalendar", "reminderFollowUp", "aiComplete",
+  "alert", "sendMail", "delete", "undo", "redo", "folder", "clear", "cancel",
+  "dialog", "insert", "view", "mode", "theme", "zoomIn", "zoomOut",
+  "drag", "drop", "autocorr",
+];
 const EXPECTED_FILES: Record<SoundEvent, string> = {
   newMail: "new-mail.wav",
   reminder: "reminder.wav",
+  reminderCalendar: "remindr2.wav",
+  reminderFollowUp: "remindr3.wav",
   aiComplete: "complete.wav",
   alert: "alert.wav",
   sendMail: "send.wav",
+  delete: "delete.wav",
+  undo: "undo.wav",
+  redo: "redo.wav",
+  folder: "folder.wav",
+  clear: "clear.wav",
+  cancel: "cancel.wav",
+  dialog: "dialog.wav",
+  insert: "insert.wav",
+  view: "view.wav",
+  mode: "mode.wav",
+  theme: "theme.wav",
+  zoomIn: "zoom-in.wav",
+  zoomOut: "zoom-out.wav",
+  drag: "drag.wav",
+  drop: "drop.wav",
+  autocorr: "autocorr.wav",
 };
 
 describe("soundManager", () => {
@@ -53,7 +76,7 @@ describe("soundManager", () => {
     for (const event of ALL_EVENTS) {
       await playSound(event);
     }
-    expect(created).toHaveLength(5);
+    expect(created).toHaveLength(ALL_EVENTS.length);
     for (const event of ALL_EVENTS) {
       const audio = created.find((a) => a.src.includes(EXPECTED_FILES[event]));
       expect(audio).toBeDefined();
@@ -76,6 +99,40 @@ describe("soundManager", () => {
     setSoundsEnabled(true);
     await playSound("reminder");
     expect(created).toHaveLength(1);
+  });
+
+  it("coalesces same-event plays inside the window", async () => {
+    // A new-mail batch fires several notifications in one tick; one chime
+    await playSound("newMail");
+    await playSound("newMail");
+    await playSound("newMail");
+    expect(created).toHaveLength(1);
+    // A different event in the same instant is not swallowed
+    await playSound("reminder");
+    expect(created).toHaveLength(2);
+  });
+
+  it("plays again once the coalescing window has passed", async () => {
+    vi.useFakeTimers();
+    // sendMail has a 400ms window; advance past it and the chime plays again
+    await playSound("sendMail");
+    vi.advanceTimersByTime(500);
+    await playSound("sendMail");
+    expect(created).toHaveLength(2);
+    vi.useRealTimers();
+  });
+
+  it("keeps the new-mail chime single during a burst beyond a short window", async () => {
+    // A big sync announces arrivals over several seconds — the chime must not
+    // repeat for every mail. The 2.5s newMail window swallows a burst.
+    vi.useFakeTimers();
+    await playSound("newMail");
+    vi.advanceTimersByTime(1000);
+    await playSound("newMail");
+    vi.advanceTimersByTime(1000);
+    await playSound("newMail");
+    expect(created).toHaveLength(1);
+    vi.useRealTimers();
   });
 
   it("never throws when playback is rejected (autoplay policy)", async () => {

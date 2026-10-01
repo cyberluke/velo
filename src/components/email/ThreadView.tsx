@@ -28,6 +28,7 @@ import { useOwnAddresses } from "@/hooks/useOwnAddresses";
 import { SmartReplySuggestions } from "./SmartReplySuggestions";
 import { InlineReply } from "./InlineReply";
 import { ContactSidebar } from "./ContactSidebar";
+import { playSound } from "@/services/sounds/soundManager";
 import { TaskSidebar } from "@/components/tasks/TaskSidebar";
 import { AiTaskExtractDialog } from "@/components/tasks/AiTaskExtractDialog";
 import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
@@ -578,9 +579,10 @@ export function ThreadView({ thread }: ThreadViewProps) {
           onToggleContactSidebar={toggleContactSidebar}
           onToggleTaskSidebar={() => useUIStore.getState().toggleTaskSidebar()}
           threadViewMode={threadViewMode}
-          onToggleThreadViewMode={() =>
-            setThreadViewMode(threadViewMode === "chat" ? "classic" : "chat")
-          }
+          onToggleThreadViewMode={() => {
+            setThreadViewMode(threadViewMode === "chat" ? "classic" : "chat");
+            void playSound("view");
+          }}
         />
 
         {isSpam && (

@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import { CSSTransition } from "react-transition-group";
 import { useUIStore } from "@/stores/uiStore";
 import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
+import { playSound } from "@/services/sounds/soundManager";
 
 const SettingsPage = lazy(() =>
   import("./SettingsPage").then((m) => ({ default: m.SettingsPage })),
@@ -19,6 +20,11 @@ export function SettingsDialog() {
   const nodeRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    if (isOpen) {
+      // The Office "dialog" chime marks the settings overlay opening — it
+      // plays only on the open edge, never on close or while open.
+      void playSound("dialog");
+    }
     if (!isOpen) return;
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key !== "Escape") return;

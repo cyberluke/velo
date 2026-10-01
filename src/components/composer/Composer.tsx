@@ -558,7 +558,10 @@ export function Composer() {
       {/* Backdrop */}
       <div
         className="absolute inset-0 pointer-events-auto backdrop-animate"
-        onClick={closeComposer}
+        onClick={() => {
+          closeComposer();
+          void playSound("cancel");
+        }}
       />
 
       {/* Composer window */}
@@ -598,7 +601,10 @@ export function Composer() {
               <ExternalLink size={14} />
             </button>
             <button
-              onClick={closeComposer}
+              onClick={() => {
+                closeComposer();
+                void playSound("cancel");
+              }}
               className="text-text-tertiary hover:text-text-primary text-lg leading-none p-1"
             >
               ×

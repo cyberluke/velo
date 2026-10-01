@@ -3,6 +3,7 @@ import type { Editor } from "@tiptap/react";
 import { InputDialog } from "@/components/ui/InputDialog";
 import { Sparkles } from "lucide-react";
 import { useI18n } from "@/i18n";
+import { playSound } from "@/services/sounds/soundManager";
 
 interface EditorToolbarProps {
   editor: Editor | null;
@@ -102,8 +103,14 @@ export function EditorToolbar({ editor, onToggleAiAssist, aiAssistOpen }: Editor
         </button>
       )}
 
-      {btn(t("composer.undo"), false, () => editor.chain().focus().undo().run())}
-      {btn(t("composer.redo"), false, () => editor.chain().focus().redo().run())}
+      {btn(t("composer.undo"), false, () => {
+        editor.chain().focus().undo().run();
+        void playSound("undo");
+      })}
+      {btn(t("composer.redo"), false, () => {
+        editor.chain().focus().redo().run();
+        void playSound("redo");
+      })}
       <InputDialog
         isOpen={showLinkDialog}
         onClose={() => setShowLinkDialog(false)}

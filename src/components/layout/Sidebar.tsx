@@ -9,6 +9,7 @@ import { useContextMenuStore } from "@/stores/contextMenuStore";
 import { useSmartFolderStore } from "@/stores/smartFolderStore";
 import { useActiveLabel, useActiveCategory } from "@/hooks/useRouteNavigation";
 import { navigateToLabel, navigateToSettings } from "@/router/navigate";
+import { playSound } from "@/services/sounds/soundManager";
 import {
   Inbox,
   MessagesSquare,
@@ -429,12 +430,14 @@ export function Sidebar({ collapsed }: SidebarProps) {
                         onClick={(e) => {
                           e.stopPropagation();
                           setInboxViewMode(inboxViewMode === "split" ? "unified" : "split");
+                          void playSound("mode");
                         }}
                         onKeyDown={(e) => {
                           if (e.key === "Enter" || e.key === " ") {
                             e.preventDefault();
                             e.stopPropagation();
                             setInboxViewMode(inboxViewMode === "split" ? "unified" : "split");
+                            void playSound("mode");
                           }
                         }}
                         title={inboxViewMode === "split" ? t("sidebar.switchToUnified") : t("sidebar.switchToSplit")}

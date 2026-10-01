@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { CSSTransition } from "react-transition-group";
 import { useComposerStore } from "@/stores/composerStore";
 import { useI18n } from "@/i18n";
+import { playSound } from "@/services/sounds/soundManager";
 
 export function UndoSendToast() {
   const {
@@ -31,6 +32,7 @@ export function UndoSendToast() {
   const handleCancel = () => {
     undoSendCancel?.();
     clearUndoSend();
+    void playSound("undo");
   };
 
   const handleSkip = () => {

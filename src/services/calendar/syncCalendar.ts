@@ -89,14 +89,15 @@ export async function syncCalendarAccount(accountId: string): Promise<void> {
 
   if (firstError) throw firstError;
 
-  // Fresh events can now be matched to their email threads, and the V271
-  // graph adapter picks up the change. Both are best-effort: a link failure
-  // or a graph outage must never fail the calendar sync itself.
+  // Fresh events can now be matched to their email threads (and each pairing
+  // records where the confirmation email came from), and the V271 graph
+  // adapter picks up the change. Both are best-effort: a link failure or a
+  // graph outage must never fail the calendar sync itself.
   try {
-    const { autoLinkEventsToThreads } = await import("./eventThreadLinks");
-    await autoLinkEventsToThreads(accountId);
+    const { pairMeetingsWithEmails } = await import("./meetingPairing");
+    await pairMeetingsWithEmails(accountId);
   } catch (err) {
-    console.warn("[calendarSync] Event-thread auto-linking failed:", err);
+    console.warn("[calendarSync] Meeting-to-email pairing failed:", err);
   }
   try {
     const { syncGraph } = await import("@/services/v271/graphSync");

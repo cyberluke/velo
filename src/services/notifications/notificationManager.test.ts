@@ -305,7 +305,7 @@ describe("office sounds ride along with notifications", () => {
     await initNotifications();
     notifyFollowUpDue("Waiting");
     await settle();
-    expect(mockPlaySound).toHaveBeenCalledWith("reminder");
+    expect(mockPlaySound).toHaveBeenCalledWith("reminderFollowUp");
   });
 
   it("plays no sound when notifications are off", async () => {

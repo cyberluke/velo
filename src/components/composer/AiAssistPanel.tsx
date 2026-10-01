@@ -10,6 +10,7 @@ import {
 } from "@/services/ai/aiService";
 import { useComposerStore } from "@/stores/composerStore";
 import { notifyAiEvent } from "@/services/notifications/notificationManager";
+import { playSound } from "@/services/sounds/soundManager";
 import { useI18n } from "@/i18n";
 
 interface AiAssistPanelProps {
@@ -81,6 +82,8 @@ export function AiAssistPanel({ editor, isReplyMode, threadMessages }: AiAssistP
     try {
       const result = await transformText(html, type);
       applyToEditor(result);
+      // The Office "autocorrect" chime marks the AI rewriting the text
+      void playSound("autocorr");
     } catch (err) {
       setError(err instanceof Error ? err.message : t("composer.aiTransformFailed"));
     } finally {

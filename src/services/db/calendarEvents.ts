@@ -31,6 +31,8 @@ export interface DbCalendarEvent {
   linked_thread_account_id: string | null;
   meeting_record_id: string | null;
   meeting_record_url: string | null;
+  /** Where the paired confirmation email came from (calendly, google_calendar, …). Null = not paired. */
+  confirmation_source: string | null;
 }
 
 export async function upsertCalendarEvent(event: {
@@ -246,6 +248,45 @@ export async function linkEventToMeetingRecord(
   await db.execute(
     "UPDATE calendar_events SET meeting_record_id = $1, meeting_record_url = $2, updated_at = unixepoch() WHERE id = $3",
     [recordId, recordUrl, eventId],
+  );
+}
+
+/**
+ * Record which provider the event's confirmation email came from. Null
+ * clears the source — used when the pairing is undone or never found.
+ */
+export async function setEventConfirmationSource(
+  eventId: string,
+  source: string | null,
+): Promise<void> {
+  const db = await getDb();
+  await db.execute(
+    "UPDATE calendar_events SET confirmation_source = $1, updated_at = unixepoch() WHERE id = $2",
+    [source, eventId],
+  );
+}
+
+/**
+ * Upcoming events that are not yet paired with a confirmation email —
+ * the "where did my confirmation go" list behind the Meetings tab.
+ * Includes the account's address so the UI can name the mailbox.
+ */
+export async function getUnpairedMeetingEvents(
+  now: number,
+  horizonDays = 60,
+): Promise<(DbCalendarEvent & { account_email: string | null })[]> {
+  const db = await getDb();
+  return db.select<(DbCalendarEvent & { account_email: string | null })[]>(
+    `SELECT e.*, a.email AS account_email
+     FROM calendar_events e
+     INNER JOIN accounts a ON a.id = e.account_id
+     WHERE e.linked_thread_id IS NULL
+       AND e.status != 'cancelled'
+       AND e.start_time BETWEEN $1 AND $2
+       AND a.is_active = 1
+     ORDER BY e.start_time ASC
+     LIMIT 100`,
+    [now - 86400, now + horizonDays * 86400],
   );
 }
 

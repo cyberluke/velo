@@ -11,6 +11,7 @@ import {
 import { useThreadStore } from "@/stores/threadStore";
 import { useAccountStore } from "@/stores/accountStore";
 import { addThreadLabel, removeThreadLabel } from "@/services/emailActions";
+import { playSound } from "@/services/sounds/soundManager";
 
 // Map sidebar IDs to Gmail label IDs (same as EmailList)
 const LABEL_MAP: Record<string, string> = {
@@ -79,6 +80,7 @@ export function DndProvider({ children }: DndProviderProps) {
     const data = event.active.data.current as DragData | undefined;
     if (data) {
       setDragData(data);
+      void playSound("drag");
     }
   };
 
@@ -91,6 +93,7 @@ export function DndProvider({ children }: DndProviderProps) {
     const targetLabel = over.id as string;
     const change = resolveLabelChange(targetLabel, dragData.sourceLabel);
     if (!change) return;
+    void playSound("drop");
 
     try {
       for (const threadId of dragData.threadIds) {

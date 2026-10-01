@@ -5,6 +5,7 @@ import { enqueuePendingOperation } from "@/services/db/pendingOperations";
 import { classifyError } from "@/utils/networkErrors";
 import { getDb } from "@/services/db/connection";
 import { navigateToThread, getActiveLabel, getSelectedThreadId } from "@/router/navigate";
+import { playSound } from "@/services/sounds/soundManager";
 
 // ---------------------------------------------------------------------------
 // Action types
@@ -512,6 +513,7 @@ export function trashThread(
   threadId: string,
   messageIds: string[],
 ): Promise<ActionResult> {
+  void playSound("delete");
   return executeEmailAction(accountId, {
     type: "trash",
     threadId,
@@ -524,6 +526,7 @@ export function permanentDeleteThread(
   threadId: string,
   messageIds: string[],
 ): Promise<ActionResult> {
+  void playSound("delete");
   return executeEmailAction(accountId, {
     type: "permanentDelete",
     threadId,
@@ -579,6 +582,7 @@ export function moveThread(
   messageIds: string[],
   folderPath: string,
 ): Promise<ActionResult> {
+  void playSound("folder");
   return executeEmailAction(accountId, {
     type: "moveToFolder",
     threadId,

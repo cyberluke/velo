@@ -176,6 +176,7 @@ export function SettingsPage() {
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [notificationBackend, setNotificationBackend] = useState<NotificationBackend>("off");
   const [soundEnabled, setSoundEnabled] = useState(true);
+  const [bookingLink, setBookingLink] = useState("");
   const [undoSendDelay, setUndoSendDelay] = useState("5");
   const [clientId, setClientId] = useState("");
   const [clientSecret, setClientSecret] = useState("");
@@ -260,6 +261,7 @@ export function SettingsPage() {
       setNotificationsEnabled(notif !== "false");
       setNotificationBackend(getNotificationBackend());
       setSoundEnabled((await getSetting("sounds_enabled")) !== "false");
+      setBookingLink((await getSetting("meeting_booking_url")) ?? "");
       const delay = await getSetting("undo_send_delay_seconds");
       setUndoSendDelay(delay ?? "5");
       const id = await getSetting("google_client_id");
@@ -648,6 +650,7 @@ export function SettingsPage() {
                         value={theme}
                         onChange={(e) => {
                           const val = e.target.value as "light" | "dark" | "system";
+                          if (val !== theme) void playSound("theme");
                           setTheme(val);
                           setSetting("theme", val);
                         }}
@@ -689,6 +692,7 @@ export function SettingsPage() {
                         value={threadViewMode}
                         onChange={(e) => {
                           setThreadViewMode(e.target.value as "classic" | "chat");
+                          void playSound("view");
                         }}
                         className="w-48 bg-bg-tertiary text-text-primary text-sm px-3 py-1.5 rounded-md border border-border-primary focus:border-accent outline-none"
                       >
@@ -700,7 +704,14 @@ export function SettingsPage() {
                       <select
                         value={fontScale}
                         onChange={(e) => {
-                          setFontScale(e.target.value as "small" | "default" | "large" | "xlarge");
+                          const next = e.target.value as "small" | "default" | "large" | "xlarge";
+                          const order = ["small", "default", "large", "xlarge"];
+                          if (order.indexOf(next) > order.indexOf(fontScale)) {
+                            void playSound("zoomIn");
+                          } else if (order.indexOf(next) < order.indexOf(fontScale)) {
+                            void playSound("zoomOut");
+                          }
+                          setFontScale(next);
                         }}
                         className="w-48 bg-bg-tertiary text-text-primary text-sm px-3 py-1.5 rounded-md border border-border-primary focus:border-accent outline-none"
                       >
@@ -774,6 +785,22 @@ export function SettingsPage() {
                       checked={reduceMotion}
                       onToggle={() => setReduceMotion(!reduceMotion)}
                     />
+                  </Section>
+
+                  <Section title={t("settings.meetings")}>
+                    <SettingRow label={t("settings.bookingLink")}>
+                      <input
+                        type="url"
+                        value={bookingLink}
+                        placeholder="https://calendly.com/you"
+                        onChange={(e) => {
+                          setBookingLink(e.target.value);
+                          void setSetting("meeting_booking_url", e.target.value);
+                        }}
+                        className="w-64 bg-bg-tertiary text-text-primary text-sm px-3 py-1.5 rounded-md border border-border-primary focus:border-accent outline-none placeholder:text-text-tertiary/60"
+                      />
+                    </SettingRow>
+                    <p className="text-xs text-text-tertiary">{t("settings.bookingLinkDesc")}</p>
                   </Section>
 
                   <SidebarNavEditor />
@@ -946,9 +973,27 @@ export function SettingsPage() {
                         [
                           { event: "newMail", labelKey: "settings.soundNewMail" },
                           { event: "reminder", labelKey: "settings.soundReminder" },
+                          { event: "reminderCalendar", labelKey: "settings.soundReminderCalendar" },
+                          { event: "reminderFollowUp", labelKey: "settings.soundReminderFollowUp" },
                           { event: "aiComplete", labelKey: "settings.soundComplete" },
                           { event: "alert", labelKey: "settings.soundAlert" },
                           { event: "sendMail", labelKey: "settings.soundSend" },
+                          { event: "delete", labelKey: "settings.soundDelete" },
+                          { event: "undo", labelKey: "settings.soundUndo" },
+                          { event: "redo", labelKey: "settings.soundRedo" },
+                          { event: "folder", labelKey: "settings.soundFolder" },
+                          { event: "clear", labelKey: "settings.soundClear" },
+                          { event: "cancel", labelKey: "settings.soundCancel" },
+                          { event: "dialog", labelKey: "settings.soundDialog" },
+                          { event: "insert", labelKey: "settings.soundInsert" },
+                          { event: "view", labelKey: "settings.soundView" },
+                          { event: "mode", labelKey: "settings.soundMode" },
+                          { event: "theme", labelKey: "settings.soundTheme" },
+                          { event: "zoomIn", labelKey: "settings.soundZoomIn" },
+                          { event: "zoomOut", labelKey: "settings.soundZoomOut" },
+                          { event: "drag", labelKey: "settings.soundDrag" },
+                          { event: "drop", labelKey: "settings.soundDrop" },
+                          { event: "autocorr", labelKey: "settings.soundAutocorr" },
                         ] as { event: SoundEvent; labelKey: string }[]
                       ).map((s) => (
                         <button
