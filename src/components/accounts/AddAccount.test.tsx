@@ -117,6 +117,50 @@ describe("AddAccount", () => {
     ).toBeInTheDocument();
   });
 
+  it("offers the Seznam preset with a logo and pre-filled servers", async () => {
+    render(<AddAccount onClose={() => {}} onSuccess={() => {}} />);
+
+    expect(screen.getByText("Seznam")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByText("Seznam"));
+
+    expect(await screen.findByText("Set up Seznam")).toBeInTheDocument();
+    fireEvent.change(screen.getByPlaceholderText("you@example.com"), {
+      target: { value: "me@seznam.cz" },
+    });
+    fireEvent.change(
+      screen.getByPlaceholderText("Enter your email password or app password"),
+      { target: { value: "hunter2" } },
+    );
+    fireEvent.click(screen.getByText("Next"));
+
+    expect(
+      await screen.findByDisplayValue("imap.seznam.cz"),
+    ).toBeInTheDocument();
+  });
+
+  it("offers the WEDOS preset with a logo and pre-filled servers", async () => {
+    render(<AddAccount onClose={() => {}} onSuccess={() => {}} />);
+
+    expect(screen.getByText("WEDOS")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByText("WEDOS"));
+
+    expect(await screen.findByText("Set up WEDOS")).toBeInTheDocument();
+    fireEvent.change(screen.getByPlaceholderText("you@example.com"), {
+      target: { value: "me@wedos.net" },
+    });
+    fireEvent.change(
+      screen.getByPlaceholderText("Enter your email password or app password"),
+      { target: { value: "hunter2" } },
+    );
+    fireEvent.click(screen.getByText("Next"));
+
+    expect(
+      await screen.findByDisplayValue("wes1-imap.wedos.net"),
+    ).toBeInTheDocument();
+  });
+
   it("returns to the picker from the IMAP wizard", async () => {
     render(<AddAccount onClose={() => {}} onSuccess={() => {}} />);
 

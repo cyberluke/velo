@@ -164,6 +164,30 @@ const wellKnownProviders: WellKnownProvider[] = [
     },
     authMethods: ["password"],
   },
+  {
+    domains: ["seznam.cz", "email.cz", "post.cz"],
+    settings: {
+      imapHost: "imap.seznam.cz",
+      imapPort: 993,
+      imapSecurity: "ssl",
+      smtpHost: "smtp.seznam.cz",
+      smtpPort: 465,
+      smtpSecurity: "ssl",
+    },
+    authMethods: ["password"],
+  },
+  {
+    domains: ["wedos.net", "wedos.cz", "vedos.net", "vedos.cz"],
+    settings: {
+      imapHost: "wes1-imap.wedos.net",
+      imapPort: 993,
+      imapSecurity: "ssl",
+      smtpHost: "wes1-smtp.wedos.net",
+      smtpPort: 587,
+      smtpSecurity: "starttls",
+    },
+    authMethods: ["password"],
+  },
 ];
 
 /**

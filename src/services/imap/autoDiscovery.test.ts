@@ -108,6 +108,48 @@ describe("findWellKnownProvider", () => {
     expect(result!.acceptInvalidCerts).toBe(true);
   });
 
+  it("returns settings for seznam.cz", () => {
+    const result = findWellKnownProvider("seznam.cz");
+    expect(result).not.toBeNull();
+    expect(result!.settings.imapHost).toBe("imap.seznam.cz");
+    expect(result!.settings.imapPort).toBe(993);
+    expect(result!.settings.imapSecurity).toBe("ssl");
+    expect(result!.settings.smtpHost).toBe("smtp.seznam.cz");
+    expect(result!.settings.smtpPort).toBe(465);
+    expect(result!.settings.smtpSecurity).toBe("ssl");
+    expect(result!.authMethods).toEqual(["password"]);
+  });
+
+  it("returns settings for email.cz (Seznam alias)", () => {
+    const result = findWellKnownProvider("email.cz");
+    expect(result).not.toBeNull();
+    expect(result!.settings.imapHost).toBe("imap.seznam.cz");
+  });
+
+  it("returns settings for post.cz (Seznam alias)", () => {
+    const result = findWellKnownProvider("post.cz");
+    expect(result).not.toBeNull();
+    expect(result!.settings.imapHost).toBe("imap.seznam.cz");
+  });
+
+  it("returns settings for wedos.net", () => {
+    const result = findWellKnownProvider("wedos.net");
+    expect(result).not.toBeNull();
+    expect(result!.settings.imapHost).toBe("wes1-imap.wedos.net");
+    expect(result!.settings.imapPort).toBe(993);
+    expect(result!.settings.imapSecurity).toBe("ssl");
+    expect(result!.settings.smtpHost).toBe("wes1-smtp.wedos.net");
+    expect(result!.settings.smtpPort).toBe(587);
+    expect(result!.settings.smtpSecurity).toBe("starttls");
+    expect(result!.authMethods).toEqual(["password"]);
+  });
+
+  it("returns settings for vedos.cz (Wedos alias)", () => {
+    const result = findWellKnownProvider("vedos.cz");
+    expect(result).not.toBeNull();
+    expect(result!.settings.imapHost).toBe("wes1-imap.wedos.net");
+  });
+
   it("returns acceptInvalidCerts true for proton.me", () => {
     const result = findWellKnownProvider("proton.me");
     expect(result).not.toBeNull();
@@ -191,6 +233,20 @@ describe("discoverSettings", () => {
     const result = discoverSettings("user@me.com");
     expect(result).not.toBeNull();
     expect(result!.settings.imapHost).toBe("imap.mail.me.com");
+  });
+
+  it("discovers Seznam settings from a seznam.cz address", () => {
+    const result = discoverSettings("user@seznam.cz");
+    expect(result).not.toBeNull();
+    expect(result!.settings.imapHost).toBe("imap.seznam.cz");
+    expect(result!.settings.smtpHost).toBe("smtp.seznam.cz");
+  });
+
+  it("discovers Wedos settings from a wedos.net address", () => {
+    const result = discoverSettings("user@wedos.net");
+    expect(result).not.toBeNull();
+    expect(result!.settings.imapHost).toBe("wes1-imap.wedos.net");
+    expect(result!.settings.smtpHost).toBe("wes1-smtp.wedos.net");
   });
 });
 

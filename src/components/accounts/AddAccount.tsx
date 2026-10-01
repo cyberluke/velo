@@ -11,6 +11,8 @@ import { AddJmapAccount } from "./AddJmapAccount";
 import { AddCalDavAccount } from "./AddCalDavAccount";
 import { getCurrentUnixTimestamp } from "@/utils/timestamp";
 import { useI18n } from "@/i18n";
+import seznamLogo from "@/assets/providers/seznam.svg";
+import wedosLogo from "@/assets/providers/wedos.png";
 
 interface AddAccountProps {
   onClose: () => void;
@@ -24,8 +26,14 @@ type View = "select-provider" | "gmail" | "gmail-imap" | "imap" | "jmap" | "cald
 /**
  * One-click providers. Picking one skips the "which server?" guesswork — the
  * IMAP wizard opens with that provider's servers and auth method already set.
+ * Providers with a `logo` render the actual brand mark; the rest fall back to
+ * a tinted initial badge.
  */
-const IMAP_PRESETS: (ImapPreset & { initial: string; tint: string })[] = [
+const IMAP_PRESETS: (ImapPreset & {
+  initial?: string;
+  tint?: string;
+  logo?: string;
+})[] = [
   { id: "outlook", name: "Outlook", domain: "outlook.com", initial: "O", tint: "text-[#0078d4]" },
   { id: "icloud", name: "iCloud", domain: "icloud.com", initial: "i", tint: "text-[#3b82f6]" },
   { id: "yahoo", name: "Yahoo", domain: "yahoo.com", initial: "Y", tint: "text-[#7e22ce]" },
@@ -34,6 +42,8 @@ const IMAP_PRESETS: (ImapPreset & { initial: string; tint: string })[] = [
   { id: "gmx", name: "GMX", domain: "gmx.com", initial: "G", tint: "text-[#f97316]" },
   { id: "zoho", name: "Zoho", domain: "zoho.com", initial: "Z", tint: "text-[#dc2626]" },
   { id: "aol", name: "AOL", domain: "aol.com", initial: "A", tint: "text-[#0ea5e9]" },
+  { id: "seznam", name: "Seznam", domain: "seznam.cz", logo: seznamLogo },
+  { id: "wedos", name: "WEDOS", domain: "wedos.net", logo: wedosLogo },
 ];
 
 function GoogleLogo({ className = "w-5 h-5" }: { className?: string }) {
@@ -344,11 +354,21 @@ export function AddAccount({ onClose, onSuccess, zIndex }: AddAccountProps) {
               className="flex flex-col items-center gap-1.5 px-1 py-3 rounded-lg border border-border-primary bg-bg-secondary hover:bg-bg-hover hover:border-accent transition-colors"
               title={`${t("addImap.setupPreset")} ${preset.name}`}
             >
-              <span
-                className={`w-7 h-7 rounded-md bg-bg-tertiary flex items-center justify-center text-sm font-semibold ${preset.tint}`}
-              >
-                {preset.initial}
-              </span>
+              {preset.logo ? (
+                <span className="w-7 h-7 rounded-md bg-white flex items-center justify-center overflow-hidden shrink-0">
+                  <img
+                    src={preset.logo}
+                    alt=""
+                    className="w-full h-full object-contain p-0.5"
+                  />
+                </span>
+              ) : (
+                <span
+                  className={`w-7 h-7 rounded-md bg-bg-tertiary flex items-center justify-center text-sm font-semibold ${preset.tint}`}
+                >
+                  {preset.initial}
+                </span>
+              )}
               <span className="text-[0.6875rem] text-text-secondary truncate max-w-full">
                 {preset.name}
               </span>
