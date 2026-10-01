@@ -32,6 +32,8 @@ export async function backfillUncategorizedThreads(
         labelIds,
         fromAddress: lastMessage?.from_address ?? thread.fromAddress ?? null,
         listUnsubscribe: lastMessage?.list_unsubscribe ?? null,
+        subject: lastMessage?.subject ?? thread.subject ?? null,
+        snippet: lastMessage?.snippet ?? thread.snippet ?? null,
       });
 
       await setThreadCategory(accountId, thread.id, category, false);

@@ -32,6 +32,17 @@ vi.mock("./caldavProvider", () => {
   return { CalDAVProvider };
 });
 
+vi.mock("./localCalendarProvider", () => {
+  class LocalCalendarProvider {
+    readonly accountId: string;
+    readonly type = "local" as const;
+    constructor(accountId: string) {
+      this.accountId = accountId;
+    }
+  }
+  return { LocalCalendarProvider };
+});
+
 import { getAccount } from "@/services/db/accounts";
 import {
   getCalendarProvider,
@@ -83,6 +94,30 @@ describe("providerFactory", () => {
       const provider = await getCalendarProvider(account.id);
 
       expect(provider.type).toBe("caldav");
+      expect(provider.accountId).toBe(account.id);
+    });
+
+    it("returns LocalCalendarProvider for accounts with local calendar enabled", async () => {
+      const account = createMockImapAccount({
+        calendar_provider: "local",
+      });
+      mockGetAccount.mockResolvedValue(account);
+
+      const provider = await getCalendarProvider(account.id);
+
+      expect(provider.type).toBe("local");
+      expect(provider.accountId).toBe(account.id);
+    });
+
+    it("local calendar wins over the Gmail API provider", async () => {
+      const account = createMockGmailAccount({
+        calendar_provider: "local",
+      });
+      mockGetAccount.mockResolvedValue(account);
+
+      const provider = await getCalendarProvider(account.id);
+
+      expect(provider.type).toBe("local");
       expect(provider.accountId).toBe(account.id);
     });
 
@@ -179,6 +214,15 @@ describe("providerFactory", () => {
       const account = createMockImapAccount({
         calendar_provider: "caldav",
         caldav_url: "https://caldav.example.com/dav",
+      });
+      mockGetAccount.mockResolvedValue(account);
+
+      expect(await hasCalendarSupport(account.id)).toBe(true);
+    });
+
+    it("returns true for accounts with local calendar enabled", async () => {
+      const account = createMockImapAccount({
+        calendar_provider: "local",
       });
       mockGetAccount.mockResolvedValue(account);
 

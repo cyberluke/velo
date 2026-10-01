@@ -115,6 +115,8 @@ async function processAndStoreThread(
         labelIds: [...allLabelIds],
         fromAddress: lastMessage.fromAddress,
         listUnsubscribe: lastMessage.listUnsubscribe,
+        subject: lastMessage.subject,
+        snippet: lastMessage.snippet,
       });
       await setThreadCategory(accountId, thread.id, category, false);
 

@@ -1167,6 +1167,9 @@ function EmptyStateForContext({
           Promotions: { title: t("email.emptyPromotions"), subtitle: t("email.emptyPromotionsHint") },
           Social: { title: t("email.emptySocial"), subtitle: t("email.emptySocialHint") },
           Newsletters: { title: t("email.emptyNewsletters"), subtitle: t("email.emptyNewslettersHint") },
+          Meetings: { title: t("email.emptyMeetings"), subtitle: t("email.emptyMeetingsHint") },
+          Interviews: { title: t("email.emptyInterviews"), subtitle: t("email.emptyInterviewsHint") },
+          Invoices: { title: t("email.emptyInvoices"), subtitle: t("email.emptyInvoicesHint") },
         };
         const msg = categoryMessages[activeCategory];
         if (msg) return <EmptyState illustration={InboxClearIllustration} title={msg.title} subtitle={msg.subtitle} />;

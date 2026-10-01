@@ -8,6 +8,8 @@ export interface Account {
   avatarUrl: string | null;
   isActive: boolean;
   provider?: string;
+  /** Which calendar backend the account uses ("local" = offline calendar). */
+  calendarProvider?: string | null;
   /** Palette id from ACCOUNT_COLORS; null means "derive one from position" */
   color?: string | null;
 }

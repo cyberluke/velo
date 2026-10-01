@@ -20,7 +20,7 @@ import { TemplatePicker } from "./TemplatePicker";
 import { FromSelector } from "./FromSelector";
 import { useComposerStore } from "@/stores/composerStore";
 import { useAccountStore } from "@/stores/accountStore";
-import { useUIStore } from "@/stores/uiStore";
+import { useUIStore, GOLDEN_MAJOR, GOLDEN_MINOR } from "@/stores/uiStore";
 import { sendEmail, archiveThread, deleteDraft as deleteDraftAction } from "@/services/emailActions";
 import { buildRawEmail } from "@/utils/emailBuilder";
 import { upsertContact } from "@/services/db/contacts";
@@ -653,29 +653,64 @@ export function Composer() {
           aiAssistOpen={showAiAssist}
         />
 
-        {/* AI Assist Panel */}
-        {showAiAssist && (
-          <AiAssistPanel
-            editor={editor}
-            isReplyMode={mode === "reply" || mode === "replyAll"}
-          />
-        )}
-
-        {/* Editor */}
-        <div className="flex-1 overflow-y-auto">
-          <EditorContent editor={editor} />
-          {signatureHtml && (
+        {/* AI Assist + Editor. Stacked in the modal; in fullpage the editor
+            keeps the golden-major share (≈61.8%) and the AI panel the minor
+            (≈38.2%), so neither side squeezes the other. */}
+        {showAiAssist && isFullpage ? (
+          <div className="flex flex-1 min-h-0">
             <div
-              className="px-4 py-2 border-t border-border-secondary text-xs text-text-tertiary"
-              dangerouslySetInnerHTML={{ __html: sanitizeHtml(signatureHtml) }}
-            />
-          )}
-        </div>
+              className="min-w-0 flex flex-col overflow-hidden"
+              style={{ flexGrow: GOLDEN_MAJOR }}
+            >
+              <div className="flex-1 overflow-y-auto">
+                <EditorContent editor={editor} />
+                {signatureHtml && (
+                  <div
+                    className="px-4 py-2 border-t border-border-secondary text-xs text-text-tertiary"
+                    dangerouslySetInnerHTML={{ __html: sanitizeHtml(signatureHtml) }}
+                  />
+                )}
+              </div>
+              <div className="border-t border-border-secondary">
+                <AttachmentPicker />
+              </div>
+            </div>
+            <div
+              className="min-w-0 border-l border-border-secondary overflow-y-auto"
+              style={{ flexGrow: GOLDEN_MINOR }}
+            >
+              <AiAssistPanel
+                editor={editor}
+                isReplyMode={mode === "reply" || mode === "replyAll"}
+              />
+            </div>
+          </div>
+        ) : (
+          <>
+            {showAiAssist && (
+              <AiAssistPanel
+                editor={editor}
+                isReplyMode={mode === "reply" || mode === "replyAll"}
+              />
+            )}
 
-        {/* Attachments */}
-        <div className="border-t border-border-secondary">
-          <AttachmentPicker />
-        </div>
+            {/* Editor */}
+            <div className="flex-1 overflow-y-auto">
+              <EditorContent editor={editor} />
+              {signatureHtml && (
+                <div
+                  className="px-4 py-2 border-t border-border-secondary text-xs text-text-tertiary"
+                  dangerouslySetInnerHTML={{ __html: sanitizeHtml(signatureHtml) }}
+                />
+              )}
+            </div>
+
+            {/* Attachments */}
+            <div className="border-t border-border-secondary">
+              <AttachmentPicker />
+            </div>
+          </>
+        )}
 
         {/* Footer */}
         <div className="flex items-center justify-between px-4 py-2.5 border-t border-border-primary bg-bg-secondary rounded-b-lg">

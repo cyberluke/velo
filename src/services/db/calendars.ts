@@ -76,6 +76,19 @@ export async function updateCalendarSyncToken(
   );
 }
 
+/**
+ * Hide every calendar of an account. Used when switching an account to the
+ * local calendar so stale remote calendars and their events stop showing up
+ * alongside the local one.
+ */
+export async function hideCalendarsForAccount(accountId: string): Promise<void> {
+  const db = await getDb();
+  await db.execute(
+    "UPDATE calendars SET is_visible = 0, updated_at = unixepoch() WHERE account_id = $1",
+    [accountId],
+  );
+}
+
 export async function deleteCalendarsForAccount(accountId: string): Promise<void> {
   const db = await getDb();
   await db.execute("DELETE FROM calendars WHERE account_id = $1", [accountId]);

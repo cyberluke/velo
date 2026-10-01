@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useCallback, useRef, useState } from "react";
-import { Inbox, Bell, Tag, Users, Newspaper, type LucideIcon } from "lucide-react";
+import { Inbox, Bell, Tag, Users, Newspaper, CalendarDays, UserCheck, Receipt, type LucideIcon } from "lucide-react";
 import { ALL_CATEGORIES } from "@/services/db/threadCategories";
 import { useI18n } from "@/i18n";
 
@@ -15,6 +15,9 @@ const CATEGORY_ICONS: Record<string, LucideIcon> = {
   Promotions: Tag,
   Social: Users,
   Newsletters: Newspaper,
+  Meetings: CalendarDays,
+  Interviews: UserCheck,
+  Invoices: Receipt,
 };
 
 export function CategoryTabs({ activeCategory, onCategoryChange, unreadCounts }: CategoryTabsProps) {

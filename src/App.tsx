@@ -437,6 +437,7 @@ export default function App() {
           avatarUrl: a.avatar_url,
           isActive: a.is_active === 1,
           provider: a.provider,
+          calendarProvider: a.calendar_provider,
           color: a.color,
         }));
         const savedAccountId = await getSetting("active_account_id");

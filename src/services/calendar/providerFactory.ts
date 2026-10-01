@@ -1,6 +1,7 @@
 import type { CalendarProvider } from "./types";
 import { GoogleCalendarProvider } from "./googleCalendarProvider";
 import { CalDAVProvider } from "./caldavProvider";
+import { LocalCalendarProvider } from "./localCalendarProvider";
 import { getAccount } from "@/services/db/accounts";
 
 const providerCache = new Map<string, CalendarProvider>();
@@ -21,6 +22,11 @@ export async function getCalendarProvider(accountId: string): Promise<CalendarPr
   // Standalone CalDAV account
   if (account.provider === "caldav") {
     provider = new CalDAVProvider(accountId);
+  }
+  // Local (offline) calendar — an explicit user choice, wins over the remote
+  // providers a Gmail/IMAP account would otherwise use
+  else if (account.calendar_provider === "local") {
+    provider = new LocalCalendarProvider(accountId);
   }
   // IMAP account with CalDAV configured
   else if (account.calendar_provider === "caldav" && account.caldav_url) {
@@ -50,6 +56,7 @@ export async function hasCalendarSupport(accountId: string): Promise<boolean> {
 
   if (account.provider === "caldav") return true;
   if (account.provider === "gmail_api") return true;
+  if (account.calendar_provider === "local") return true;
   if (account.calendar_provider === "caldav" && account.caldav_url) return true;
   return false;
 }

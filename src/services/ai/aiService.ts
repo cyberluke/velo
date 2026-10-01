@@ -177,7 +177,16 @@ export async function askMeetings(
   return callAi(MEETINGS_PROMPT, userContent);
 }
 
-const VALID_CATEGORIES = new Set(["Primary", "Updates", "Promotions", "Social", "Newsletters"]);
+const VALID_CATEGORIES = new Set([
+  "Primary",
+  "Updates",
+  "Promotions",
+  "Social",
+  "Newsletters",
+  "Meetings",
+  "Interviews",
+  "Invoices",
+]);
 
 export async function categorizeThreads(
   threads: { id: string; subject: string; snippet: string; fromAddress: string }[],

@@ -1,6 +1,14 @@
 import { getDb } from "./connection";
 
-export type ThreadCategory = "Primary" | "Updates" | "Promotions" | "Social" | "Newsletters";
+export type ThreadCategory =
+  | "Primary"
+  | "Updates"
+  | "Promotions"
+  | "Social"
+  | "Newsletters"
+  | "Meetings"
+  | "Interviews"
+  | "Invoices";
 
 export const ALL_CATEGORIES: ThreadCategory[] = [
   "Primary",
@@ -8,6 +16,9 @@ export const ALL_CATEGORIES: ThreadCategory[] = [
   "Promotions",
   "Social",
   "Newsletters",
+  "Meetings",
+  "Interviews",
+  "Invoices",
 ];
 
 interface DbThreadCategory {

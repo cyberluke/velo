@@ -275,6 +275,22 @@ export async function updateAccountColor(
   await db.execute("UPDATE accounts SET color = $1 WHERE id = $2", [color, accountId]);
 }
 
+/**
+ * Switch which calendar backend an account uses. `null` falls back to the
+ * provider derived from the account type (Gmail API / CalDAV); `"local"`
+ * selects the offline local calendar.
+ */
+export async function setAccountCalendarProvider(
+  accountId: string,
+  provider: string | null,
+): Promise<void> {
+  const db = await getDb();
+  await db.execute(
+    "UPDATE accounts SET calendar_provider = $1, updated_at = unixepoch() WHERE id = $2",
+    [provider, accountId],
+  );
+}
+
 export async function updateAccountCalDav(
   accountId: string,
   fields: {

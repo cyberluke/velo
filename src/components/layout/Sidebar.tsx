@@ -34,6 +34,9 @@ import {
   Bell,
   Users,
   Newspaper,
+  CalendarDays,
+  UserCheck,
+  Receipt,
   Search,
   MailOpen,
   Paperclip,
@@ -71,6 +74,9 @@ const CATEGORY_ITEMS: { id: string; label: string; icon: LucideIcon }[] = [
   { id: "Promotions", label: "Promotions", icon: Tag },
   { id: "Social", label: "Social", icon: Users },
   { id: "Newsletters", label: "Newsletters", icon: Newspaper },
+  { id: "Meetings", label: "Meetings", icon: CalendarDays },
+  { id: "Interviews", label: "Interviews", icon: UserCheck },
+  { id: "Invoices", label: "Invoices", icon: Receipt },
 ];
 
 function DroppableNavItem({

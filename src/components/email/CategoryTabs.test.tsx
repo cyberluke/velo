@@ -3,7 +3,16 @@ import { render, screen, fireEvent } from "@testing-library/react";
 import { CategoryTabs } from "./CategoryTabs";
 
 vi.mock("@/services/db/threadCategories", () => ({
-  ALL_CATEGORIES: ["Primary", "Updates", "Promotions", "Social", "Newsletters"],
+  ALL_CATEGORIES: [
+    "Primary",
+    "Updates",
+    "Promotions",
+    "Social",
+    "Newsletters",
+    "Meetings",
+    "Interviews",
+    "Invoices",
+  ],
 }));
 
 // jsdom does not provide ResizeObserver or scrollIntoView
@@ -24,7 +33,7 @@ describe("CategoryTabs", () => {
     vi.clearAllMocks();
   });
 
-  it("renders all 5 category tabs", () => {
+  it("renders all 8 category tabs", () => {
     render(
       <CategoryTabs
         activeCategory="Primary"
@@ -37,6 +46,9 @@ describe("CategoryTabs", () => {
     expect(screen.getByText("Promotions")).toBeInTheDocument();
     expect(screen.getByText("Social")).toBeInTheDocument();
     expect(screen.getByText("Newsletters")).toBeInTheDocument();
+    expect(screen.getByText("Meetings")).toBeInTheDocument();
+    expect(screen.getByText("Interviews")).toBeInTheDocument();
+    expect(screen.getByText("Invoices")).toBeInTheDocument();
   });
 
   it("highlights the active category", () => {

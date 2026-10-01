@@ -1,4 +1,4 @@
-export type CalendarProviderType = "google_api" | "caldav";
+export type CalendarProviderType = "google_api" | "caldav" | "local";
 
 export interface CalendarInfo {
   remoteId: string;

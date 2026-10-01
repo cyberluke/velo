@@ -1,9 +1,13 @@
 import { useState, useRef, useCallback } from "react";
-import { CalendarDays, Check, ChevronDown, Plus } from "lucide-react";
+import { CalendarDays, Check, ChevronDown, Plus, HardDrive } from "lucide-react";
 import { useAccountStore, type Account } from "@/stores/accountStore";
 import { useUIStore } from "@/stores/uiStore";
 import { useClickOutside } from "@/hooks/useClickOutside";
 import { accountColor } from "@/constants/accountColors";
+import { setAccountCalendarProvider } from "@/services/db/accounts";
+import { hideCalendarsForAccount } from "@/services/db/calendars";
+import { removeCalendarProvider } from "@/services/calendar/providerFactory";
+import { reloadAccountsIntoStore } from "@/services/accounts/accountLifecycle";
 import { useI18n } from "@/i18n";
 
 interface CalendarAccountPickerProps {
@@ -29,6 +33,7 @@ export function CalendarAccountPicker({
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement | null>(null);
   const allAccounts = useAccountStore((s) => s.accounts);
+  const activeAccountId = useAccountStore((s) => s.activeAccountId);
   const requestAddAccount = useUIStore((s) => s.requestAddAccount);
 
   useClickOutside(ref, () => setOpen(false));
@@ -49,6 +54,36 @@ export function CalendarAccountPicker({
     // that is where CalDAV, the calendar-only option, lives
     requestAddAccount();
   }, [requestAddAccount]);
+
+  // The local calendar attaches to a mail account. Prefer the one the user is
+  // looking at, then the active mailbox, then any mail account at all.
+  const localTargetId =
+    (selectedId && allAccounts.some((a) => a.id === selectedId && a.provider !== "caldav")
+      ? selectedId
+      : null) ??
+    activeAccountId ??
+    allAccounts.find((a) => a.provider !== "caldav")?.id ??
+    null;
+
+  const localTarget = allAccounts.find((a) => a.id === localTargetId) ?? null;
+  const localTargetEnabled = localTarget?.calendarProvider === "local";
+
+  const handleToggleLocal = useCallback(async () => {
+    if (!localTargetId) return;
+    setOpen(false);
+    try {
+      await setAccountCalendarProvider(localTargetId, localTargetEnabled ? null : "local");
+      if (!localTargetEnabled) {
+        // Stale remote calendars must not sit next to the local one
+        await hideCalendarsForAccount(localTargetId);
+      }
+      removeCalendarProvider(localTargetId);
+      await reloadAccountsIntoStore();
+      if (!localTargetEnabled) onSelect(localTargetId);
+    } catch (err) {
+      console.error("Failed to toggle local calendar:", err);
+    }
+  }, [localTargetId, localTargetEnabled, onSelect]);
 
   // Nothing to choose between, but adding a calendar account still has to be
   // reachable from here.
@@ -106,6 +141,7 @@ export function CalendarAccountPicker({
                   <div className="text-xs text-text-secondary truncate leading-tight">
                     {account.email}
                     {account.provider === "caldav" && " · CalDAV"}
+                    {account.calendarProvider === "local" && ` · ${t("calendar.localProvider")}`}
                   </div>
                 </div>
                 {isSelected && <Check size={14} className="shrink-0 text-accent" />}
@@ -124,6 +160,26 @@ export function CalendarAccountPicker({
             </div>
             <span>{t("calendar.addAccount")}</span>
           </button>
+
+          {/* Offline local calendar — no server needed */}
+          {localTargetId && (
+            <>
+              <div className="border-t border-border-primary my-1" />
+              <button
+                onClick={() => void handleToggleLocal()}
+                className="flex items-center gap-2.5 w-full px-3 py-2 text-sm text-text-secondary hover:bg-bg-hover hover:text-text-primary transition-colors"
+                title={localTarget ? localTarget.email : undefined}
+              >
+                <div className="w-7 h-7 rounded-full bg-bg-tertiary flex items-center justify-center shrink-0">
+                  <HardDrive size={14} />
+                </div>
+                <span className="flex-1 text-left">
+                  {localTargetEnabled ? t("calendar.disableLocal") : t("calendar.enableLocal")}
+                </span>
+                {localTargetEnabled && <Check size={14} className="shrink-0 text-accent" />}
+              </button>
+            </>
+          )}
         </div>
       )}
     </div>

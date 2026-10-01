@@ -144,6 +144,78 @@ export async function deleteCalendarEvent(eventId: string): Promise<void> {
   await db.execute("DELETE FROM calendar_events WHERE id = $1", [eventId]);
 }
 
+/**
+ * Local-calendar update path: merge partial edits into the stored row and
+ * return the resulting row. Matches by account + remote event id (the local
+ * provider stores the same value in both google_event_id and remote_event_id).
+ */
+export async function updateEventByRemoteId(
+  accountId: string,
+  remoteEventId: string,
+  changes: {
+    summary?: string;
+    description?: string;
+    location?: string;
+    startTime?: number;
+    endTime?: number;
+    isAllDay?: boolean;
+  },
+): Promise<DbCalendarEvent | null> {
+  const existing = await selectFirstBy<DbCalendarEvent>(
+    "SELECT * FROM calendar_events WHERE account_id = $1 AND (remote_event_id = $2 OR google_event_id = $2)",
+    [accountId, remoteEventId],
+  );
+  if (!existing) return null;
+
+  const updated: DbCalendarEvent = {
+    ...existing,
+    summary: changes.summary ?? existing.summary,
+    description: changes.description ?? existing.description,
+    location: changes.location ?? existing.location,
+    start_time: changes.startTime ?? existing.start_time,
+    end_time: changes.endTime ?? existing.end_time,
+    is_all_day: changes.isAllDay === undefined ? existing.is_all_day : changes.isAllDay ? 1 : 0,
+  };
+
+  await upsertCalendarEvent({
+    accountId,
+    googleEventId: existing.google_event_id,
+    summary: updated.summary,
+    description: updated.description,
+    location: updated.location,
+    startTime: updated.start_time,
+    endTime: updated.end_time,
+    isAllDay: updated.is_all_day === 1,
+    status: updated.status,
+    organizerEmail: updated.organizer_email,
+    attendeesJson: updated.attendees_json,
+    htmlLink: updated.html_link,
+    calendarId: updated.calendar_id,
+    remoteEventId: updated.remote_event_id,
+    etag: updated.etag,
+    icalData: updated.ical_data,
+    uid: updated.uid,
+    meetingLink: updated.meeting_link,
+    recurringEventId: updated.recurring_event_id,
+    recurrenceRule: updated.recurrence_rule,
+    remindersJson: updated.reminders_json,
+  });
+
+  return updated;
+}
+
+/** Local-calendar delete path: remove by account + remote event id. */
+export async function deleteEventByAccountAndRemoteId(
+  accountId: string,
+  remoteEventId: string,
+): Promise<void> {
+  const db = await getDb();
+  await db.execute(
+    "DELETE FROM calendar_events WHERE account_id = $1 AND (remote_event_id = $2 OR google_event_id = $2)",
+    [accountId, remoteEventId],
+  );
+}
+
 export async function getCalendarEventById(eventId: string): Promise<DbCalendarEvent | null> {
   return selectFirstBy<DbCalendarEvent>(
     "SELECT * FROM calendar_events WHERE id = $1",
