@@ -85,7 +85,7 @@ import { reportError } from "./stores/toastStore";
 import { UpdateToast } from "./components/ui/UpdateToast";
 import { ErrorBoundary } from "./components/ui/ErrorBoundary";
 import { formatSyncError } from "./utils/networkErrors";
-import { isThemeId, useDocumentTheme } from "@/themes";
+import { isThemeId, useDocumentTheme, useEffectiveLayout } from "@/themes";
 import type { ColorThemeId } from "@/themes";
 import { router } from "./router";
 import { getSelectedThreadId } from "./router/navigate";
@@ -109,7 +109,9 @@ function useRouterSyncBridge() {
 import { useThreadStore } from "./stores/threadStore";
 
 export default function App() {
-  const sidebarCollapsed = useUIStore((s) => s.sidebarCollapsed);
+  // Rail-sidebar themes force the compact toolbelt regardless of the user's
+  // stored collapse state; full-nav themes follow the user's own toggle.
+  const { sidebarCollapsed: effectiveSidebarCollapsed } = useEffectiveLayout();
   const [showAddAccount, setShowAddAccount] = useState(false);
   // Throttles the "show what has synced so far" refresh during a long initial sync
   const lastIncrementalRefreshRef = useRef(0);
@@ -664,7 +666,7 @@ export default function App() {
         <WorkspaceToolbar onAddAccount={() => setShowAddAccount(true)} />
         <div className="canvas-shell flex flex-1 min-w-0 overflow-hidden">
           <ErrorBoundary name="Sidebar">
-            <Sidebar collapsed={sidebarCollapsed} />
+            <Sidebar collapsed={effectiveSidebarCollapsed} />
           </ErrorBoundary>
           <Outlet />
         </div>

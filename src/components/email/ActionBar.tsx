@@ -368,13 +368,15 @@ export function ActionBar({ thread, messages, noReply, defaultReplyMode = "reply
           onClick={onToggleTaskSidebar}
           title={taskSidebarVisible ? t("email.hideTaskPanel") : t("email.showTaskPanel")}
         />
-        <Button
-          variant="secondary"
-          iconOnly
-          icon={contactSidebarVisible ? <PanelRightClose size={15} /> : <PanelRightOpen size={15} />}
-          onClick={onToggleContactSidebar}
-          title={contactSidebarVisible ? t("email.hideContactSidebar") : t("email.showContactSidebar")}
-        />
+        {onToggleContactSidebar && (
+          <Button
+            variant="secondary"
+            iconOnly
+            icon={contactSidebarVisible ? <PanelRightClose size={15} /> : <PanelRightOpen size={15} />}
+            onClick={onToggleContactSidebar}
+            title={contactSidebarVisible ? t("email.hideContactSidebar") : t("email.showContactSidebar")}
+          />
+        )}
       </div>
 
       <SnoozeDialog

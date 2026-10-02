@@ -131,6 +131,10 @@ export function resolveMode(preference: ThemePreference, prefersDark: boolean): 
  * the root element and records the active theme as `data-theme`. Inline
  * styles on `<html>` override the static `@theme` defaults in globals.css,
  * which exist only for Tailwind utility generation and first paint.
+ *
+ * `data-layout` mirrors the theme's layout descriptor id so CSS can scope
+ * composition hooks per persona (the component layer reads the same value
+ * through useEffectiveLayout).
  */
 export function applyThemeTokens(root: HTMLElement, template: ThemeTemplate, mode: ThemeMode): void {
   const vars = tokensToCssVars(mode === "dark" ? template.dark : template.light);
@@ -138,4 +142,5 @@ export function applyThemeTokens(root: HTMLElement, template: ThemeTemplate, mod
     root.style.setProperty(name, value);
   }
   root.dataset.theme = template.id;
+  root.dataset.layout = template.layout.id;
 }

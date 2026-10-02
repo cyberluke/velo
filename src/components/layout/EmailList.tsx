@@ -37,6 +37,7 @@ import {
 } from "../ui/illustrations";
 import { getListSearchTerms } from "@/utils/searchHighlight";
 import { InboxDigestPanel } from "../email/InboxDigestPanel";
+import { useEffectiveLayout } from "@/themes";
 
 const PAGE_SIZE = 50;
 
@@ -57,6 +58,9 @@ const LABEL_MAP: Record<string, string | string[]> = {
 
 export function EmailList({ width, listRef }: { width?: number; listRef?: React.Ref<HTMLDivElement> }) {
   const { t } = useI18n();
+  // Minimal-chrome themes (Scholar, Underwood, Deep Tech CTO) hide the
+  // category tabs; categories stay reachable in the sidebar's split list.
+  const { showCategoryTabs } = useEffectiveLayout();
   const threads = useThreadStore((s) => s.threads);
   const selectedThreadId = useSelectedThreadId();
   const selectedThreadIds = useThreadStore((s) => s.selectedThreadIds);
@@ -927,8 +931,9 @@ export function EmailList({ width, listRef }: { width?: number; listRef?: React.
         </div>
       </div>
 
-      {/* Category tabs (inbox + split mode only) */}
-      {activeLabel === "inbox" && inboxViewMode === "split" && (
+      {/* Category tabs (inbox + split mode only) — hidden by minimal-chrome
+          themes; the sidebar's split-mode category list remains available */}
+      {activeLabel === "inbox" && inboxViewMode === "split" && showCategoryTabs && (
         <CategoryTabs
           activeCategory={activeCategory}
           onCategoryChange={setActiveCategory}

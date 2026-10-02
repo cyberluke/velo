@@ -132,11 +132,63 @@ export interface ThemeTokens {
   motion: MotionTokens;
 }
 
+/* ------------------------------------------------------------------ */
+/* Layout & workflow — the part of a theme that rearranges the app.    */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Sidebar composition. "full" is the normal navigation panel; "rail" is a
+ * compact icon-only toolbelt (the deep-tech / macOS-Mail persona).
+ */
+export type ThemeSidebarMode = "full" | "rail";
+
+/**
+ * Mail list density. "default" means "follow the theme"; the user's explicit
+ * Settings choice overrides the theme value.
+ */
+export type ThemeDensity = "compact" | "default" | "spacious";
+
+/** How an open thread is laid out by default (classic stack vs chat). */
+export type ThemeThreadView = "classic" | "chat";
+
+/** Which side the reading pane sits on. "left" mirrors the pane order. */
+export type ThemeReadingPane = "right" | "left";
+
+/**
+ * Chrome level. "minimal" declutters reading-focused personas: category
+ * tabs and the contact sidebar are hidden (categories stay reachable in the
+ * sidebar's split-mode sub-list).
+ */
+export type ThemeChrome = "standard" | "minimal";
+
+/** AI thread summary visibility ("off" hides it; "auto" = current default). */
+export type ThemeAiSummary = "auto" | "off";
+
+/**
+ * The layout/workflow descriptor of a theme — what makes a role theme a
+ * *redesign* and not an accent swap. The component layer reads the effective
+ * layout (theme value, with explicit user settings taking precedence) and
+ * rearranges itself: sidebar rail vs full nav, list density, thread view
+ * mode, reading-pane side, chrome visibility and the AI summary.
+ */
+export interface ThemeLayout {
+  /** Machine id, also written as `data-layout` on <html> for CSS hooks. */
+  id: string;
+  sidebar: ThemeSidebarMode;
+  density: ThemeDensity;
+  threadView: ThemeThreadView;
+  readingPane: ThemeReadingPane;
+  chrome: ThemeChrome;
+  aiSummary: ThemeAiSummary;
+}
+
 /**
  * An external theme template. One object per theme; light and dark are the
  * same contract, so a theme is fully defined by two ThemeTokens.
  *
  * `id` doubles as the persisted setting value and the `data-theme` attribute.
+ * `layout` is mode-independent: the same composition applies to light and
+ * dark so switching modes never rearranges the UI.
  */
 export interface ThemeTemplate {
   id: string;
@@ -145,6 +197,7 @@ export interface ThemeTemplate {
   swatch: string;
   light: ThemeTokens;
   dark: ThemeTokens;
+  layout: ThemeLayout;
 }
 
 /**

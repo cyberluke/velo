@@ -47,6 +47,7 @@ import {
 } from "lucide-react";
 import { useTaskStore } from "@/stores/taskStore";
 import { useI18n } from "@/i18n";
+import { useEffectiveLayout } from "@/themes";
 
 interface SidebarProps {
   collapsed: boolean;
@@ -215,6 +216,9 @@ const LABELS_COLLAPSED_COUNT = 3;
 
 export function Sidebar({ collapsed }: SidebarProps) {
   const activeLabel = useActiveLabel();
+  // Rail-sidebar themes (Deep Tech CTO, Cupertino) lock the compact toolbelt —
+  // there is nothing to expand, so the collapse toggle disappears.
+  const { railSidebar } = useEffectiveLayout();
   const toggleSidebar = useUIStore((s) => s.toggleSidebar);
   const sidebarNavConfig = useUIStore((s) => s.sidebarNavConfig);
   const taskIncompleteCount = useTaskStore((s) => s.incompleteCount);
@@ -662,13 +666,15 @@ export function Sidebar({ collapsed }: SidebarProps) {
         >
           <HelpCircle size={18} className="shrink-0" />
         </button>
-        <button
-          onClick={toggleSidebar}
-          className="p-2 text-sidebar-text/60 hover:text-sidebar-text hover:bg-sidebar-hover rounded-md transition-colors"
-          title={collapsed ? t("sidebar.expand") : t("sidebar.collapse")}
-        >
-          {collapsed ? <PanelLeftOpen size={16} /> : <PanelLeftClose size={16} />}
-        </button>
+        {!railSidebar && (
+          <button
+            onClick={toggleSidebar}
+            className="p-2 text-sidebar-text/60 hover:text-sidebar-text hover:bg-sidebar-hover rounded-md transition-colors"
+            title={collapsed ? t("sidebar.expand") : t("sidebar.collapse")}
+          >
+            {collapsed ? <PanelLeftOpen size={16} /> : <PanelLeftClose size={16} />}
+          </button>
+        )}
       </div>
 
       <InputDialog

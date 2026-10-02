@@ -4,7 +4,7 @@ import type { Thread } from "@/stores/threadStore";
 import { useAccountStore } from "@/stores/accountStore";
 import { accountColor } from "@/constants/accountColors";
 import { useThreadStore } from "@/stores/threadStore";
-import { useUIStore } from "@/stores/uiStore";
+import { useEffectiveLayout } from "@/themes";
 import { useActiveLabel } from "@/hooks/useRouteNavigation";
 import { formatRelativeDate } from "@/utils/date";
 import { useTimeFormat } from "@/hooks/useTimeFormat";
@@ -67,7 +67,9 @@ export const ThreadCard = memo(function ThreadCard({ thread, isSelected, onClick
   const threadAccountColor = threadAccount
     ? accountColor(threadAccount.color, threadAccountIndex)
     : null;
-  const emailDensity = useUIStore((s) => s.emailDensity);
+  // Density comes from the effective layout: the user's explicit Settings
+  // choice wins, otherwise the active theme's density applies.
+  const { density: emailDensity } = useEffectiveLayout();
   // Repaint when the 12/24-hour preference changes
   useTimeFormat();
   const isSpam = thread.labelIds.includes("SPAM");

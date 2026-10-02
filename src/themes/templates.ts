@@ -2,14 +2,17 @@ import type { ThemeTemplate } from "./types";
 import { baseLight, baseDark } from "./base";
 import { registerTheme, DEFAULT_THEME_ID } from "./registry";
 import { ROLE_THEMES } from "./roles";
+import { STANDARD_LAYOUT } from "./layout";
 
 /**
  * External theme templates.
  *
  * Each export is a complete, self-contained theme: two ThemeTokens (light +
- * dark) satisfying the full contract. The accent themes start from the
- * neutral shell (base.ts) and override the accent family; a custom theme may
- * override typography, layout, effects or motion the same way.
+ * dark) satisfying the full contract, plus a `layout` descriptor that tells
+ * the component layer how to compose the app for this persona. The accent
+ * themes start from the neutral shell (base.ts) and override the accent
+ * family; a custom theme may override typography, layout, effects or motion
+ * the same way.
  *
  * ADDING A THEME: copy one template below, change id/name/swatch and the
  * tokens you care about, then call registerTheme(yourTheme). That's the
@@ -20,6 +23,7 @@ export const indigoTheme: ThemeTemplate = {
   id: DEFAULT_THEME_ID,
   name: "Aurora",
   swatch: "#818cf8",
+  layout: STANDARD_LAYOUT,
   light: baseLight,
   dark: baseDark,
 };
@@ -28,6 +32,7 @@ export const roseTheme: ThemeTemplate = {
   id: "rose",
   name: "Rose",
   swatch: "#fb7185",
+  layout: STANDARD_LAYOUT,
   light: {
     ...baseLight,
     colors: {
@@ -57,6 +62,7 @@ export const emeraldTheme: ThemeTemplate = {
   id: "emerald",
   name: "Emerald",
   swatch: "#059669",
+  layout: STANDARD_LAYOUT,
   light: {
     ...baseLight,
     colors: {
@@ -85,6 +91,7 @@ export const amberTheme: ThemeTemplate = {
   id: "amber",
   name: "Amber",
   swatch: "#d97706",
+  layout: STANDARD_LAYOUT,
   light: {
     ...baseLight,
     colors: {
@@ -113,6 +120,7 @@ export const skyTheme: ThemeTemplate = {
   id: "sky",
   name: "Sky",
   swatch: "#0ea5e9",
+  layout: STANDARD_LAYOUT,
   light: {
     ...baseLight,
     colors: {
@@ -142,6 +150,7 @@ export const violetTheme: ThemeTemplate = {
   id: "violet",
   name: "Violet",
   swatch: "#a78bfa",
+  layout: STANDARD_LAYOUT,
   light: {
     ...baseLight,
     colors: {
@@ -171,6 +180,7 @@ export const orangeTheme: ThemeTemplate = {
   id: "orange",
   name: "Orange",
   swatch: "#ea580c",
+  layout: STANDARD_LAYOUT,
   light: {
     ...baseLight,
     colors: {
@@ -199,6 +209,7 @@ export const slateTheme: ThemeTemplate = {
   id: "slate",
   name: "Slate",
   swatch: "#94a3b8",
+  layout: STANDARD_LAYOUT,
   light: {
     ...baseLight,
     colors: {

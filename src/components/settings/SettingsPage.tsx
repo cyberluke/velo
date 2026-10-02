@@ -728,36 +728,41 @@ export function SettingsPage() {
                       </select>
                     </SettingRow>
                     <SettingRow label={t("settings.accentColor")}>
-                      <div className="flex items-center gap-2 flex-wrap">
-                        {COLOR_THEMES.map((t) => {
-                          const isSelected = colorTheme === t.id;
-                          return (
-                            <button
-                              key={t.id}
-                              onClick={() => setColorTheme(t.id)}
-                              onMouseEnter={() => previewAccent(t.id)}
-                              onMouseLeave={restoreAccent}
-                              onFocus={() => previewAccent(t.id)}
-                              onBlur={restoreAccent}
-                              title={t.name}
-                              className={`relative w-7 h-7 rounded-full transition-all ${
-                                isSelected
-                                  ? "ring-2 ring-offset-2 ring-offset-bg-primary scale-110"
-                                  : "hover:scale-105"
-                              }`}
-                              style={{
-                                backgroundColor: t.swatch,
-                                boxShadow: isSelected
-                                  ? `0 0 0 2px var(--color-bg-primary), 0 0 0 4px ${t.swatch}`
-                                  : undefined,
-                              }}
-                            >
-                              {isSelected && (
-                                <Check size={14} className="absolute inset-0 m-auto text-on-accent drop-shadow-sm" />
-                              )}
-                            </button>
-                          );
-                        })}
+                      <div className="flex flex-col items-end gap-1.5">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          {COLOR_THEMES.map((t) => {
+                            const isSelected = colorTheme === t.id;
+                            return (
+                              <button
+                                key={t.id}
+                                onClick={() => setColorTheme(t.id)}
+                                onMouseEnter={() => previewAccent(t.id)}
+                                onMouseLeave={restoreAccent}
+                                onFocus={() => previewAccent(t.id)}
+                                onBlur={restoreAccent}
+                                title={t.name}
+                                className={`relative w-7 h-7 rounded-full transition-all ${
+                                  isSelected
+                                    ? "ring-2 ring-offset-2 ring-offset-bg-primary scale-110"
+                                    : "hover:scale-105"
+                                }`}
+                                style={{
+                                  backgroundColor: t.swatch,
+                                  boxShadow: isSelected
+                                    ? `0 0 0 2px var(--color-bg-primary), 0 0 0 4px ${t.swatch}`
+                                    : undefined,
+                                }}
+                              >
+                                {isSelected && (
+                                  <Check size={14} className="absolute inset-0 m-auto text-on-accent drop-shadow-sm" />
+                                )}
+                              </button>
+                            );
+                          })}
+                        </div>
+                        <span className="text-[0.6875rem] text-text-tertiary max-w-80 text-right leading-snug">
+                          {t("settings.themeLayoutHint")}
+                        </span>
                       </div>
                     </SettingRow>
                     <SettingRow label={t("settings.inboxViewMode")}>

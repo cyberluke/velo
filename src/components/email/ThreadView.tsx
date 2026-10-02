@@ -5,7 +5,7 @@ import { ActionBar } from "./ActionBar";
 import { getMessagesForThreads, type DbMessage } from "@/services/db/messages";
 import { ensureMessageBodies } from "@/services/email/messageBodies";
 import { useAccountStore } from "@/stores/accountStore";
-import { useUIStore } from "@/stores/uiStore";
+import { useUIStore, type ThreadViewMode } from "@/stores/uiStore";
 import { useThreadStore, type Thread } from "@/stores/threadStore";
 import { getMergedThreadIds, unmergeThread } from "@/services/db/threads";
 import { useComposerStore } from "@/stores/composerStore";
@@ -27,6 +27,7 @@ import { RelatedEventsModal } from "@/components/calendar/RelatedEventsModal";
 import { useOwnAddresses } from "@/hooks/useOwnAddresses";
 import { SmartReplySuggestions } from "./SmartReplySuggestions";
 import { InlineReply } from "./InlineReply";
+import { useEffectiveLayout } from "@/themes";
 import { ContactSidebar } from "./ContactSidebar";
 import { playSound } from "@/services/sounds/soundManager";
 import { TaskSidebar } from "@/components/tasks/TaskSidebar";
@@ -86,6 +87,13 @@ export function ThreadView({ thread }: ThreadViewProps) {
   const setThreadViewMode = useUIStore((s) => s.setThreadViewMode);
   const toggleContactSidebar = useUIStore((s) => s.toggleContactSidebar);
   const taskSidebarVisible = useUIStore((s) => s.taskSidebarVisible);
+  // The theme's layout/workflow descriptor reshapes the thread view: which
+  // conversation style is the default, whether the contact sidebar and the
+  // AI summary belong in the composition (minimal-chrome reading personas
+  // declutter both). The user's explicit thread-view choice still wins.
+  const { threadView: themeThreadView, showContactSidebar: themeContactSidebar, showAiSummary } = useEffectiveLayout();
+  const viewMode: ThreadViewMode = threadViewMode !== "classic" ? threadViewMode : themeThreadView;
+  const effectiveContactSidebar = themeContactSidebar && contactSidebarVisible;
   // Which side of the chat view a message sits on
   const ownAddressScope = useMemo(
     () => (threadAccountId ? [threadAccountId] : []),
@@ -616,7 +624,7 @@ export function ThreadView({ thread }: ThreadViewProps) {
           messages={messages}
           noReply={noReply}
           defaultReplyMode={defaultReplyMode}
-          contactSidebarVisible={contactSidebarVisible}
+          contactSidebarVisible={effectiveContactSidebar}
           taskSidebarVisible={taskSidebarVisible}
           onReply={handleReply}
           onReplyAll={handleReplyAll}
@@ -624,11 +632,11 @@ export function ThreadView({ thread }: ThreadViewProps) {
           onPrint={handlePrint}
           onExport={handleExport}
           onPopOut={() => handlePopOut(thread)}
-          onToggleContactSidebar={toggleContactSidebar}
+          onToggleContactSidebar={themeContactSidebar ? toggleContactSidebar : undefined}
           onToggleTaskSidebar={() => useUIStore.getState().toggleTaskSidebar()}
-          threadViewMode={threadViewMode}
+          threadViewMode={viewMode}
           onToggleThreadViewMode={() => {
-            setThreadViewMode(threadViewMode === "chat" ? "classic" : "chat");
+            setThreadViewMode(viewMode === "chat" ? "classic" : "chat");
             void playSound("view");
           }}
         />
@@ -785,8 +793,9 @@ export function ThreadView({ thread }: ThreadViewProps) {
           </div>
         )}
 
-        {/* AI Summary */}
-        {threadAccountId && (
+        {/* AI Summary — hidden entirely by reading-first personas (the
+            scholar and the typewriter came to read, not to be narrated) */}
+        {showAiSummary && threadAccountId && (
           <ThreadSummary
             threadId={thread.id}
             accountId={threadAccountId}
@@ -841,7 +850,7 @@ export function ThreadView({ thread }: ThreadViewProps) {
         {/* Messages */}
         <div className="flex-1 overflow-y-auto">
           <ErrorBoundary name="MessageList">
-            {threadViewMode === "chat" ? (
+            {viewMode === "chat" ? (
               <ChatThread
                 messages={messages}
                 ownAddresses={ownAddresses}
@@ -907,7 +916,7 @@ export function ThreadView({ thread }: ThreadViewProps) {
               email={peerAddress}
               name={peerName}
               currentThreadId={thread.id}
-              viewMode={threadViewMode}
+              viewMode={viewMode}
               ownAddresses={ownAddresses}
               blockImages={blockImages}
               allowlistedSenders={allowlistedSenders}
@@ -916,8 +925,9 @@ export function ThreadView({ thread }: ThreadViewProps) {
         </div>
       </div>
 
-      {/* Contact sidebar — overlay at narrow widths, inline at wide */}
-      {contactSidebarVisible && peerAddress && threadAccountId && (
+      {/* Contact sidebar — overlay at narrow widths, inline at wide.
+          Hidden by minimal-chrome themes, which declutter the reading pane */}
+      {effectiveContactSidebar && peerAddress && threadAccountId && (
         <>
           {/* Backdrop for overlay mode (narrow widths) */}
           <div

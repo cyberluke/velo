@@ -56,6 +56,43 @@ describe("theme templates (Liskov: every theme satisfies the full contract)", ()
     }
   });
 
+  it("every template carries a full layout descriptor (the workflow half of a theme)", () => {
+    for (const theme of listThemes()) {
+      const l = theme.layout;
+      expect(l.id, theme.id).toBeTruthy();
+      expect(["full", "rail"], `${theme.id} sidebar`).toContain(l.sidebar);
+      expect(["compact", "default", "spacious"], `${theme.id} density`).toContain(l.density);
+      expect(["classic", "chat"], `${theme.id} threadView`).toContain(l.threadView);
+      expect(["right", "left"], `${theme.id} readingPane`).toContain(l.readingPane);
+      expect(["standard", "minimal"], `${theme.id} chrome`).toContain(l.chrome);
+      expect(["auto", "off"], `${theme.id} aiSummary`).toContain(l.aiSummary);
+    }
+  });
+
+  it("accent themes keep the standard composition", () => {
+    for (const theme of listThemes()) {
+      if (!ACCENT_THEME_IDS.has(theme.id)) continue;
+      expect(theme.layout.id, theme.id).toBe("standard");
+    }
+  });
+
+  it("role themes define distinct, structurally different compositions (a redesign, not an accent swap)", () => {
+    const roleLayouts = listThemes()
+      .filter((t) => !ACCENT_THEME_IDS.has(t.id))
+      .map((t) => t.layout);
+    expect(new Set(roleLayouts.map((l) => l.id)).size).toBe(roleLayouts.length);
+    for (const layout of roleLayouts) {
+      const structural =
+        layout.sidebar !== "full" ||
+        layout.density !== "default" ||
+        layout.threadView !== "classic" ||
+        layout.readingPane !== "right" ||
+        layout.chrome !== "standard" ||
+        layout.aiSummary !== "auto";
+      expect(structural, `${layout.id} should rearrange the composition`).toBe(true);
+    }
+  });
+
   it("indigo is the default theme and falls back for unknown ids", () => {
     expect(DEFAULT_THEME_ID).toBe("indigo");
     expect(getTheme("indigo").name).toBe("Aurora");
@@ -145,6 +182,14 @@ describe("applyThemeTokens", () => {
     expect(el.style.getPropertyValue("--color-text-primary")).toBeTruthy();
     expect(el.style.getPropertyValue("--spacing")).toBe("0.25rem");
     expect(el.dataset.theme).toBe("rose");
+    expect(el.dataset.layout).toBe("standard");
+  });
+
+  it("writes the layout descriptor id of a role theme as data-layout", () => {
+    const el = document.createElement("html");
+    applyThemeTokens(el, getTheme("deeptech-cto"), "dark");
+    expect(el.dataset.theme).toBe("deeptech-cto");
+    expect(el.dataset.layout).toBe("terminal");
   });
 
   it("switching theme/mode overwrites every token (no residue from the old one)", () => {

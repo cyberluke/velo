@@ -26,6 +26,91 @@ function tokens(
   return { ...base, colors, ...extra };
 }
 
+/**
+ * Per-persona layout & workflow. These are the *redesign* knobs: which
+ * composition the app takes when the theme is active (see layout.ts for the
+ * precedence rules — the user's explicit Settings choices still win).
+ */
+const SAP_LAYOUT = {
+  id: "enterprise-ai",
+  sidebar: "full",
+  density: "default",
+  threadView: "chat",
+  readingPane: "right",
+  chrome: "standard",
+  aiSummary: "auto",
+} as const;
+
+const CEO_LAYOUT = {
+  id: "executive",
+  sidebar: "full",
+  density: "compact",
+  threadView: "classic",
+  readingPane: "right",
+  chrome: "standard",
+  aiSummary: "auto",
+} as const;
+
+const STARTUP_LAYOUT = {
+  id: "momentum",
+  sidebar: "full",
+  density: "spacious",
+  threadView: "chat",
+  readingPane: "right",
+  chrome: "standard",
+  aiSummary: "auto",
+} as const;
+
+const CTO_LAYOUT = {
+  id: "terminal",
+  sidebar: "rail",
+  density: "compact",
+  threadView: "chat",
+  readingPane: "right",
+  chrome: "minimal",
+  aiSummary: "auto",
+} as const;
+
+const SCHOLAR_LAYOUT = {
+  id: "reading-room",
+  sidebar: "full",
+  density: "spacious",
+  threadView: "classic",
+  readingPane: "right",
+  chrome: "minimal",
+  aiSummary: "off",
+} as const;
+
+const TYPEWRITER_LAYOUT = {
+  id: "editorial",
+  sidebar: "full",
+  density: "spacious",
+  threadView: "classic",
+  readingPane: "left",
+  chrome: "minimal",
+  aiSummary: "off",
+} as const;
+
+const STUDIO_LAYOUT = {
+  id: "studio",
+  sidebar: "full",
+  density: "spacious",
+  threadView: "chat",
+  readingPane: "right",
+  chrome: "standard",
+  aiSummary: "auto",
+} as const;
+
+const CUPERTINO_LAYOUT = {
+  id: "apple",
+  sidebar: "rail",
+  density: "spacious",
+  threadView: "chat",
+  readingPane: "right",
+  chrome: "standard",
+  aiSummary: "auto",
+} as const;
+
 /* ------------------------------------------------------------------ */
 /* 1. SAP North Star — SAP's AI-native North Star vision (Joule-era).  */
 /*    Fiori Horizon "Morning Sky"/"Evening Horizon" palettes, the 72   */
@@ -114,6 +199,7 @@ export const sapNorthStarTheme: ThemeTemplate = {
   id: "sap-northstar",
   name: "SAP North Star",
   swatch: "#0070F2",
+  layout: SAP_LAYOUT,
   light: tokens(baseLight, sapLight, {
     typography: {
       fontFamily: '"72", "Segoe UI Variable", "Segoe UI", sans-serif',
@@ -249,6 +335,7 @@ export const corporateCeoTheme: ThemeTemplate = {
   id: "corporate-ceo",
   name: "Corporate CEO",
   swatch: "#8A6D22",
+  layout: CEO_LAYOUT,
   light: tokens(baseLight, corpLight, { typography: corpTypography, layout: corpLayout }),
   dark: tokens(baseDark, corpDark, { typography: corpTypography, layout: corpLayout }),
 };
@@ -354,6 +441,7 @@ export const startupCeoTheme: ThemeTemplate = {
   id: "startup-ceo",
   name: "Startup CEO",
   swatch: "#6C5CE7",
+  layout: STARTUP_LAYOUT,
   light: tokens(baseLight, startLight, {
     typography: startTypography,
     layout: startLayout,
@@ -467,6 +555,7 @@ export const deepTechCtoTheme: ThemeTemplate = {
   id: "deeptech-cto",
   name: "Deep Tech CTO",
   swatch: "#22D3EE",
+  layout: CTO_LAYOUT,
   light: tokens(baseLight, deepLight, { typography: deepTypography, layout: deepLayout }),
   dark: tokens(baseDark, deepDark, { typography: deepTypography, layout: deepLayout }),
 };
@@ -571,6 +660,7 @@ export const academicTheme: ThemeTemplate = {
   id: "academic",
   name: "Scholar",
   swatch: "#7B2D3B",
+  layout: SCHOLAR_LAYOUT,
   light: tokens(baseLight, acadLight, { typography: acadTypography, layout: acadLayout }),
   dark: tokens(baseDark, acadDark, { typography: acadTypography, layout: acadLayout }),
 };
@@ -676,6 +766,7 @@ export const typewriterTheme: ThemeTemplate = {
   id: "typewriter",
   name: "Underwood",
   swatch: "#A93226",
+  layout: TYPEWRITER_LAYOUT,
   light: tokens(baseLight, typewLight, {
     typography: typewTypography,
     layout: typewLayout,
@@ -789,6 +880,7 @@ export const studioTheme: ThemeTemplate = {
   id: "studio",
   name: "Studio",
   swatch: "#E11D48",
+  layout: STUDIO_LAYOUT,
   light: tokens(baseLight, agencyLight, {
     typography: agencyTypography,
     layout: agencyLayout,
@@ -906,6 +998,7 @@ export const cupertinoTheme: ThemeTemplate = {
   id: "cupertino",
   name: "Cupertino",
   swatch: "#0066CC",
+  layout: CUPERTINO_LAYOUT,
   light: tokens(baseLight, appleLight, {
     typography: {
       fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Segoe UI Variable", "Segoe UI", system-ui, sans-serif',

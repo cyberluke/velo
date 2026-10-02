@@ -10,9 +10,16 @@ export type {
   EffectTokens,
   LayoutTokens,
   MotionTokens,
+  ThemeAiSummary,
+  ThemeChrome,
+  ThemeDensity,
+  ThemeLayout,
   ThemeMode,
   ThemePreference,
+  ThemeReadingPane,
+  ThemeSidebarMode,
   ThemeTemplate,
+  ThemeThreadView,
   ThemeTokens,
   TypographyTokens,
 } from "./types";
@@ -20,6 +27,9 @@ export type {
 export { DEFAULT_THEME_ID, getTheme, isThemeId, listThemes, registerTheme } from "./registry";
 export { applyThemeTokens, resolveMode, tokensToCssVars } from "./apply";
 export { useDocumentTheme } from "./useDocumentTheme";
+export { STANDARD_LAYOUT, resolveEffectiveLayout } from "./layout";
+export type { EffectiveLayout, EffectiveLayoutInput } from "./layout";
+export { useEffectiveLayout, useThemeLayout } from "./useThemeLayout";
 
 // Backward-compatible aliases for consumers that predate the registry.
 import { DEFAULT_THEME_ID, getTheme } from "./registry";
