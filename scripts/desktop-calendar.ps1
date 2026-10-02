@@ -1,8 +1,11 @@
-# Creates a "NAI E-Mail — Calendar" shortcut on the Windows desktop.
+# Creates "NAI E-Mail — Calendar" and "NAI E-Mail — Contacts" shortcuts on the
+# Windows desktop. The installer already adds both to the Start Menu via
+# src-tauri/installer/hooks.nsh (bundle.windows.nsis.installerHooks); this
+# script is the manual equivalent for machines that did not get the shortcuts.
 #
-# The shortcut launches the app with the single argument `naiemail://calendar`:
+# Each shortcut launches the app with a single deep-link argument:
 #   - app already running  -> single-instance forwards the URL, the running
-#     window is shown/focused/maximized and the Calendar tab opens;
+#     window is shown/focused/maximized and the target tab opens;
 #   - app not running      -> the deep-link plugin reads the URL from the
 #     command line on startup and the same thing happens after launch.
 #
@@ -10,7 +13,7 @@
 #   powershell -ExecutionPolicy Bypass -File scripts/desktop-calendar.ps1
 #   powershell -ExecutionPolicy Bypass -File scripts/desktop-calendar.ps1 -ExePath "D:\apps\NAI E-Mail\NAI-E-Mail.exe"
 #
-# Re-running is safe: it overwrites the existing shortcut.
+# Re-running is safe: it overwrites the existing shortcuts.
 
 param(
     [string]$ExePath = "",
@@ -48,17 +51,27 @@ $exe = Find-AppExe
 $desktop = if ($DesktopPath) { $DesktopPath } else {
     [Environment]::GetFolderPath("Desktop")
 }
-$shortcutPath = Join-Path $desktop "NAI E-Mail - Calendar.lnk"
 
 $shell = New-Object -ComObject WScript.Shell
-$shortcut = $shell.CreateShortcut($shortcutPath)
-$shortcut.TargetPath = $exe
-$shortcut.Arguments = "naiemail://calendar"
-$shortcut.WorkingDirectory = Split-Path -Parent $exe
-$shortcut.IconLocation = "$exe,0"
-$shortcut.Description = "Open NAI E-Mail and show the Calendar tab"
-$shortcut.Save()
 
-Write-Output "Created: $shortcutPath"
+function New-AppShortcut {
+    param(
+        [string]$Name,
+        [string]$Link
+    )
+    $shortcutPath = Join-Path $desktop "$Name.lnk"
+    $shortcut = $shell.CreateShortcut($shortcutPath)
+    $shortcut.TargetPath = $exe
+    $shortcut.Arguments = $Link
+    $shortcut.WorkingDirectory = Split-Path -Parent $exe
+    $shortcut.IconLocation = "$exe,0"
+    $shortcut.Description = "Open NAI E-Mail and show the $($Name -replace 'NAI E-Mail - ', '') view"
+    $shortcut.Save()
+    Write-Output "Created: $shortcutPath"
+}
+
+New-AppShortcut "NAI E-Mail - Calendar" "naiemail://calendar"
+New-AppShortcut "NAI E-Mail - Contacts" "naiemail://contacts"
+
 Write-Output "Target:  $exe"
-Write-Output "Arg:     naiemail://calendar (focus + maximize + Calendar tab, cold or warm start)"
+Write-Output "Args:    naiemail://calendar / naiemail://contacts (focus + maximize + target tab, cold or warm start)"

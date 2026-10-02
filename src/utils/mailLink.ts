@@ -25,6 +25,18 @@ export function createMailLink(target: MailLinkTarget): string {
  * smuggled into the calendar route.
  */
 export function isCalendarLink(value: string): boolean {
+  return isBareHostLink(value, "calendar");
+}
+
+/**
+ * The desktop "open the address book" link — `naiemail://contacts`. Same
+ * bare-host contract as the calendar link; opens Settings → People.
+ */
+export function isContactsLink(value: string): boolean {
+  return isBareHostLink(value, "contacts");
+}
+
+function isBareHostLink(value: string, host: string): boolean {
   let url: URL;
   try {
     url = new URL(value);
@@ -33,7 +45,7 @@ export function isCalendarLink(value: string): boolean {
   }
   return (
     url.protocol === "naiemail:" &&
-    url.hostname.toLowerCase() === "calendar" &&
+    url.hostname.toLowerCase() === host &&
     url.username === "" &&
     url.password === "" &&
     url.port === "" &&

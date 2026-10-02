@@ -1,4 +1,4 @@
-import { createMailLink, parseMailLink, isCalendarLink } from "./mailLink";
+import { createMailLink, parseMailLink, isCalendarLink, isContactsLink } from "./mailLink";
 
 describe("public mail links", () => {
   it("round-trips encoded IMAP and account identifiers", () => {
@@ -32,5 +32,21 @@ describe("calendar deep link", () => {
     "naiemail://user@calendar", "naiemail://calendar:8080",
   ])("rejects anything but the bare calendar host: %s", (url) => {
     expect(isCalendarLink(url)).toBe(false);
+  });
+});
+
+describe("contacts deep link", () => {
+  it.each(["naiemail://contacts", "naiemail://contacts/", "NAIEMAIL://CONTACTS"])(
+    "accepts the bare contacts host: %s",
+    (url) => {
+      expect(isContactsLink(url)).toBe(true);
+    },
+  );
+  it.each([
+    "naiemail://calendar", "naiemail://open?account=a&thread=t", "mailto:contacts@example.com",
+    "naiemail://contacts?x=1", "naiemail://contacts#frag", "naiemail://contacts/other",
+    "naiemail://user@contacts", "naiemail://contacts:8080",
+  ])("rejects anything but the bare contacts host: %s", (url) => {
+    expect(isContactsLink(url)).toBe(false);
   });
 });
