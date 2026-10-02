@@ -19,6 +19,30 @@ export function createMailLink(target: MailLinkTarget): string {
   return `naiemail://open?${query}`;
 }
 
+/**
+ * The desktop "open the Calendar tab" link — `naiemail://calendar`. Accepts
+ * only the bare host with no query/hash/credentials, so nothing else can be
+ * smuggled into the calendar route.
+ */
+export function isCalendarLink(value: string): boolean {
+  let url: URL;
+  try {
+    url = new URL(value);
+  } catch {
+    return false;
+  }
+  return (
+    url.protocol === "naiemail:" &&
+    url.hostname.toLowerCase() === "calendar" &&
+    url.username === "" &&
+    url.password === "" &&
+    url.port === "" &&
+    (url.pathname === "" || url.pathname === "/") &&
+    url.search === "" &&
+    url.hash === ""
+  );
+}
+
 export function parseMailLink(value: string): MailLinkTarget {
   if (value.length > 16000) throw new Error("Mail link is too long.");
   const url = new URL(value);

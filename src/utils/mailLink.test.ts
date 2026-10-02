@@ -1,4 +1,4 @@
-import { createMailLink, parseMailLink } from "./mailLink";
+import { createMailLink, parseMailLink, isCalendarLink } from "./mailLink";
 
 describe("public mail links", () => {
   it("round-trips encoded IMAP and account identifiers", () => {
@@ -16,5 +16,21 @@ describe("public mail links", () => {
     "naiemail://open?account=a&thread=%00", "naiemail://open?thread=t",
   ])("rejects malformed or ambiguous input: %s", (url) => {
     expect(() => parseMailLink(url)).toThrow();
+  });
+});
+
+describe("calendar deep link", () => {
+  it.each(["naiemail://calendar", "naiemail://calendar/", "NAIEMAIL://CALENDAR"])(
+    "accepts the bare calendar host: %s",
+    (url) => {
+      expect(isCalendarLink(url)).toBe(true);
+    },
+  );
+  it.each([
+    "naiemail://open?account=a&thread=t", "mailto:calendar@example.com", "https://calendar",
+    "naiemail://calendar?x=1", "naiemail://calendar#frag", "naiemail://calendar/other",
+    "naiemail://user@calendar", "naiemail://calendar:8080",
+  ])("rejects anything but the bare calendar host: %s", (url) => {
+    expect(isCalendarLink(url)).toBe(false);
   });
 });

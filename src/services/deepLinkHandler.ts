@@ -4,8 +4,9 @@ import { WebviewWindow } from "@tauri-apps/api/webviewWindow";
 import { parseMailtoUrl } from "../utils/mailtoParser";
 import { useComposerStore } from "../stores/composerStore";
 import { escapeHtml } from "../utils/sanitize";
-import { parseMailLink } from "../utils/mailLink";
+import { parseMailLink, isCalendarLink } from "../utils/mailLink";
 import { openMailLink } from "./threads/openMailLink";
+import { navigateToLabel } from "../router/navigate";
 import { reportError } from "../stores/toastStore";
 
 export async function handleUrl(url: string): Promise<void> {
@@ -19,6 +20,17 @@ export async function handleUrl(url: string): Promise<void> {
   }
 
   if (/^naiemail:/i.test(url)) {
+    // Desktop "Open Calendar" entry (naiemail://calendar): focus, maximize
+    // and open the Calendar tab — whether the app was already running
+    // (single-instance forwards the URL) or started cold from the link.
+    if (isCalendarLink(url)) {
+      if (mainWindow) {
+        await mainWindow.unminimize();
+        await mainWindow.maximize();
+      }
+      navigateToLabel("calendar");
+      return;
+    }
     await openMailLink(parseMailLink(url));
     return;
   }
