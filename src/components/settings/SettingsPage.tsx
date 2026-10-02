@@ -728,7 +728,7 @@ export function SettingsPage() {
                       </select>
                     </SettingRow>
                     <SettingRow label={t("settings.accentColor")}>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
                         {COLOR_THEMES.map((t) => {
                           const isSelected = colorTheme === t.id;
                           return (

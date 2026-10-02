@@ -26,10 +26,15 @@ const CONTRACT_LEAVES = leafEntries(baseLight)
   .map(([path]) => path)
   .sort();
 
+/** The 8 original accent-only themes (restyle the accent family only). */
+const ACCENT_THEME_IDS = new Set([
+  "indigo", "rose", "emerald", "amber", "sky", "violet", "orange", "slate",
+]);
+
 describe("theme templates (Liskov: every theme satisfies the full contract)", () => {
-  it("registers all 8 accent themes with unique ids", () => {
+  it("registers all 16 themes (8 accents + 8 roles) with unique ids", () => {
     const themes = listThemes();
-    expect(themes).toHaveLength(8);
+    expect(themes).toHaveLength(16);
     const ids = themes.map((t) => t.id);
     expect(new Set(ids).size).toBe(ids.length);
     for (const theme of themes) {
@@ -62,7 +67,7 @@ describe("theme templates (Liskov: every theme satisfies the full contract)", ()
   it("accent themes differ from the shell in the accent family only", () => {
     const indigo = getTheme("indigo");
     for (const theme of listThemes()) {
-      if (theme.id === "indigo") continue;
+      if (theme.id === "indigo" || !ACCENT_THEME_IDS.has(theme.id)) continue;
       const light = theme.light;
       const indigoLight = indigo.light;
       expect(light.colors.accent).not.toBe(indigoLight.colors.accent);
@@ -73,11 +78,35 @@ describe("theme templates (Liskov: every theme satisfies the full contract)", ()
       expect(light.typography.sizes.sm.size).toBe(indigoLight.typography.sizes.sm.size);
     }
   });
+
+  it("role themes restyle more than the accent: type, density, radii and glass", () => {
+    const indigo = getTheme("indigo");
+    for (const theme of listThemes()) {
+      if (ACCENT_THEME_IDS.has(theme.id)) continue;
+      const light = theme.light;
+      // Every role theme changes the app voice…
+      expect(light.typography.fontFamily).not.toBe(indigo.light.typography.fontFamily);
+      // …and at least one structural family beyond colors (density, corners
+      // or glass), so a role theme is never mistaken for an accent swap.
+      const structural =
+        light.layout.spacing !== indigo.light.layout.spacing ||
+        light.layout.radiusPanel !== indigo.light.layout.radiusPanel ||
+        light.effects.glassBlur !== indigo.light.effects.glassBlur;
+      expect(structural, `${theme.id} should restyle layout or effects`).toBe(true);
+      expect(light.colors.bgPrimary).not.toBe(indigo.light.colors.bgPrimary);
+    }
+  });
+
+  it("SAP North Star uses the bundled 72 typeface", () => {
+    const sap = getTheme("sap-northstar");
+    expect(sap.light.typography.fontFamily).toContain('"72"');
+    expect(sap.dark.typography.fontFamily).toContain('"72"');
+  });
 });
 
 describe("COLOR_THEMES compatibility surface", () => {
   it("exposes id, name and swatch for the settings picker", () => {
-    expect(COLOR_THEMES).toHaveLength(8);
+    expect(COLOR_THEMES).toHaveLength(16);
     for (const t of COLOR_THEMES) {
       expect(t.id).toBeTruthy();
       expect(t.name).toBeTruthy();

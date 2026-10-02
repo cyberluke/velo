@@ -1,6 +1,7 @@
 import type { ThemeTemplate } from "./types";
 import { baseLight, baseDark } from "./base";
 import { registerTheme, DEFAULT_THEME_ID } from "./registry";
+import { ROLE_THEMES } from "./roles";
 
 /**
  * External theme templates.
@@ -233,6 +234,7 @@ export const THEMES: ThemeTemplate[] = [
   violetTheme,
   orangeTheme,
   slateTheme,
+  ...ROLE_THEMES,
 ];
 
 for (const theme of THEMES) {

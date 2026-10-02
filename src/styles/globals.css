@@ -1,6 +1,31 @@
 @import "tailwindcss";
 
 /*
+ * SAP 72 — the SAP typeface (72 by SAP), bundled for the "SAP North Star"
+ * role theme. Sourced from SAP/theming-base-content (72-{Weight}-full.woff2,
+ * full unicode sets). The theme's font stack references the family "72" and
+ * falls back to Segoe UI when the theme is not active.
+ */
+@font-face {
+  font-family: "72";
+  src: url("/fonts/72-Light-full.woff2") format("woff2");
+  font-weight: 300;
+  font-display: swap;
+}
+@font-face {
+  font-family: "72";
+  src: url("/fonts/72-Regular-full.woff2") format("woff2");
+  font-weight: 400 500;
+  font-display: swap;
+}
+@font-face {
+  font-family: "72";
+  src: url("/fonts/72-Bold-full.woff2") format("woff2");
+  font-weight: 600 700;
+  font-display: swap;
+}
+
+/*
  * Design-token contract.
  *
  * The values here are the DEFAULT template's DARK set (indigo / Aurora dark

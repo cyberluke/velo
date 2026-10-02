@@ -161,4 +161,12 @@ export type ColorThemeId =
   | "sky"
   | "violet"
   | "orange"
-  | "slate";
+  | "slate"
+  | "sap-northstar"
+  | "corporate-ceo"
+  | "startup-ceo"
+  | "deeptech-cto"
+  | "academic"
+  | "typewriter"
+  | "studio"
+  | "cupertino";
