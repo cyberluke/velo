@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { setSetting } from "@/services/db/settings";
 import type { ColorThemeId } from "@/themes";
+import { getTheme } from "@/themes/registry";
 import { setTimeFormatPreference, type TimeFormat } from "@/utils/date";
 
 type Theme = "light" | "dark" | "system";
@@ -204,7 +205,25 @@ export const useUIStore = create<UIState>((set) => ({
   },
   setColorTheme: (colorTheme) => {
     setSetting("color_theme", colorTheme).catch(() => {});
-    set({ colorTheme });
+    set((state) => {
+      const next: Partial<UIState> = { colorTheme };
+      // A role theme's composition becomes the *initial* density / thread-view
+      // settings when the user has no explicit choice of their own (i.e. the
+      // stored value is still the app default). Persisting through the regular
+      // setters makes the store the single source of truth afterwards, so the
+      // thread-view toggle in the ActionBar always works — an explicit choice
+      // can never lose to the theme again.
+      const layout = getTheme(colorTheme).layout;
+      if (state.emailDensity === "default" && layout.density !== "default") {
+        setSetting("email_density", layout.density).catch(() => {});
+        next.emailDensity = layout.density;
+      }
+      if (state.threadViewMode === "classic" && layout.threadView === "chat") {
+        setSetting("thread_view_mode", layout.threadView).catch(() => {});
+        next.threadViewMode = layout.threadView;
+      }
+      return next;
+    });
   },
   setSendAndArchive: (sendAndArchive) => {
     setSetting("send_and_archive", String(sendAndArchive)).catch(() => {});

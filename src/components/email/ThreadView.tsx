@@ -5,7 +5,7 @@ import { ActionBar } from "./ActionBar";
 import { getMessagesForThreads, type DbMessage } from "@/services/db/messages";
 import { ensureMessageBodies } from "@/services/email/messageBodies";
 import { useAccountStore } from "@/stores/accountStore";
-import { useUIStore, type ThreadViewMode } from "@/stores/uiStore";
+import { useUIStore } from "@/stores/uiStore";
 import { useThreadStore, type Thread } from "@/stores/threadStore";
 import { getMergedThreadIds, unmergeThread } from "@/services/db/threads";
 import { useComposerStore } from "@/stores/composerStore";
@@ -87,12 +87,11 @@ export function ThreadView({ thread }: ThreadViewProps) {
   const setThreadViewMode = useUIStore((s) => s.setThreadViewMode);
   const toggleContactSidebar = useUIStore((s) => s.toggleContactSidebar);
   const taskSidebarVisible = useUIStore((s) => s.taskSidebarVisible);
-  // The theme's layout/workflow descriptor reshapes the thread view: which
-  // conversation style is the default, whether the contact sidebar and the
-  // AI summary belong in the composition (minimal-chrome reading personas
-  // declutter both). The user's explicit thread-view choice still wins.
-  const { threadView: themeThreadView, showContactSidebar: themeContactSidebar, showAiSummary } = useEffectiveLayout();
-  const viewMode: ThreadViewMode = threadViewMode !== "classic" ? threadViewMode : themeThreadView;
+  // Thread view mode is store-owned (picking a role theme folds its default
+  // in, and the ActionBar toggle flips the stored value), so the toggle
+  // always works. The theme-only dimensions here are chrome and the AI
+  // summary: minimal-chrome reading personas declutter both.
+  const { showContactSidebar: themeContactSidebar, showAiSummary } = useEffectiveLayout();
   const effectiveContactSidebar = themeContactSidebar && contactSidebarVisible;
   // Which side of the chat view a message sits on
   const ownAddressScope = useMemo(
@@ -634,9 +633,9 @@ export function ThreadView({ thread }: ThreadViewProps) {
           onPopOut={() => handlePopOut(thread)}
           onToggleContactSidebar={themeContactSidebar ? toggleContactSidebar : undefined}
           onToggleTaskSidebar={() => useUIStore.getState().toggleTaskSidebar()}
-          threadViewMode={viewMode}
+          threadViewMode={threadViewMode}
           onToggleThreadViewMode={() => {
-            setThreadViewMode(viewMode === "chat" ? "classic" : "chat");
+            setThreadViewMode(threadViewMode === "chat" ? "classic" : "chat");
             void playSound("view");
           }}
         />
@@ -850,7 +849,7 @@ export function ThreadView({ thread }: ThreadViewProps) {
         {/* Messages */}
         <div className="flex-1 overflow-y-auto">
           <ErrorBoundary name="MessageList">
-            {viewMode === "chat" ? (
+            {threadViewMode === "chat" ? (
               <ChatThread
                 messages={messages}
                 ownAddresses={ownAddresses}
@@ -916,7 +915,7 @@ export function ThreadView({ thread }: ThreadViewProps) {
               email={peerAddress}
               name={peerName}
               currentThreadId={thread.id}
-              viewMode={viewMode}
+              viewMode={threadViewMode}
               ownAddresses={ownAddresses}
               blockImages={blockImages}
               allowlistedSenders={allowlistedSenders}

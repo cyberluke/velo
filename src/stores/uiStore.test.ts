@@ -1,5 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { useUIStore } from "./uiStore";
+// Registers the built-in theme templates so setColorTheme can resolve layouts.
+import "@/themes";
 
 vi.mock("@/services/db/settings", () => ({
   setSetting: vi.fn(() => Promise.resolve()),
@@ -158,6 +160,55 @@ describe("uiStore", () => {
     useUIStore.getState().setColorTheme("emerald");
     expect(setSetting).toHaveBeenCalledWith("color_theme", "emerald");
     expect(useUIStore.getState().colorTheme).toBe("emerald");
+  });
+
+  it("setColorTheme folds a role theme's density/thread-view defaults in when unset", () => {
+    // Deep Tech CTO: compact density + chat threads.
+    useUIStore.setState({ emailDensity: "default", threadViewMode: "classic" });
+    useUIStore.getState().setColorTheme("deeptech-cto");
+    expect(useUIStore.getState().emailDensity).toBe("compact");
+    expect(useUIStore.getState().threadViewMode).toBe("chat");
+    expect(setSetting).toHaveBeenCalledWith("email_density", "compact");
+    expect(setSetting).toHaveBeenCalledWith("thread_view_mode", "chat");
+  });
+
+  it("setColorTheme never overrides an explicit non-default user choice", () => {
+    useUIStore.setState({ emailDensity: "spacious", threadViewMode: "chat" });
+    useUIStore.getState().setColorTheme("deeptech-cto");
+    expect(useUIStore.getState().emailDensity).toBe("spacious");
+    expect(useUIStore.getState().threadViewMode).toBe("chat");
+  });
+
+  it("setColorTheme treats the default sentinel (classic/default) as 'no choice yet'", () => {
+    // "classic" is indistinguishable from "never touched it", so a chat theme
+    // folds its conversation default in — after that the store is fully
+    // authoritative and the ActionBar toggle works.
+    useUIStore.setState({ emailDensity: "default", threadViewMode: "classic" });
+    useUIStore.getState().setColorTheme("deeptech-cto");
+    expect(useUIStore.getState().threadViewMode).toBe("chat");
+  });
+
+  it("setColorTheme leaves defaults alone for accent themes and default-layout roles", () => {
+    useUIStore.setState({ emailDensity: "default", threadViewMode: "classic" });
+    useUIStore.getState().setColorTheme("rose");
+    expect(useUIStore.getState().emailDensity).toBe("default");
+    expect(useUIStore.getState().threadViewMode).toBe("classic");
+
+    // Corporate CEO has compact density but classic threads.
+    useUIStore.getState().setColorTheme("corporate-ceo");
+    expect(useUIStore.getState().emailDensity).toBe("compact");
+    expect(useUIStore.getState().threadViewMode).toBe("classic");
+  });
+
+  it("switching themes never clobbers a value the previous theme set", () => {
+    useUIStore.setState({ emailDensity: "default", threadViewMode: "classic" });
+    useUIStore.getState().setColorTheme("deeptech-cto");
+    expect(useUIStore.getState().emailDensity).toBe("compact");
+    // Now the stored "compact" is the user's (theme-derived but concrete)
+    // choice — switching to a default-density role must not reset it.
+    useUIStore.getState().setColorTheme("sap-northstar");
+    expect(useUIStore.getState().emailDensity).toBe("compact");
+    expect(useUIStore.getState().threadViewMode).toBe("chat");
   });
 
   it("sidebarNavConfig should default to null", () => {

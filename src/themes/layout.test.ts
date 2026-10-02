@@ -14,43 +14,40 @@ const EDITORIAL: ThemeLayout = {
 };
 
 describe("resolveEffectiveLayout", () => {
-  it("applies the theme composition when the user has no explicit choice", () => {
+  it("applies the theme composition for the theme-only dimensions", () => {
     const eff = resolveEffectiveLayout({
       layout: EDITORIAL,
       sidebarCollapsed: false,
-      emailDensity: "default",
-      threadViewMode: "classic",
       readingPanePosition: "right",
     });
     expect(eff.railSidebar).toBe(true);
     expect(eff.sidebarCollapsed).toBe(true); // rail forces the compact toolbelt
-    expect(eff.density).toBe("spacious");
-    expect(eff.threadView).toBe("chat");
     expect(eff.readingPane).toBe("left");
     expect(eff.showCategoryTabs).toBe(false);
     expect(eff.showContactSidebar).toBe(false);
     expect(eff.showAiSummary).toBe(false);
   });
 
-  it("user settings win over the theme for density, thread view and reading pane", () => {
+  it("an explicit non-default reading pane position wins over the theme", () => {
     const eff = resolveEffectiveLayout({
       layout: EDITORIAL,
       sidebarCollapsed: false,
-      emailDensity: "compact",
-      threadViewMode: "chat",
       readingPanePosition: "bottom",
     });
-    expect(eff.density).toBe("compact");
-    expect(eff.threadView).toBe("chat");
     expect(eff.readingPane).toBe("bottom");
+
+    const hidden = resolveEffectiveLayout({
+      layout: EDITORIAL,
+      sidebarCollapsed: false,
+      readingPanePosition: "hidden",
+    });
+    expect(hidden.readingPane).toBe("hidden");
   });
 
   it("a full-nav theme follows the user's own collapse toggle", () => {
     const eff = resolveEffectiveLayout({
       layout: STANDARD_LAYOUT,
       sidebarCollapsed: true,
-      emailDensity: "default",
-      threadViewMode: "classic",
       readingPanePosition: "right",
     });
     expect(eff.railSidebar).toBe(false);
@@ -61,26 +58,11 @@ describe("resolveEffectiveLayout", () => {
     const eff = resolveEffectiveLayout({
       layout: STANDARD_LAYOUT,
       sidebarCollapsed: false,
-      emailDensity: "default",
-      threadViewMode: "classic",
       readingPanePosition: "right",
     });
     expect(eff.showCategoryTabs).toBe(true);
     expect(eff.showContactSidebar).toBe(true);
     expect(eff.showAiSummary).toBe(true);
     expect(eff.readingPane).toBe("right");
-    expect(eff.density).toBe("default");
-    expect(eff.threadView).toBe("classic");
-  });
-
-  it("an explicit non-default reading pane position is preserved", () => {
-    const eff = resolveEffectiveLayout({
-      layout: EDITORIAL,
-      sidebarCollapsed: false,
-      emailDensity: "default",
-      threadViewMode: "classic",
-      readingPanePosition: "hidden",
-    });
-    expect(eff.readingPane).toBe("hidden");
   });
 });

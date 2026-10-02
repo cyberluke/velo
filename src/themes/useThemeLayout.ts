@@ -10,11 +10,15 @@ import {
 
 /**
  * The layout/workflow half of the active theme. Components that rearrange
- * themselves per persona (sidebar, list, thread view, reading pane, chrome)
- * read this instead of hardcoding a composition.
+ * themselves per persona (sidebar, reading pane, chrome, AI summary) read
+ * this instead of hardcoding a composition.
  *
  * `useThemeLayout` returns the raw descriptor of the active theme;
- * `useEffectiveLayout` folds the user's explicit Settings choices over it.
+ * `useEffectiveLayout` resolves the theme-only dimensions (sidebar rail,
+ * reading-pane side, chrome level, AI summary). Density and thread view are
+ * deliberately absent here: picking a role theme folds its defaults into the
+ * persisted settings (`setColorTheme` in uiStore), so the store owns them and
+ * every UI toggle keeps working.
  */
 export function useThemeLayout(): ThemeLayout {
   const colorTheme = useUIStore((s) => s.colorTheme);
@@ -24,8 +28,6 @@ export function useThemeLayout(): ThemeLayout {
 export function useEffectiveLayout(): EffectiveLayout {
   const layout = useThemeLayout();
   const sidebarCollapsed = useUIStore((s) => s.sidebarCollapsed);
-  const emailDensity = useUIStore((s) => s.emailDensity);
-  const threadViewMode = useUIStore((s) => s.threadViewMode);
   const readingPanePosition = useUIStore((s) => s.readingPanePosition);
 
   return useMemo(
@@ -33,10 +35,8 @@ export function useEffectiveLayout(): EffectiveLayout {
       resolveEffectiveLayout({
         layout,
         sidebarCollapsed,
-        emailDensity,
-        threadViewMode,
         readingPanePosition,
       } satisfies EffectiveLayoutInput),
-    [layout, sidebarCollapsed, emailDensity, threadViewMode, readingPanePosition],
+    [layout, sidebarCollapsed, readingPanePosition],
   );
 }

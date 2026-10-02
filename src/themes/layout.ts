@@ -11,18 +11,18 @@ import type {
 /**
  * Layout & workflow resolution — the pure half of the role-theme redesign.
  *
- * A theme's `layout` describes its intended composition (sidebar rail vs full
- * nav, density, thread view, reading-pane side, chrome level, AI summary).
- * The app layer never reads a theme layout directly: it goes through
- * `resolveEffectiveLayout`, which applies the theme value as the *default*
- * and lets the user's explicit Settings choices win where one exists.
+ * Two ownership layers:
+ * - **Store-owned dimensions** (density, thread view): picking a role theme
+ *   folds its defaults into the persisted settings via `setColorTheme`
+ *   (only when the user has no explicit choice). After that the store is the
+ *   single source of truth, so toggles in the UI always work.
+ * - **Theme-only dimensions** (sidebar rail, reading-pane side, chrome
+ *   level, AI summary): resolved here at render time — no user setting
+ *   exists for them, so the theme decides.
  *
- * Rule of precedence:
- * - sidebar: a "rail" theme forces the collapsed rail (it is the persona);
- * - density / thread view / reading-pane side: the user's non-default stored
- *   choice wins, otherwise the theme value applies — so switching themes
- *   rearranges the UI unless the user already picked something deliberately;
- * - chrome / AI summary: theme-only (no user setting exists).
+ * Reading-pane precedence: the user's explicit non-default position
+ * (bottom/hidden) wins; the theme's `left` applies only while the stored
+ * position is the app default (`right`).
  */
 
 export const STANDARD_LAYOUT: ThemeLayout = {
@@ -39,8 +39,6 @@ export const STANDARD_LAYOUT: ThemeLayout = {
 export interface EffectiveLayoutInput {
   layout: ThemeLayout;
   sidebarCollapsed: boolean;
-  emailDensity: "compact" | "default" | "spacious";
-  threadViewMode: "classic" | "chat";
   /** The persisted reading-pane position (right/bottom/hidden). */
   readingPanePosition: "right" | "bottom" | "hidden";
 }
@@ -51,8 +49,6 @@ export interface EffectiveLayout {
   /** Rail themes are always collapsed — the rail *is* the sidebar. */
   sidebarCollapsed: boolean;
   railSidebar: boolean;
-  density: ThemeDensity;
-  threadView: ThemeThreadView;
   /** "left" is theme-only; bottom/hidden come from the user's setting. */
   readingPane: ThemeReadingPane | "bottom" | "hidden";
   showCategoryTabs: boolean;
@@ -67,8 +63,6 @@ export function resolveEffectiveLayout(input: EffectiveLayoutInput): EffectiveLa
     layout,
     sidebarCollapsed: railSidebar ? true : input.sidebarCollapsed,
     railSidebar,
-    density: input.emailDensity !== "default" ? input.emailDensity : layout.density,
-    threadView: input.threadViewMode !== "classic" ? input.threadViewMode : layout.threadView,
     readingPane: input.readingPanePosition !== "right" ? input.readingPanePosition : layout.readingPane,
     showCategoryTabs: layout.chrome === "standard",
     showContactSidebar: layout.chrome === "standard",
