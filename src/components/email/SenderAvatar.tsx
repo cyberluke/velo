@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { getGravatarUrl } from "@/services/contacts/gravatar";
+import { resolveBrandMark } from "./brandLogo";
 
 /**
  * Freemail domains whose favicon would show the provider's logo, not the
@@ -32,13 +33,17 @@ function nextSource(current: AvatarSource, domain: string): AvatarSource {
 }
 
 /**
- * Airmail-style sender avatar for the thread list: the sender's Gravatar
- * photo, then their domain's favicon (company logo), then the initial circle.
+ * Airmail-style sender avatar for the thread list: a recognized sender's
+ * brand logo (nvidia.com → NVIDIA), then their Gravatar photo, then their
+ * domain's favicon (company logo), then the initial circle.
  *
  * The avatar says who wrote, never whether the mail was read — a photo cannot
  * change colour, so a read/unread tint only ever applied to the third of
  * senders that fall back to an initial. Unread is drawn around the avatar
  * (a ring, a dot) by the caller instead.
+ *
+ * `brand` is deterministic (bundled inline SVG, no network) so it short
+ * circuits the fallback state machine below.
  */
 export function SenderAvatar({
   email,
@@ -51,7 +56,11 @@ export function SenderAvatar({
 }) {
   const address = (email ?? "").trim().toLowerCase();
   const domain = address.includes("@") ? address.split("@")[1]! : "";
+  const brand = resolveBrandMark(domain);
 
+  // Hooks run unconditionally (Rules of Hooks): the fallback state machine
+  // below is unused when a brand mark is present, but it must still be
+  // declared on every render.
   const [state, setState] = useState<{ address: string; source: AvatarSource }>(() => ({
     address,
     source: firstSource(address),
@@ -72,6 +81,17 @@ export function SenderAvatar({
   };
 
   const initial = (name?.[0] ?? email?.[0] ?? "?").toUpperCase();
+
+  if (brand) {
+    return (
+      <div className={`${className} rounded-full overflow-hidden bg-white flex items-center justify-center`}>
+        <brand.StatelessIcon
+          className="w-[70%] h-[70%]"
+          style={brand.monoColor ? { color: brand.monoColor } : undefined}
+        />
+      </div>
+    );
+  }
 
   if (state.source === "gravatar") {
     return (
